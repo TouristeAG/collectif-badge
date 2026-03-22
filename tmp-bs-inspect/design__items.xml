@@ -1,0 +1,671 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<items>
+	<item ID="EA02C4">
+		<fill>
+			<type>
+				<solid>
+					<color type="QString">#000000</color>
+				</solid>
+			</type>
+		</fill>
+		<imageAcquisition>
+			<transformations>
+				<color>
+					<negative type="QString">false</negative>
+					<monochrome type="QString">false</monochrome>
+				</color>
+			</transformations>
+		</imageAcquisition>
+		<clipping>
+			<shape type="QString">rectangle</shape>
+		</clipping>
+		<item>
+			<UID type="QString">EA02C4</UID>
+			<layout type="QString">L1</layout>
+			<protected type="bool">true</protected>
+			<layer type="int">1</layer>
+			<side type="int">4096</side>
+			<userID type="QString">ITEM.EA02C4</userID>
+		</item>
+		<background>
+			<type type="QString">none</type>
+			<type>
+				<picture>
+					<fileName type="QString">C:/ProgramData/Evolis/Badge Studio/contents/backgrounds/colored/white/cr80/landscape/E-LD.jpg</fileName>
+					<canDistort type="QString">false</canDistort>
+				</picture>
+			</type>
+			<options>
+				<print type="QString">yes</print>
+			</options>
+		</background>
+		<info>
+			<designObject type="QString">background</designObject>
+		</info>
+		<position>
+			<pos2>
+				<y type="QString">5398</y>
+				<x type="QString">8573</x>
+			</pos2>
+			<pos1>
+				<y type="QString">0</y>
+				<x type="QString">0</x>
+			</pos1>
+		</position>
+		<line>
+			<color type="QString">#000000</color>
+		</line>
+		<clipart>
+			<color type="QString">#000000</color>
+		</clipart>
+		<font>
+			<color type="QString">#000000</color>
+		</font>
+	</item>
+	<item ID="46037F">
+		<item>
+			<UID type="QString">46037F</UID>
+			<layout type="QString">L1</layout>
+			<protected type="bool">true</protected>
+			<layer type="int">1</layer>
+			<side type="int">8192</side>
+			<userID type="QString">ITEM.46037F</userID>
+		</item>
+		<background>
+			<type type="QString">none</type>
+		</background>
+		<info>
+			<designObject type="QString">background</designObject>
+		</info>
+		<position>
+			<pos2>
+				<y type="QString">5398</y>
+				<x type="QString">8573</x>
+			</pos2>
+			<pos1>
+				<y type="QString">0</y>
+				<x type="QString">0</x>
+			</pos1>
+		</position>
+	</item>
+	<item ID="C516F8">
+		<fill>
+			<type type="QString">solid</type>
+			<type>
+				<solid>
+					<color type="QColor">#000000</color>
+				</solid>
+			</type>
+		</fill>
+		<clipping>
+			<shape type="QString">rectangle</shape>
+		</clipping>
+		<rotation>
+			<angle type="double">0</angle>
+		</rotation>
+		<item>
+			<layout type="QString">L1</layout>
+			<layer type="int">322</layer>
+			<side type="int">4096</side>
+			<userID type="QString">ITEM.C516F8</userID>
+		</item>
+		<background>
+			<type/>
+		</background>
+		<info>
+			<designObject type="QString">rectangle</designObject>
+		</info>
+		<position>
+			<pos2>
+				<y type="double">5422.976</y>
+				<x type="double">8579.494666666667</x>
+			</pos2>
+			<pos1>
+				<y type="double">18.20799999999963</y>
+				<x type="double">7.8999999999991815</x>
+			</pos1>
+		</position>
+		<line>
+			<style type="QString">NoPen</style>
+		</line>
+	</item>
+	<item ID="601A7D">
+		<fill>
+			<type type="QString">solid</type>
+			<type>
+				<solid>
+					<color type="QColor">#000000</color>
+				</solid>
+			</type>
+		</fill>
+		<rotation>
+			<angle type="double">0</angle>
+		</rotation>
+		<item>
+			<layout type="QString">L1</layout>
+			<layer type="int">322</layer>
+			<side type="int">4096</side>
+			<userID type="QString">ITEM.601A7D</userID>
+			<type type="QString">text_database</type>
+		</item>
+		<database>
+			<column type="QString">defaultTable.Texte2</column>
+		</database>
+		<background>
+			<type/>
+		</background>
+		<info>
+			<designObject type="QString">text_database</designObject>
+		</info>
+		<position>
+			<pos2>
+				<y type="double">710.6293333333332</y>
+				<x type="double">7641.457333333334</x>
+			</pos2>
+			<pos1>
+				<y type="double">210.6293333333332</y>
+				<x type="double">2039.8359999999993</x>
+			</pos1>
+		</position>
+		<line>
+			<style type="QString">NoPen</style>
+		</line>
+		<data>
+			<dbInnerInfo type="QString">defaultTable.Texte2</dbInnerInfo>
+			<placeholder type="QString">Text From DB</placeholder>
+			<final type="QString">Collectif pour une vie nocturne riche, vivante et diversifiée</final>
+		</data>
+		<font>
+			<underline type="QString">false</underline>
+			<style type="QString">Italic</style>
+			<strikeOut type="QString">false</strikeOut>
+			<family type="QString">Arial</family>
+			<color type="QColor">#ffffff</color>
+			<pointSize type="QString">6</pointSize>
+		</font>
+	</item>
+	<item ID="BD4F66">
+		<fill>
+			<type type="QString">imageAcquisition.picture</type>
+		</fill>
+		<imageAcquisition>
+			<picture>
+				<originalData type="QByteArray">design/FILES/items/BD4F66/imageAcquisition/picture/originalData/{ddbd49a9-fd19-4761-bda3-6d36ae03ebaf}.bin</originalData>
+				<data type="QImage"></data>
+			</picture>
+			<acquisition>
+				<autoOperation type="QString">DB</autoOperation>
+			</acquisition>
+			<transformations>
+				<color>
+					<negative type="bool">false</negative>
+					<monochrome type="bool">false</monochrome>
+				</color>
+			</transformations>
+		</imageAcquisition>
+		<clipping>
+			<shape type="QString">perfectCircle</shape>
+		</clipping>
+		<rotation>
+			<angle type="double">0</angle>
+		</rotation>
+		<item>
+			<layout type="QString">L1</layout>
+			<layer type="int">322</layer>
+			<side type="int">4096</side>
+			<userID type="QString">ITEM.BD4F66</userID>
+			<type type="QString">image_database</type>
+		</item>
+		<database>
+			<column type="QString">defaultTable.Image1</column>
+		</database>
+		<background>
+			<type/>
+		</background>
+		<info>
+			<designObject type="QString">image_database</designObject>
+		</info>
+		<position>
+			<pos2>
+				<y type="double">2989.4186666666665</y>
+				<x type="double">8280.590666666669</x>
+			</pos2>
+			<pos1>
+				<y type="double">489.41866666666647</y>
+				<x type="double">6280.590666666668</x>
+			</pos1>
+		</position>
+		<line>
+			<style type="QString">NoPen</style>
+		</line>
+		<data>
+			<dbInnerInfo type="QString">defaultTable.Image1</dbInnerInfo>
+			<final type="QImage"></final>
+		</data>
+		<image>
+			<fitOption type="QString">1</fitOption>
+		</image>
+	</item>
+	<item ID="421A5A">
+		<fill>
+			<type type="QString">solid</type>
+			<type>
+				<solid>
+					<color type="QColor">#ffffff</color>
+				</solid>
+			</type>
+		</fill>
+		<rotation>
+			<angle type="double">0</angle>
+		</rotation>
+		<barcode>
+			<symbol type="QString">QRCODE</symbol>
+			<type type="QString">2D</type>
+		</barcode>
+		<item>
+			<layout type="QString">L1</layout>
+			<layer type="int">322</layer>
+			<side type="int">4096</side>
+			<userID type="QString">ITEM.421A5A</userID>
+			<type type="QString">barcode2D_database</type>
+		</item>
+		<database>
+			<column type="QString">defaultTable.Code barre1</column>
+		</database>
+		<background>
+			<type/>
+		</background>
+		<info>
+			<designObject type="QString">barcode2D_database</designObject>
+		</info>
+		<position>
+			<pos2>
+				<y type="double">4900.525333333332</y>
+				<x type="double">2719.173333333333</x>
+			</pos2>
+			<pos1>
+				<y type="double">2655.386666666666</y>
+				<x type="double">366.0746666666664</x>
+			</pos1>
+		</position>
+		<line>
+			<style type="QString">NoPen</style>
+		</line>
+		<data>
+			<dbInnerInfo type="QString">defaultTable.Code barre1</dbInnerInfo>
+			<placeholder type="QString">cardPresso</placeholder>
+			<final type="QString"></final>
+		</data>
+	</item>
+	<item ID="142BA8">
+		<fill>
+			<type type="QString">imageAcquisition.picture</type>
+		</fill>
+		<imageAcquisition>
+			<picture>
+				<data type="QByteArray">design/FILES/items/142BA8/imageAcquisition/picture/data/{a9b57d66-5222-493d-be30-488aba10813f}.bin</data>
+			</picture>
+			<acquisition>
+				<autoOperation type="QString">BROWSE</autoOperation>
+				<family type="QString">DISK_FAMILY</family>
+			</acquisition>
+			<transformations>
+				<color>
+					<negative type="bool">false</negative>
+					<monochrome type="bool">false</monochrome>
+				</color>
+			</transformations>
+		</imageAcquisition>
+		<rotation>
+			<angle type="double">0</angle>
+		</rotation>
+		<item>
+			<layout type="QString">L1</layout>
+			<layer type="int">322</layer>
+			<side type="int">4096</side>
+			<userID type="QString">ITEM.142BA8</userID>
+		</item>
+		<background>
+			<type/>
+		</background>
+		<info>
+			<designObject type="QString">imageDeviceDisk</designObject>
+		</info>
+		<position>
+			<pos2>
+				<y type="double">2418.2079999999996</y>
+				<x type="double">2190.1693333333333</x>
+			</pos2>
+			<pos1>
+				<y type="double">-81.79200000000037</y>
+				<x type="double">190.16933333333327</x>
+			</pos1>
+		</position>
+		<line>
+			<style type="QString">NoPen</style>
+		</line>
+		<image>
+			<fitOption type="QString">1</fitOption>
+		</image>
+	</item>
+	<item ID="EA6DC8">
+		<fill>
+			<type type="QString">imageAcquisition.picture</type>
+		</fill>
+		<imageAcquisition>
+			<picture>
+				<data type="QByteArray">design/FILES/items/EA6DC8/imageAcquisition/picture/data/{177a6c44-ee7e-49e4-8cb8-a6f0ad17339b}.bin</data>
+			</picture>
+			<acquisition>
+				<autoOperation type="QString">BROWSE</autoOperation>
+				<family type="QString">DISK_FAMILY</family>
+			</acquisition>
+			<transformations>
+				<color>
+					<negative type="bool">false</negative>
+					<monochrome type="bool">false</monochrome>
+				</color>
+			</transformations>
+		</imageAcquisition>
+		<rotation>
+			<angle type="double">0</angle>
+		</rotation>
+		<item>
+			<layout type="QString">L1</layout>
+			<layer type="int">322</layer>
+			<side type="int">4096</side>
+			<userID type="QString">ITEM.EA6DC8</userID>
+		</item>
+		<background>
+			<type/>
+		</background>
+		<info>
+			<designObject type="QString">imageDeviceDisk</designObject>
+		</info>
+		<position>
+			<pos2>
+				<y type="double">5457.293333333333</y>
+				<x type="double">7341.457333333334</x>
+			</pos2>
+			<pos1>
+				<y type="double">3504.2906666666668</y>
+				<x type="double">5946.033333333333</x>
+			</pos1>
+		</position>
+		<line>
+			<style type="QString">NoPen</style>
+		</line>
+		<image>
+			<fitOption type="QString">1</fitOption>
+		</image>
+	</item>
+	<item ID="046576">
+		<fill>
+			<type type="QString">imageAcquisition.picture</type>
+		</fill>
+		<imageAcquisition>
+			<picture>
+				<data type="QByteArray">design/FILES/items/046576/imageAcquisition/picture/data/{3c38a595-25d4-4288-8758-1f8c86d6ca86}.bin</data>
+			</picture>
+			<acquisition>
+				<autoOperation type="QString">BROWSE</autoOperation>
+				<family type="QString">DISK_FAMILY</family>
+			</acquisition>
+			<transformations>
+				<color>
+					<negative type="bool">false</negative>
+					<monochrome type="bool">false</monochrome>
+				</color>
+			</transformations>
+		</imageAcquisition>
+		<rotation>
+			<angle type="double">0</angle>
+		</rotation>
+		<item>
+			<layout type="QString">L1</layout>
+			<layer type="int">322</layer>
+			<side type="int">4096</side>
+			<userID type="QString">ITEM.046576</userID>
+		</item>
+		<background>
+			<type/>
+		</background>
+		<info>
+			<designObject type="QString">imageDeviceDisk</designObject>
+		</info>
+		<position>
+			<pos2>
+				<y type="double">5148.6186666666645</y>
+				<x type="double">8280.590666666669</x>
+			</pos2>
+			<pos1>
+				<y type="double">3893.7573333333326</y>
+				<x type="double">7273.822666666669</x>
+			</pos1>
+		</position>
+		<line>
+			<style type="QString">NoPen</style>
+		</line>
+		<image>
+			<fitOption type="QString">1</fitOption>
+		</image>
+	</item>
+	<item ID="A504EC">
+		<fill>
+			<type type="QString">none</type>
+		</fill>
+		<alignment>
+			<verticalAlignment type="QString">AlignVCenter</verticalAlignment>
+			<horizontalAlignment type="QString">AlignLeft</horizontalAlignment>
+		</alignment>
+		<rotation>
+			<angle type="double">0</angle>
+		</rotation>
+		<item>
+			<layout type="QString">L1</layout>
+			<layer type="int">322</layer>
+			<side type="int">4096</side>
+			<padding type="double">97.09244444444433</padding>
+			<userID type="QString">ITEM.A504EC</userID>
+			<type type="QString">text_database</type>
+		</item>
+		<database>
+			<column type="QString">defaultTable.Texte3</column>
+		</database>
+		<background>
+			<type/>
+		</background>
+		<info>
+			<designObject type="QString">text_database</designObject>
+		</info>
+		<position>
+			<pos2>
+				<y type="double">3089.4186666666665</y>
+				<x type="double">8242.649333333333</x>
+			</pos2>
+			<pos1>
+				<y type="double">2798.1413333333335</y>
+				<x type="double">6275.681333333335</x>
+			</pos1>
+		</position>
+		<line>
+			<style type="QString">NoPen</style>
+		</line>
+		<data>
+			<dbInnerInfo type="QString">defaultTable.Texte3</dbInnerInfo>
+			<placeholder type="QString">Text From DB</placeholder>
+			<final type="QString">Raphaëlle</final>
+		</data>
+		<font>
+			<underline type="QString">false</underline>
+			<style type="QString">Normal</style>
+			<strikeOut type="QString">false</strikeOut>
+			<family type="QString">Arial</family>
+			<color type="QColor">#ffffff</color>
+			<pointSize type="QString">6</pointSize>
+		</font>
+	</item>
+	<item ID="C30AE2">
+		<fill>
+			<type type="QString">none</type>
+		</fill>
+		<alignment>
+			<verticalAlignment type="QString">AlignVCenter</verticalAlignment>
+			<horizontalAlignment type="QString">AlignLeft</horizontalAlignment>
+		</alignment>
+		<rotation>
+			<angle type="QString">0</angle>
+		</rotation>
+		<item>
+			<UID type="QString">C30AE2</UID>
+			<layout type="QString">L1</layout>
+			<layer type="int">326</layer>
+			<side type="int">4096</side>
+			<padding type="QString">97.09244444444433</padding>
+			<userID type="QString">ITEM.A504EC</userID>
+			<type type="QString">text_database</type>
+		</item>
+		<database>
+			<column type="QString">defaultTable.Texte4</column>
+		</database>
+		<background>
+			<type/>
+		</background>
+		<info>
+			<designObject type="QString">text_database</designObject>
+		</info>
+		<position>
+			<pos2>
+				<y type="double">3323.9053333333327</y>
+				<x type="double">8240.361333333334</x>
+			</pos2>
+			<pos1>
+				<y type="double">3032.6279999999997</y>
+				<x type="double">6280.590666666668</x>
+			</pos1>
+		</position>
+		<line>
+			<style type="QString">NoPen</style>
+		</line>
+		<data>
+			<dbInnerInfo type="QString">defaultTable.Texte4</dbInnerInfo>
+			<placeholder type="QString">Text From DB</placeholder>
+			<final type="QString">Millan Castells</final>
+		</data>
+		<font>
+			<underline type="QString">false</underline>
+			<style type="QString">Normal</style>
+			<strikeOut type="QString">false</strikeOut>
+			<family type="QString">Arial</family>
+			<color type="QString">#ffffff</color>
+			<pointSize type="QString">6</pointSize>
+		</font>
+	</item>
+	<item ID="A65224">
+		<fill>
+			<type type="QString">none</type>
+		</fill>
+		<alignment>
+			<verticalAlignment type="QString">AlignVCenter</verticalAlignment>
+			<horizontalAlignment type="QString">AlignLeft</horizontalAlignment>
+		</alignment>
+		<rotation>
+			<angle type="QString">0</angle>
+		</rotation>
+		<item>
+			<UID type="QString">A65224</UID>
+			<layout type="QString">L1</layout>
+			<layer type="int">326</layer>
+			<side type="int">4096</side>
+			<padding type="QString">97.09244444444433</padding>
+			<userID type="QString">ITEM.A504EC</userID>
+			<type type="QString">text_database</type>
+		</item>
+		<database>
+			<column type="QString">defaultTable.Texte5</column>
+		</database>
+		<background>
+			<type/>
+		</background>
+		<info>
+			<designObject type="QString">text_database</designObject>
+		</info>
+		<position>
+			<pos2>
+				<y type="double">3595.5679999999998</y>
+				<x type="double">8211.572000000002</x>
+			</pos2>
+			<pos1>
+				<y type="double">3304.2906666666668</y>
+				<x type="double">6280.590666666668</x>
+			</pos1>
+		</position>
+		<line>
+			<style type="QString">NoPen</style>
+		</line>
+		<data>
+			<dbInnerInfo type="QString">defaultTable.Texte5</dbInnerInfo>
+			<placeholder type="QString">Text From DB</placeholder>
+			<final type="QString">Secrétaire Générale</final>
+		</data>
+		<font>
+			<underline type="QString">false</underline>
+			<style type="QString">Normal</style>
+			<strikeOut type="QString">false</strikeOut>
+			<family type="QString">Arial</family>
+			<color type="QString">#ffffff</color>
+			<pointSize type="QString">6</pointSize>
+		</font>
+	</item>
+	<item ID="E95DED">
+		<fill>
+			<type type="QString">none</type>
+		</fill>
+		<rotation>
+			<angle type="double">0</angle>
+		</rotation>
+		<item>
+			<layout type="QString">L1</layout>
+			<layer type="int">322</layer>
+			<side type="int">4096</side>
+			<padding type="double">82.69777777777745</padding>
+			<userID type="QString">ITEM.E95DED</userID>
+			<type type="QString">text_database</type>
+		</item>
+		<database>
+			<column type="QString">defaultTable.Texte6</column>
+		</database>
+		<background>
+			<type/>
+		</background>
+		<info>
+			<designObject type="QString">text_database</designObject>
+		</info>
+		<position>
+			<pos2>
+				<y type="double">5148.6186666666645</y>
+				<x type="double">2996.889333333333</x>
+			</pos2>
+			<pos1>
+				<y type="double">4900.525333333332</y>
+				<x type="double">7.8999999999991815</x>
+			</pos1>
+		</position>
+		<line>
+			<style type="QString">NoPen</style>
+		</line>
+		<data>
+			<dbInnerInfo type="QString">defaultTable.Texte6</dbInnerInfo>
+			<placeholder type="QString">Text From DB</placeholder>
+			<final type="QString">Code de vérification</final>
+		</data>
+		<font>
+			<underline type="QString">false</underline>
+			<style type="QString">Normal</style>
+			<strikeOut type="QString">false</strikeOut>
+			<family type="QString">Arial</family>
+			<color type="QColor">#ffffff</color>
+			<pointSize type="QString">auto</pointSize>
+		</font>
+	</item>
+</items>

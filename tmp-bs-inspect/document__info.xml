@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document>
+	<card>
+		<badgeType type="QString"></badgeType>
+		<uuid type="QString">348c779d-c988-4d9b-8ed2-fff5f9afba15</uuid>
+		<designLocked type="bool">false</designLocked>
+		<hybridSplitter type="QString"></hybridSplitter>
+		<version type="QString">0.0.21</version>
+	</card>
+</document>

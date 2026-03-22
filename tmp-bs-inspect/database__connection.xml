@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<connection>
+	<connection>
+		<properties>
+			<imageSettings type="QVariantHash">
+				<dataSourceData type="QByteArray">database/connection/connection/properties/imageSettings/dataSourceData/{41baafb2-697b-42da-899c-04ca832c4200}.sqlite</dataSourceData>
+				<dataSource type="QString">$INTERNAL$/{0bd10777-a3bc-4622-aeaa-e14e20f53527}.nosql</dataSource>
+			</imageSettings>
+			<SQLITE type="QVariantHash">
+				<dataSourceData type="QByteArray">database/connection/connection/properties/SQLITE/dataSourceData/{64558745-e392-44b9-9de8-c54177bc98a5}.sqlite</dataSourceData>
+				<dataSource type="QString">$INTERNAL$/{2d89d41f-fe71-4232-bd0a-57d0bacc9191}.sqlite</dataSource>
+				<dataSourceDataWAL type="QString">C:/Users/mgaudichet/AppData/Local/Temp/{020d7bc7-5982-4b6c-ae49-9ab67ab44d20}.cptmp</dataSourceDataWAL>
+				<dataSourceDataSHM type="QString">C:/Users/mgaudichet/AppData/Local/Temp/{ddbecee2-5b0c-4eef-98da-18f39ce4afd9}.cptmp</dataSourceDataSHM>
+			</SQLITE>
+		</properties>
+		<dataSets>
+			<SQLITE type="QVariantHash">
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte5.dataTypeProperties.VALIDATOR type="QString"></defaultName0.queryInfo.columnProperties.defaultTable.Texte5.dataTypeProperties.VALIDATOR>
+				<defaultName0.formInfo.form type="QString">basic</defaultName0.formInfo.form>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Codebarre1.mandatory type="bool">false</defaultName0.queryInfo.columnProperties.defaultTable.Codebarre1.mandatory>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Codebarre1.dataTypeProperties.VALIDATOR type="QString"></defaultName0.queryInfo.columnProperties.defaultTable.Codebarre1.dataTypeProperties.VALIDATOR>
+				<defaultName0.queryInfo.columnProperties.defaultTable.id.editable type="QString">true</defaultName0.queryInfo.columnProperties.defaultTable.id.editable>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte4.dataTypeProperties.VALIDATOR type="QString"></defaultName0.queryInfo.columnProperties.defaultTable.Texte4.dataTypeProperties.VALIDATOR>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte5.width type="int">150</defaultName0.queryInfo.columnProperties.defaultTable.Texte5.width>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Codebarre1.dataTypeProperties.INPUTMASK type="QString"></defaultName0.queryInfo.columnProperties.defaultTable.Codebarre1.dataTypeProperties.INPUTMASK>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte3.caption type="QString">Texte3</defaultName0.queryInfo.columnProperties.defaultTable.Texte3.caption>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte1.mandatory type="bool">false</defaultName0.queryInfo.columnProperties.defaultTable.Texte1.mandatory>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte5.caption type="QString">Texte5</defaultName0.queryInfo.columnProperties.defaultTable.Texte5.caption>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte5.editable type="bool">true</defaultName0.queryInfo.columnProperties.defaultTable.Texte5.editable>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte4.dataType type="QString">TEXTBOX</defaultName0.queryInfo.columnProperties.defaultTable.Texte4.dataType>
+				<defaultName0.model.selectedRow type="int">0</defaultName0.model.selectedRow>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte6.dataType type="QString">TEXTBOX</defaultName0.queryInfo.columnProperties.defaultTable.Texte6.dataType>
+				<defaultName0.queryInfo.primaryKeys.defaultTable type="QString">id</defaultName0.queryInfo.primaryKeys.defaultTable>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Codebarre1.editable type="bool">true</defaultName0.queryInfo.columnProperties.defaultTable.Codebarre1.editable>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Codebarre1.width type="int">150</defaultName0.queryInfo.columnProperties.defaultTable.Codebarre1.width>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte1.dataTypeProperties.INPUTMASK type="QString"></defaultName0.queryInfo.columnProperties.defaultTable.Texte1.dataTypeProperties.INPUTMASK>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte1.dataType type="QString">TEXTBOX</defaultName0.queryInfo.columnProperties.defaultTable.Texte1.dataType>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte4.mandatory type="bool">false</defaultName0.queryInfo.columnProperties.defaultTable.Texte4.mandatory>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Image1.editable type="bool">true</defaultName0.queryInfo.columnProperties.defaultTable.Image1.editable>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Image1.caption type="QString">Image1</defaultName0.queryInfo.columnProperties.defaultTable.Image1.caption>
+				<defaultName0.queryInfo.tableSelection.defaultTable type="QString">id,Texte1,Texte2,Image1,Code barre1,Texte3,Texte4,Texte5,Texte6</defaultName0.queryInfo.tableSelection.defaultTable>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte4.caption type="QString">Texte4</defaultName0.queryInfo.columnProperties.defaultTable.Texte4.caption>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte1.width type="int">150</defaultName0.queryInfo.columnProperties.defaultTable.Texte1.width>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte3.dataTypeProperties.INPUTMASK type="QString"></defaultName0.queryInfo.columnProperties.defaultTable.Texte3.dataTypeProperties.INPUTMASK>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Image1.dataType type="QString">PHOTO</defaultName0.queryInfo.columnProperties.defaultTable.Image1.dataType>
+				<defaultName0.queryInfo.columnProperties.defaultTable.id.mandatory type="QString">false</defaultName0.queryInfo.columnProperties.defaultTable.id.mandatory>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte3.width type="int">150</defaultName0.queryInfo.columnProperties.defaultTable.Texte3.width>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte6.editable type="bool">true</defaultName0.queryInfo.columnProperties.defaultTable.Texte6.editable>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Codebarre1.caption type="QString">Code barre1</defaultName0.queryInfo.columnProperties.defaultTable.Codebarre1.caption>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte6.caption type="QString">Texte6</defaultName0.queryInfo.columnProperties.defaultTable.Texte6.caption>
+				<list type="QString">defaultName0</list>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte5.dataTypeProperties.INPUTMASK type="QString"></defaultName0.queryInfo.columnProperties.defaultTable.Texte5.dataTypeProperties.INPUTMASK>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte6.dataTypeProperties.VALIDATOR type="QString"></defaultName0.queryInfo.columnProperties.defaultTable.Texte6.dataTypeProperties.VALIDATOR>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Image1.dataTypeProperties.VALIDATOR type="QString"></defaultName0.queryInfo.columnProperties.defaultTable.Image1.dataTypeProperties.VALIDATOR>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte2.caption type="QString">Texte2</defaultName0.queryInfo.columnProperties.defaultTable.Texte2.caption>
+				<defaultName0.formInfo.styleSheet type="QString">b&amp;w</defaultName0.formInfo.styleSheet>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte1.caption type="QString">Texte1</defaultName0.queryInfo.columnProperties.defaultTable.Texte1.caption>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte6.dataTypeProperties.INPUTMASK type="QString"></defaultName0.queryInfo.columnProperties.defaultTable.Texte6.dataTypeProperties.INPUTMASK>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte2.mandatory type="bool">false</defaultName0.queryInfo.columnProperties.defaultTable.Texte2.mandatory>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Image1.mandatory type="bool">false</defaultName0.queryInfo.columnProperties.defaultTable.Image1.mandatory>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte3.dataType type="QString">TEXTBOX</defaultName0.queryInfo.columnProperties.defaultTable.Texte3.dataType>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte4.editable type="bool">true</defaultName0.queryInfo.columnProperties.defaultTable.Texte4.editable>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte4.width type="int">150</defaultName0.queryInfo.columnProperties.defaultTable.Texte4.width>
+				<defaultName0.name type="QString">defaultName0</defaultName0.name>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte1.editable type="bool">true</defaultName0.queryInfo.columnProperties.defaultTable.Texte1.editable>
+				<defaultName0.queryInfo.tables type="QString">defaultTable</defaultName0.queryInfo.tables>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte2.width type="int">150</defaultName0.queryInfo.columnProperties.defaultTable.Texte2.width>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte3.editable type="bool">true</defaultName0.queryInfo.columnProperties.defaultTable.Texte3.editable>
+				<defaultName0.queryInfo.columnProperties.defaultTable.id.dataType type="QString">INTEGER</defaultName0.queryInfo.columnProperties.defaultTable.id.dataType>
+				<defaultName0.configPage type="QString">0</defaultName0.configPage>
+				<defaultName0.mode type="QString">2</defaultName0.mode>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte2.dataTypeProperties.VALIDATOR type="QString"></defaultName0.queryInfo.columnProperties.defaultTable.Texte2.dataTypeProperties.VALIDATOR>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte1.dataTypeProperties.VALIDATOR type="QString"></defaultName0.queryInfo.columnProperties.defaultTable.Texte1.dataTypeProperties.VALIDATOR>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte5.mandatory type="bool">false</defaultName0.queryInfo.columnProperties.defaultTable.Texte5.mandatory>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte3.mandatory type="bool">false</defaultName0.queryInfo.columnProperties.defaultTable.Texte3.mandatory>
+				<defaultName0.model.hiddenColumns type="QString">defaultTable.id</defaultName0.model.hiddenColumns>
+				<count type="QString">1</count>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte5.dataType type="QString">TEXTBOX</defaultName0.queryInfo.columnProperties.defaultTable.Texte5.dataType>
+				<defaultName0.queryInfo.columnProperties.defaultTable.id.caption type="QString">id</defaultName0.queryInfo.columnProperties.defaultTable.id.caption>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Image1.width type="int">150</defaultName0.queryInfo.columnProperties.defaultTable.Image1.width>
+				<active type="QString">0</active>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte6.mandatory type="bool">false</defaultName0.queryInfo.columnProperties.defaultTable.Texte6.mandatory>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte3.dataTypeProperties.VALIDATOR type="QString"></defaultName0.queryInfo.columnProperties.defaultTable.Texte3.dataTypeProperties.VALIDATOR>
+				<defaultName0.model.checkedRows type="QString">0</defaultName0.model.checkedRows>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte2.dataTypeProperties.INPUTMASK type="QString"></defaultName0.queryInfo.columnProperties.defaultTable.Texte2.dataTypeProperties.INPUTMASK>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Image1.dataTypeProperties.INPUTMASK type="QString"></defaultName0.queryInfo.columnProperties.defaultTable.Image1.dataTypeProperties.INPUTMASK>
+				<defaultName0.id type="QString">0</defaultName0.id>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte2.dataType type="QString">TEXTBOX</defaultName0.queryInfo.columnProperties.defaultTable.Texte2.dataType>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Codebarre1.dataType type="QString">BARCODE2D</defaultName0.queryInfo.columnProperties.defaultTable.Codebarre1.dataType>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte4.dataTypeProperties.INPUTMASK type="QString"></defaultName0.queryInfo.columnProperties.defaultTable.Texte4.dataTypeProperties.INPUTMASK>
+				<defaultName0.queryInfo.columnProperties.defaultTable.Texte2.editable type="bool">true</defaultName0.queryInfo.columnProperties.defaultTable.Texte2.editable>
+			</SQLITE>
+		</dataSets>
+		<connector type="QString">SQLITE</connector>
+	</connection>
+</connection>

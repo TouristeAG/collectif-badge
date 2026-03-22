@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<events>
+	<event ID="document_open"/>
+	<event ID="document_close"/>
+	<event ID="encoding_contactless"/>
+	<event ID="encoding_contact"/>
+	<event ID="item_create_imageDevice"/>
+	<event ID="item_create_fingerprint"/>
+	<event ID="item_create_signature"/>
+	<event ID="item_edit_imageDevice"/>
+	<event ID="item_edit_fingerprint"/>
+	<event ID="item_edit_signature"/>
+	<event ID="item_font_aboutToChange"/>
+	<event ID="item_font_changed"/>
+	<event ID="item_data_aboutToChange"/>
+	<event ID="item_data_changed"/>
+	<event ID="before_print"/>
+	<event ID="after_print"/>
+	<event ID="before_print_record"/>
+	<event ID="after_print_record"/>
+	<event ID="audit_successful_print"/>
+</events>

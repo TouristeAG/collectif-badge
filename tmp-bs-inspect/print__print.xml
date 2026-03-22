@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<print>
+	<properties>
+		<printMode type="QString">1</printMode>
+	</properties>
+	<model>
+		<colored type="QString">true</colored>
+		<color>
+			<b type="QString">255</b>
+			<g type="QString">255</g>
+			<r type="QString">255</r>
+		</color>
+		<ID type="QString">cp1cr80</ID>
+	</model>
+	<printer>
+		<settings type="QVariantHash">
+			<Badgy200 type="QVariantHash">
+				<rotatebackGuard type="QString">ROTATE_BACK_LANDSCAPE</rotatebackGuard>
+				<resolution type="QString">260,300</resolution>
+				<rotateback type="QString">false</rotateback>
+			</Badgy200>
+		</settings>
+		<driverName type="QString">Badgy200</driverName>
+		<name type="QString">Badgy200</name>
+		<capabilities type="QVariantHash">
+			<Badgy200 type="QVariantHash">
+				<print.printerCapabilities.resolution type="QString">260,300</print.printerCapabilities.resolution>
+				<print.printerCapabilities.PrinterModel type="QString">Badgy200</print.printerCapabilities.PrinterModel>
+				<print.printerCapabilities.Manufacturer type="QString">Evolis</print.printerCapabilities.Manufacturer>
+				<print.printerCapabilities.RibbonType type="QString">ymcko</print.printerCapabilities.RibbonType>
+				<print.printerCapabilities.SerialNumber type="QString">10000803059</print.printerCapabilities.SerialNumber>
+				<print.printerCapabilities.colordevice type="QString">true</print.printerCapabilities.colordevice>
+				<print.printerCapabilities.duplex type="QString">false</print.printerCapabilities.duplex>
+				<print.printerCapabilities.copies type="QString">9999</print.printerCapabilities.copies>
+				<print.printerCapabilities.collate type="QString">true</print.printerCapabilities.collate>
+			</Badgy200>
+		</capabilities>
+	</printer>
+	<operations>
+		<printBack type="QString">false</printBack>
+		<contactEncoding type="QString">false</contactEncoding>
+		<contactlessEncoding type="QString">false</contactlessEncoding>
+		<magneticEncoding type="QString">false</magneticEncoding>
+	</operations>
+	<paper>
+		<orientation type="QString">landscape</orientation>
+		<name type="QString">CR80 (S1)</name>
+	</paper>
+	<advanced>
+		<antialiasing type="QString">images</antialiasing>
+	</advanced>
+</print>

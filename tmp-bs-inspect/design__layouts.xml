@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<layouts>
+	<layout ID="L1">
+		<document_layout_name type="QString">Layout 1</document_layout_name>
+	</layout>
+</layouts>
