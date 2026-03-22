@@ -154,15 +154,6 @@ export function CanvaSettingsModal({ isOpen, onClose }: CanvaSettingsModalProps)
             <GoogleSheetsHelpPanel />
           </div>
 
-          <div className="settings-section settings-section--intro">
-            <h3>{t("canva.howToOpenTitle")}</h3>
-            <ol className="settings-steps-list">
-              <li>{t("canva.howToOpen1")}</li>
-              <li>{t("canva.howToOpen2")}</li>
-              <li>{t("canva.howToOpen3")}</li>
-            </ol>
-          </div>
-
           <aside className="settings-callout" role="note">
             <strong>{t("canva.mfaTitle")}</strong>
             <p>{t("canva.mfaBody")}</p>
