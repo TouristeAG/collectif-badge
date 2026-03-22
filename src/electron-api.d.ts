@@ -13,7 +13,9 @@ interface ElectronAPI {
   saveBinaryFile: (payload: {
     defaultFileName: string;
     filters: Array<{ name: string; extensions: string[] }>;
-    dataBase64: string;
+    /** Prefer for large exports; avoids base64 megastring IPC issues. */
+    dataBytes?: Uint8Array;
+    dataBase64?: string;
     openAfterSave?: boolean;
   }) => Promise<string | null>;
   canvaGetStatus?: () => Promise<CanvaStatus>;

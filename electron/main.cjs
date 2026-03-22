@@ -12,7 +12,7 @@ function createWindow() {
     height: 860,
     minWidth: 980,
     minHeight: 700,
-    title: "Collectif Badge Manager",
+    title: "COLLECTIF BADGÉ",
     backgroundColor: "#0f172a",
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
@@ -47,7 +47,7 @@ ipcMain.handle("sheets:loadPeople", async (_, payload) => {
 });
 
 ipcMain.handle("dialog:saveBinaryFile", async (_, payload) => {
-  const { defaultFileName, filters, dataBase64, openAfterSave } = payload ?? {};
+  const { defaultFileName, filters, dataBase64, dataBytes, openAfterSave } = payload ?? {};
   const result = await dialog.showSaveDialog({
     title: "Save export",
     defaultPath: defaultFileName,
@@ -58,7 +58,23 @@ ipcMain.handle("dialog:saveBinaryFile", async (_, payload) => {
     return null;
   }
 
-  const buffer = Buffer.from(dataBase64, "base64");
+  /** Prefer raw bytes over base64 — large exports (multi .bs) as base64 strings can crash V8 during IPC clone. */
+  let buffer;
+  if (dataBytes != null) {
+    if (Buffer.isBuffer(dataBytes)) {
+      buffer = dataBytes;
+    } else if (dataBytes instanceof Uint8Array || ArrayBuffer.isView(dataBytes)) {
+      const view = dataBytes;
+      buffer = Buffer.from(view.buffer, view.byteOffset, view.byteLength);
+    } else {
+      throw new Error("Invalid dataBytes for saveBinaryFile.");
+    }
+  } else if (typeof dataBase64 === "string" && dataBase64.length > 0) {
+    buffer = Buffer.from(dataBase64, "base64");
+  } else {
+    throw new Error("Missing file data for saveBinaryFile.");
+  }
+
   await fs.writeFile(result.filePath, buffer);
 
   if (openAfterSave) {

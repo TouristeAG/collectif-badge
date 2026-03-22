@@ -64,6 +64,62 @@
   box-shadow: var(--shadow-card);
 }
 
+.setup-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: -0.15rem 0 0.85rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.setup-card-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+}
+
+.setup-card-help-btn {
+  flex-shrink: 0;
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.sheets-help-modal-window {
+  width: min(92vw, 560px);
+}
+
+.sheets-help-panel .hint.sheets-help-intro {
+  margin-top: 0;
+}
+
+.sheets-help-console-wrap {
+  margin: 0 0 0.5rem;
+}
+
+.sheets-help-console-link {
+  color: #93c5fd;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.sheets-help-console-link:hover {
+  text-decoration: underline;
+}
+
+.sheets-help-step-title {
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.sheets-help-step-desc {
+  color: #cbd5e1;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(200px, 1fr));
@@ -214,6 +270,14 @@ button:disabled {
   background: rgba(8, 11, 16, 0.35);
 }
 
+.list-multi-hint {
+  margin: 0;
+  padding: 0.5rem 1rem 0.35rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #94a3b8;
+}
+
 .list {
   max-height: 620px;
   overflow-y: auto;
@@ -223,15 +287,16 @@ button:disabled {
 .person-row {
   width: 100%;
   display: grid;
-  grid-template-columns: 40px 1fr auto;
-  align-items: center;
-  gap: 0.75rem;
-  text-align: left;
+  grid-template-columns: auto 1fr;
+  align-items: stretch;
+  gap: 0.35rem;
   border-radius: var(--radius-md);
-  padding: 0.65rem 0.7rem;
+  padding: 0.35rem 0.5rem 0.35rem 0.25rem;
   border: 1px solid transparent;
   margin-bottom: 0.35rem;
   transition: background 0.15s ease, border-color 0.15s ease;
+  /* Limits layout/paint invalidation to the row when the list updates. */
+  contain: layout style;
 }
 
 .person-row:hover {
@@ -241,6 +306,42 @@ button:disabled {
 .person-row.selected {
   background: linear-gradient(90deg, rgba(37, 99, 235, 0.18), rgba(30, 58, 138, 0.12));
   border-color: rgba(59, 130, 246, 0.45);
+}
+
+.person-select-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.15rem;
+  cursor: pointer;
+}
+
+.person-select-cell input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--color-accent, #3b82f6);
+  cursor: pointer;
+}
+
+.person-row-main {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: left;
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.45rem;
+  border: none;
+  margin: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.person-row-main:hover {
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .avatar {
@@ -418,6 +519,60 @@ dd {
   flex-direction: column;
   align-items: flex-end;
   gap: 0.35rem;
+}
+
+.badge-illustrator-person-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 0.35rem;
+  padding: 0.5rem 1rem 0.65rem;
+  margin: 0 0 0.35rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: rgba(8, 11, 16, 0.45);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  flex-shrink: 0;
+}
+
+.badge-illustrator-person-tabs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.badge-illustrator-person-tabs::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+}
+
+.badge-illustrator-person-tab {
+  flex: 0 0 auto;
+  max-width: 200px;
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-strong);
+  background: rgba(15, 23, 42, 0.65);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.badge-illustrator-person-tab:hover {
+  border-color: rgba(59, 130, 246, 0.45);
+  color: var(--color-text);
+}
+
+.badge-illustrator-person-tab.is-active {
+  border-color: rgba(59, 130, 246, 0.65);
+  background: rgba(37, 99, 235, 0.2);
+  color: #e2e8f0;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
 }
 
 .btn-reset-factory {
@@ -977,7 +1132,6 @@ dd {
   filter: brightness(0) invert(1);
   transform-origin: center center;
   transition: transform 0.15s ease-out;
-  will-change: transform;
 }
 
 .badge-background-tint {
@@ -1114,7 +1268,10 @@ dd {
   object-fit: cover;
   transform-origin: center center;
   transition: transform 0.15s ease-out;
-  will-change: transform;
+}
+
+.badge-card-preview--isolate {
+  contain: layout style;
 }
 
 .back-photo-placeholder {

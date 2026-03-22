@@ -18,11 +18,14 @@
     "@fontsource/archivo-narrow": "^5.2.8",
     "googleapis": "^171.4.0",
     "html-to-image": "^1.11.13",
+    "i18next": "^25.10.4",
     "jspdf": "^4.2.1",
     "jszip": "^3.10.1",
     "qrcode": "^1.5.4",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "react-i18next": "^16.6.1",
+    "sql.js": "^1.14.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
@@ -30,6 +33,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@types/sql.js": "^1.4.10",
     "@vitejs/plugin-react": "^6.0.1",
     "concurrently": "^9.2.1",
     "electron": "^41.0.3",
@@ -45,7 +49,7 @@
   },
   "build": {
     "appId": "ch.collectif.badgeapp",
-    "productName": "Collectif Badge Manager",
+    "productName": "COLLECTIF BADGE",
     "files": [
       "dist/**/*",
       "electron/**/*",
@@ -55,11 +59,26 @@
       "buildResources": "build"
     },
     "mac": {
-      "target": "dmg",
-      "category": "public.app-category.utilities"
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.utilities",
+      "icon": "LOGO/app.icns"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "LOGO/app.ico"
     }
   }
 }

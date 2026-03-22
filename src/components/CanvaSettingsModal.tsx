@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
+import i18n, { LANGUAGE_STORAGE_KEY } from "../i18n/config";
+import { GoogleSheetsHelpPanel } from "./GoogleSheetsHelp";
 
 /** Must match `electron/canva.cjs` — add this exact URL in the Canva Developer Portal. */
 export const CANVA_REDIRECT_URI_DOC =
@@ -17,12 +20,16 @@ interface CanvaSettingsModalProps {
 }
 
 export function CanvaSettingsModal({ isOpen, onClose }: CanvaSettingsModalProps) {
+  const { t } = useTranslation();
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
   const [brandTemplateId, setBrandTemplateId] = useState("");
   const [status, setStatus] = useState<CanvaStatus | null>(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [language, setLanguage] = useState<"fr" | "en">(() =>
+    (localStorage.getItem("app.language") as "fr" | "en" | null) === "en" ? "en" : "fr"
+  );
 
   const refresh = useCallback(async () => {
     const api = window.electronAPI;
@@ -41,6 +48,7 @@ export function CanvaSettingsModal({ isOpen, onClose }: CanvaSettingsModalProps)
 
   useEffect(() => {
     if (isOpen) {
+      setLanguage(i18n.language.startsWith("en") ? "en" : "fr");
       void refresh();
       setMessage("");
     }
@@ -50,10 +58,16 @@ export function CanvaSettingsModal({ isOpen, onClose }: CanvaSettingsModalProps)
 
   const api = window.electronAPI;
 
+  function handleLanguageChange(lng: "fr" | "en") {
+    setLanguage(lng);
+    void i18n.changeLanguage(lng);
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, lng);
+  }
+
   async function handleSaveCredentials() {
     setMessage("");
     if (!api?.canvaSaveCredentials) {
-      setMessage("Desktop API unavailable. Run with Electron (`npm run dev`).");
+      setMessage(t("canva.msgNoApi"));
       return;
     }
     setBusy(true);
@@ -64,10 +78,10 @@ export function CanvaSettingsModal({ isOpen, onClose }: CanvaSettingsModalProps)
         brandTemplateId: brandTemplateId.trim(),
       });
       setClientSecret("");
-      setMessage("API credentials saved locally.");
+      setMessage(t("canva.msgCredentialsSaved"));
       await refresh();
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Could not save credentials.");
+      setMessage(e instanceof Error ? e.message : t("canva.msgSaveFailed"));
     } finally {
       setBusy(false);
     }
@@ -76,16 +90,16 @@ export function CanvaSettingsModal({ isOpen, onClose }: CanvaSettingsModalProps)
   async function handleConnect() {
     setMessage("");
     if (!api?.canvaLogin) {
-      setMessage("Desktop API unavailable.");
+      setMessage(t("canva.msgNoApi"));
       return;
     }
     setBusy(true);
     try {
       await api.canvaLogin();
-      setMessage("Signed in to Canva.");
+      setMessage(t("canva.msgSignedIn"));
       await refresh();
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Canva login failed.");
+      setMessage(e instanceof Error ? e.message : t("canva.msgLoginFailed"));
     } finally {
       setBusy(false);
     }
@@ -97,10 +111,10 @@ export function CanvaSettingsModal({ isOpen, onClose }: CanvaSettingsModalProps)
     setBusy(true);
     try {
       await api.canvaLogout();
-      setMessage("Disconnected from Canva (API keys kept).");
+      setMessage(t("canva.msgDisconnected"));
       await refresh();
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Could not disconnect.");
+      setMessage(e instanceof Error ? e.message : t("canva.msgDisconnectFailed"));
     } finally {
       setBusy(false);
     }
@@ -111,192 +125,180 @@ export function CanvaSettingsModal({ isOpen, onClose }: CanvaSettingsModalProps)
       <section className="settings-modal-window" onClick={(e) => e.stopPropagation()}>
         <header className="settings-modal-header">
           <div>
-            <h2>Canva</h2>
-            <p className="hint">
-              Connect API (OAuth). Your client secret stays only in this desktop app — it is never sent to the web UI
-              bundle.
-            </p>
+            <h2>{t("settings.title")}</h2>
+            <p className="hint">{t("settings.modalIntro")}</p>
           </div>
           <button type="button" className="modal-close-btn" onClick={onClose}>
-            Close
+            {t("common.close")}
           </button>
         </header>
 
         <div className="settings-modal-body">
+          <div className="settings-section">
+            <h3>{t("settings.languageSection")}</h3>
+            <label>
+              {t("settings.languageLabel")}
+              <select
+                value={language}
+                onChange={(e) => handleLanguageChange(e.target.value as "fr" | "en")}
+                aria-label={t("settings.languageLabel")}
+              >
+                <option value="fr">{t("settings.languageFr")}</option>
+                <option value="en">{t("settings.languageEn")}</option>
+              </select>
+            </label>
+          </div>
+
           <div className="settings-section settings-section--intro">
-            <h3>How to open this panel</h3>
+            <h3>{t("settings.sheetsHelpSection")}</h3>
+            <GoogleSheetsHelpPanel />
+          </div>
+
+          <div className="settings-section settings-section--intro">
+            <h3>{t("canva.howToOpenTitle")}</h3>
             <ol className="settings-steps-list">
-              <li>
-                In the main window <strong>header</strong>, look for the <strong>gear icon</strong> to the{" "}
-                <strong>left</strong> of the blue <strong>Refresh from Sheets</strong> button.
-              </li>
-              <li>Click the gear — this Canva settings window opens.</li>
-              <li>
-                After setup below, use <strong>Badge illustrator → Export badge → Send to Canva</strong>. With a{" "}
-                <strong>brand template ID</strong>, you get editable layers; without it, the app imports a{" "}
-                <strong>2‑page PDF</strong> (flattened badge) like before.
-              </li>
+              <li>{t("canva.howToOpen1")}</li>
+              <li>{t("canva.howToOpen2")}</li>
+              <li>{t("canva.howToOpen3")}</li>
             </ol>
           </div>
 
           <aside className="settings-callout" role="note">
-            <strong>MFA (two-factor authentication)</strong>
-            <p>
-              If you don’t see MFA options in your Canva account settings, try resetting your password in Canva’s
-              account settings — after that, MFA controls often become visible so you can finish securing your account
-              for API / developer use.
-            </p>
+            <strong>{t("canva.mfaTitle")}</strong>
+            <p>{t("canva.mfaBody")}</p>
           </aside>
 
           <div className="settings-section">
-            <h3>1. Create the integration (Canva Developer Portal)</h3>
+            <h3>{t("canva.sectionTitle")}</h3>
+            <p className="hint" style={{ marginBottom: "0.75rem" }}>
+              {t("canva.headerHint")}
+            </p>
+            <h4 className="settings-subsection-title" style={{ marginTop: "0.5rem", marginBottom: "0.35rem" }}>
+              {t("canva.step1Title")}
+            </h4>
             <ol className="settings-steps-list">
               <li>
-                Sign in at{" "}
-                <a href="https://www.canva.com/developers/" target="_blank" rel="noreferrer">
-                  canva.com/developers
-                </a>
-                .
+                <Trans
+                  i18nKey="canva.step1Li1"
+                  components={{
+                    link: <a href="https://www.canva.com/developers/" target="_blank" rel="noreferrer" />,
+                  }}
+                />
               </li>
               <li>
-                Create a new integration and choose the <strong>Connect API</strong> type (or open{" "}
-                <a
-                  href="https://www.canva.com/developers/integrations/connect-api"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Connect API docs
-                </a>
-                ).
-              </li>
-              <li>
-                In the integration’s <strong>Authentication</strong> (or similar) section, add this{" "}
-                <strong>redirect URL</strong> exactly — copy/paste with no extra spaces:
+                <Trans
+                  i18nKey="canva.step1Li2"
+                  components={{
+                    ca: (
+                      <a
+                        href="https://www.canva.com/developers/integrations/connect-api"
+                        target="_blank"
+                        rel="noreferrer"
+                      />
+                    ),
+                  }}
+                />
               </li>
             </ol>
+            <p className="hint" style={{ margin: "0.5rem 0" }}>
+              {t("canva.step1Li3Prefix")}
+            </p>
             <pre className="redirect-uri-box">{CANVA_REDIRECT_URI_DOC}</pre>
-            <p className="hint">
-              This app listens on <strong>127.0.0.1 port 32887</strong> only during “Connect to Canva”. Keep this port
-              free or the login step will fail.
-            </p>
-            <ol className="settings-steps-list" start={4}>
-              <li>
-                Under <strong>Scopes</strong>, enable at least: <code>design:content:write</code>,{" "}
-                <code>design:meta:read</code>, <code>brandtemplate:meta:read</code>,{" "}
-                <code>brandtemplate:content:read</code>, <code>asset:read</code>, <code>asset:write</code>. Save the
-                integration.
-              </li>
-              <li>
-                Copy the integration’s <strong>Client ID</strong> and <strong>Client secret</strong> (starts with{" "}
-                <code>cnvca</code>) — you’ll paste them in step 2 below.
-              </li>
+            <p className="hint">{t("canva.step1PortHint")}</p>
+            <ol className="settings-steps-list" start={3}>
+              <li>{t("canva.step1Li4")}</li>
+              <li>{t("canva.step1Li5")}</li>
             </ol>
+            <p className="hint">{t("canva.step1AltHint")}</p>
             <p className="hint">
-              <strong>Alternative:</strong> set environment variables <code>CANVA_CLIENT_ID</code> and{" "}
-              <code>CANVA_CLIENT_SECRET</code> when launching the app (no need to use the fields below). After changing
-              scopes, use <strong>Disconnect</strong> then <strong>Connect to Canva</strong> again so the new scopes are
-              granted.
-            </p>
-            <p className="hint">
-              Autofill requires a <strong>Canva Enterprise</strong> org (or developer access approved by Canva). See{" "}
-              <a href="https://www.canva.dev/docs/connect/autofill-guide/" target="_blank" rel="noreferrer">
-                Autofill guide
-              </a>
-              .
+              <Trans
+                i18nKey="canva.step1AutofillHint"
+                components={{
+                  link: (
+                    <a
+                      href="https://www.canva.dev/docs/connect/autofill-guide/"
+                      target="_blank"
+                      rel="noreferrer"
+                    />
+                  ),
+                }}
+              />
             </p>
           </div>
 
           <div className="settings-section">
-            <h3>2. Save API credentials in this app</h3>
+            <h3>{t("canva.step2Title")}</h3>
             <ol className="settings-steps-list">
-              <li>Paste <strong>Client ID</strong> and <strong>Client secret</strong> from the portal.</li>
-              <li>
-                Click <strong>Save credentials locally</strong>. They are stored in your app profile folder on disk.
-              </li>
-              <li>
-                To update only the Client ID later, paste the new ID and leave the secret blank, then save (the saved
-                secret is kept).
-              </li>
+              <li>{t("canva.step2Li1")}</li>
+              <li>{t("canva.step2Li2")}</li>
+              <li>{t("canva.step2Li3")}</li>
             </ol>
             <label>
-              Client ID
+              {t("canva.labelClientId")}
               <input
                 value={clientId}
                 onChange={(e) => setClientId(e.target.value)}
-                placeholder="From Canva Developer Portal"
+                placeholder={t("canva.placeholderClientId")}
                 autoComplete="off"
               />
             </label>
             <label>
-              Client secret
+              {t("canva.labelClientSecret")}
               <input
                 type="password"
                 value={clientSecret}
                 onChange={(e) => setClientSecret(e.target.value)}
-                placeholder={status?.hasCredentials ? "Leave blank to keep saved secret" : "cnvca…"}
+                placeholder={status?.hasCredentials ? t("canva.placeholderSecretKeep") : t("canva.placeholderSecretNew")}
                 autoComplete="off"
               />
             </label>
             <label>
-              Brand template ID (Autofill)
+              {t("canva.labelBrandTemplate")}
               <input
                 value={brandTemplateId}
                 onChange={(e) => setBrandTemplateId(e.target.value)}
-                placeholder="e.g. AEN3TrQftXo — from your published brand template URL"
+                placeholder={t("canva.placeholderBrandTemplate")}
                 autoComplete="off"
               />
             </label>
-            <p className="hint">
-              Create a <strong>brand template</strong> with the Data autofill app using field names from{" "}
-              <code>docs/CANVA_BRAND_TEMPLATE.md</code>. Optional env: <code>CANVA_BRAND_TEMPLATE_ID</code>. You can
-              save this field alone if API keys are set via environment variables.
-            </p>
+            <p className="hint">{t("canva.brandTemplateHint")}</p>
             <button type="button" className="primary" onClick={() => void handleSaveCredentials()} disabled={busy}>
-              Save credentials &amp; template ID
+              {t("canva.saveCredentials")}
             </button>
           </div>
 
           <div className="settings-section">
-            <h3>3. Sign in to Canva (OAuth)</h3>
+            <h3>{t("canva.step3Title")}</h3>
             <p className="hint">
-              Status:{" "}
+              {t("canva.statusPrefix")}{" "}
               {status == null ? (
-                "…"
+                t("canva.statusEllipsis")
               ) : (
                 <>
                   {status.connected ? (
-                    <strong style={{ color: "#86efac" }}>Connected to Canva</strong>
+                    <strong style={{ color: "#86efac" }}>{t("canva.statusConnected")}</strong>
                   ) : (
-                    <strong style={{ color: "#fca5a5" }}>Not connected</strong>
+                    <strong style={{ color: "#fca5a5" }}>{t("canva.statusNotConnected")}</strong>
                   )}
-                  {status.hasCredentials ? " · credentials on file" : " · add credentials in step 2 first"}
-                  {status.hasBrandTemplate ? (
-                    <span> · brand template ID set (editable Autofill)</span>
-                  ) : (
-                    <span> · no template ID — Send to Canva uses PDF import (flattened)</span>
-                  )}
+                  {status.hasCredentials ? t("canva.statusCredentialsOk") : t("canva.statusCredentialsMissing")}
+                  {status.hasBrandTemplate ? t("canva.statusBrandYes") : t("canva.statusBrandNo")}
                 </>
               )}
             </p>
             <ol className="settings-steps-list">
-              <li>
-                Click <strong>Connect to Canva (browser)</strong>. Your default browser opens Canva’s consent screen.
-              </li>
-              <li>Approve access for this integration. You’ll be redirected to a small local page saying “Connected”.</li>
-              <li>Return to this app — status should show <strong>Connected to Canva</strong>.</li>
+              <li>{t("canva.step3Li1")}</li>
+              <li>{t("canva.step3Li2")}</li>
+              <li>{t("canva.step3Li3")}</li>
             </ol>
             <div className="settings-modal-actions">
               <button type="button" className="primary" onClick={() => void handleConnect()} disabled={busy}>
-                {busy ? "Working…" : "Connect to Canva (browser)"}
+                {busy ? t("canva.working") : t("canva.connectBrowser")}
               </button>
               <button type="button" onClick={() => void handleDisconnect()} disabled={busy || !status?.connected}>
-                Disconnect
+                {t("canva.disconnect")}
               </button>
             </div>
-            <p className="hint">
-              <strong>Disconnect</strong> removes saved login tokens from this app only; your Client ID / secret in step
-              2 are kept until you overwrite them.
-            </p>
+            <p className="hint">{t("canva.disconnectHint")}</p>
           </div>
 
           {message && <p className="settings-modal-message">{message}</p>}
@@ -316,13 +318,14 @@ function GearIcon() {
 }
 
 export function CanvaSettingsButton({ onClick }: { onClick: () => void }) {
+  const { t } = useTranslation();
   return (
     <button
       type="button"
       className="icon-button"
       onClick={onClick}
-      title="Canva Connect settings"
-      aria-label="Canva Connect settings"
+      title={t("canva.gearTitle")}
+      aria-label={t("canva.gearAria")}
     >
       <GearIcon />
     </button>

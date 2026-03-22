@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import '@fontsource/archivo-black/400.css'
 import '@fontsource/archivo-narrow/400.css'
 import '@fontsource/archivo-narrow/700.css'
+import './i18n/config'
 import './index.css'
 import App from './App.tsx'
 

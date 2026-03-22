@@ -26,3 +26,4 @@ service_account_key.json
 *.njsproj
 *.sln
 *.sw?
+tmp-bs-ref
