@@ -19,6 +19,9 @@ import QRCode from "qrcode";
 import initSqlJs from "sql.js";
 import sqlWasm from "sql.js/dist/sql-wasm.wasm?url";
 import coverTemplateImage from "../assets/badge-cover-template.png";
+import collectifnocturneLogo from "../assets/logo/collectifnocturne.png";
+import legrooveLogo from "../assets/logo/legroove-logo.png";
+import logoTerreau from "../assets/logo/logo_terreau.png";
 import { BADGY_EMPTY_SQLITE_B64 } from "../assets/badgy-empty-sqlite";
 import { CANVA_IMAGE_FIELDS, CANVA_TEXT_FIELDS } from "../canvaAutofillFields";
 import type { PersonRecord } from "../types";
@@ -1016,7 +1019,7 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
     mergeVCardFromStored(buildDefaultVCardSettings(people[0]!), readIllustratorDefaultsCached().vCardSettings)
   );
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
-  const [coverImageSrc, setCoverImageSrc] = useState("/LOGO/collectifnocturne.png");
+  const [coverImageSrc, setCoverImageSrc] = useState(collectifnocturneLogo);
 
   const [qrTopPct, setQrTopPct] = useState(() => readIllustratorDefaultsCached().qrTopPct);
   const [qrRightPct, setQrRightPct] = useState(() => readIllustratorDefaultsCached().qrRightPct);
@@ -2333,8 +2336,8 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
               aria-label="Collectif Nocturne"
               style={{
                 backgroundColor: safeSecondaryColor,
-                WebkitMaskImage: "url('/LOGO/collectifnocturne.png')",
-                maskImage: "url('/LOGO/collectifnocturne.png')",
+                WebkitMaskImage: `url(${collectifnocturneLogo})`,
+                maskImage: `url(${collectifnocturneLogo})`,
               }}
             />
             <span
@@ -2342,8 +2345,8 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
               aria-label="Le Groove"
               style={{
                 backgroundColor: safeSecondaryColor,
-                WebkitMaskImage: "url('/LOGO/legroove-logo.png')",
-                maskImage: "url('/LOGO/legroove-logo.png')",
+                WebkitMaskImage: `url(${legrooveLogo})`,
+                maskImage: `url(${legrooveLogo})`,
               }}
             />
             <span
@@ -2351,8 +2354,8 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
               aria-label="Le Terreau"
               style={{
                 backgroundColor: safeSecondaryColor,
-                WebkitMaskImage: "url('/LOGO/logo_terreau.png')",
-                maskImage: "url('/LOGO/logo_terreau.png')",
+                WebkitMaskImage: `url(${logoTerreau})`,
+                maskImage: `url(${logoTerreau})`,
               }}
             />
           </div>
@@ -2444,8 +2447,8 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
               aria-label="Collectif Nocturne"
               style={{
                 backgroundColor: safeSecondaryColor,
-                WebkitMaskImage: "url('/LOGO/collectifnocturne.png')",
-                maskImage: "url('/LOGO/collectifnocturne.png')",
+                WebkitMaskImage: `url(${collectifnocturneLogo})`,
+                maskImage: `url(${collectifnocturneLogo})`,
               }}
             />
             <span
@@ -2453,8 +2456,8 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
               aria-label="Le Groove"
               style={{
                 backgroundColor: safeSecondaryColor,
-                WebkitMaskImage: "url('/LOGO/legroove-logo.png')",
-                maskImage: "url('/LOGO/legroove-logo.png')",
+                WebkitMaskImage: `url(${legrooveLogo})`,
+                maskImage: `url(${legrooveLogo})`,
               }}
             />
             <span
@@ -2462,8 +2465,8 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
               aria-label="Le Terreau"
               style={{
                 backgroundColor: safeSecondaryColor,
-                WebkitMaskImage: "url('/LOGO/logo_terreau.png')",
-                maskImage: "url('/LOGO/logo_terreau.png')",
+                WebkitMaskImage: `url(${logoTerreau})`,
+                maskImage: `url(${logoTerreau})`,
               }}
             />
           </div>

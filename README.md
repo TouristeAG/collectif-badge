@@ -37,14 +37,15 @@ npm run dev
    - Click **Refresh from Sheets**
    - Select a person, then open **Badge illustrator**
 
-## Badge Cover Asset
+## Badge cover & venue logos (bundled)
 
-The front cover uses a fixed image from:
+Cover and back-side venue masks are **imported from source** (not `public/`) so they ship in the app bundle:
 
-- `public/LOGO/logo-cover.png`
+- `src/assets/logo/collectifnocturne.png` — front cover + Collectif mask
+- `src/assets/logo/legroove-logo.png` — Le Groove mask
+- `src/assets/logo/logo_terreau.png` — Le Terreau mask
 
-You can replace this file with your final official cover design and the app will keep the same
-overlay positioning logic for:
+Replace those files and rebuild; overlay positioning stays the same for:
 
 - QR vCard (top-right)
 - NFC mark (bottom-right)

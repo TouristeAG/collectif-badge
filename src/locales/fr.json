@@ -163,7 +163,7 @@
     "factoryRestored": "Réglages d’usine d’origine restaurés.",
     "setAsDefault": "Définir par défaut",
     "frontSettings": "Réglages du recto",
-    "frontHint": "La mise en page est figée sur le modèle validé. L’image de couverture est LOGO/collectifnocturne.png. Seuls le code QR et le pictogramme NFC sont configurables.",
+    "frontHint": "La mise en page est figée sur le modèle validé. L’image de couverture est incluse dans l’application (src/assets/logo). Seuls le code QR et le pictogramme NFC sont configurables.",
     "logoPositioning": "Position du logo",
     "zoom": "Zoom",
     "axisX": "X",

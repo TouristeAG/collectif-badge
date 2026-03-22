@@ -163,7 +163,7 @@
     "factoryRestored": "Restored original factory defaults.",
     "setAsDefault": "Set as default",
     "frontSettings": "Front settings",
-    "frontHint": "Design is fixed to your approved layout. Cover image is LOGO/collectifnocturne.png. Only the QR code and NFC mark are configurable.",
+    "frontHint": "Design is fixed to your approved layout. The cover image is bundled in the app (src/assets/logo). Only the QR code and NFC mark are configurable.",
     "logoPositioning": "Logo positioning",
     "zoom": "Zoom",
     "axisX": "X",
