@@ -34,7 +34,6 @@ export interface SheetNames {
 
 export interface SheetsLoadPayload {
   spreadsheetId: string;
-  serviceAccountKeyPath: string;
   sheetNames: SheetNames;
 }
 

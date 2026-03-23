@@ -4,7 +4,7 @@ import "./App.css";
 import { BadgeIllustrator } from "./components/BadgeIllustrator";
 import { CanvaSettingsButton, CanvaSettingsModal } from "./components/CanvaSettingsModal";
 import { GoogleSheetsHelpModal } from "./components/GoogleSheetsHelp";
-import type { PersonCategory, PersonRecord, SheetNames } from "./types";
+import type { PeopleResponse, PersonCategory, PersonRecord, SheetNames } from "./types";
 
 const DEFAULT_SHEET_NAMES: SheetNames = {
   guestList: "Guest List",
@@ -56,6 +56,7 @@ const PersonListRow = memo(function PersonListRow({
 
 function App() {
   const { t } = useTranslation();
+  const isDesktopApp = Boolean(window.electronAPI);
 
   useEffect(() => {
     document.title = t("meta.title");
@@ -92,8 +93,10 @@ function App() {
   );
 
   const [spreadsheetId, setSpreadsheetId] = useState(localStorage.getItem("spreadsheetId") ?? "");
-  const [serviceAccountKeyPath, setServiceAccountKeyPath] = useState(
-    localStorage.getItem("serviceAccountKeyPath") ?? ""
+  const [serviceAccountConfigured, setServiceAccountConfigured] = useState(false);
+  const [serviceAccountEmail, setServiceAccountEmail] = useState("");
+  const [webApiBaseUrl, setWebApiBaseUrl] = useState(
+    localStorage.getItem("webApiBaseUrl") ?? ""
   );
   const [sheetNames, setSheetNames] = useState<SheetNames>({
     guestList: localStorage.getItem("sheet.guestList") ?? DEFAULT_SHEET_NAMES.guestList,
@@ -111,6 +114,9 @@ function App() {
   const [categoryFilter, setCategoryFilter] = useState<PersonCategory | "all">("all");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [networkShareRunning, setNetworkShareRunning] = useState(false);
+  const [networkShareUrls, setNetworkShareUrls] = useState<string[]>([]);
+  const [copiedNetworkUrl, setCopiedNetworkUrl] = useState("");
   const [isIllustratorOpen, setIsIllustratorOpen] = useState(false);
   const [isCanvaSettingsOpen, setIsCanvaSettingsOpen] = useState(false);
   const [isSheetsHelpOpen, setIsSheetsHelpOpen] = useState(false);
@@ -181,38 +187,111 @@ function App() {
     return { total: people.length, ...byCategory };
   }, [people]);
 
-  async function pickKeyFile() {
+  async function importKeyFile() {
     setError("");
     if (!window.electronAPI) {
-      setError(t("app.errorDesktopApi"));
+      setError(t("app.errorImportDesktopOnly"));
       return;
     }
-    const file = await window.electronAPI.pickServiceAccountKey();
-    if (file) {
-      setServiceAccountKeyPath(file);
-      localStorage.setItem("serviceAccountKeyPath", file);
+    try {
+      const result = await window.electronAPI.importServiceAccountKey();
+      if (result?.configured) {
+        setServiceAccountConfigured(true);
+        setServiceAccountEmail(result.clientEmail || "");
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("app.errorImportServiceAccount"));
+    }
+  }
+
+  async function toggleNetworkShare() {
+    setError("");
+    if (!window.electronAPI) return;
+    const startShare = window.electronAPI.networkShareStart;
+    const stopShare = window.electronAPI.networkShareStop;
+    if (typeof startShare !== "function" || typeof stopShare !== "function") {
+      setError(t("app.errorNetworkShareUnavailable"));
+      return;
+    }
+    try {
+      if (!networkShareRunning && !spreadsheetId.trim()) {
+        setError(t("app.errorSpreadsheetIdRequired"));
+        return;
+      }
+      const status = networkShareRunning
+        ? await stopShare()
+        : await startShare({ spreadsheetId: spreadsheetId.trim() });
+      setNetworkShareRunning(status.running);
+      setNetworkShareUrls(status.networkUrls);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "";
+      if (message.includes("No handler registered")) {
+        setError(t("app.errorNetworkShareUnavailable"));
+      } else {
+        setError(message || t("app.errorNetworkShare"));
+      }
+    }
+  }
+
+  async function copyNetworkUrl(url: string) {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const input = document.createElement("input");
+        input.value = url;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        document.body.removeChild(input);
+      }
+      setCopiedNetworkUrl(url);
+      window.setTimeout(() => setCopiedNetworkUrl(""), 1600);
+    } catch {
+      setError(t("app.errorCopyNetworkUrl"));
     }
   }
 
   const refreshFromSheets = useCallback(async () => {
     setError("");
-    if (!window.electronAPI) {
-      setError(t("app.errorDesktopApi"));
+    if (!spreadsheetId.trim()) {
+      setError(t("app.errorSpreadsheetIdRequired"));
       return;
     }
-
-    if (!spreadsheetId.trim() || !serviceAccountKeyPath.trim()) {
+    if (isDesktopApp && !serviceAccountConfigured) {
       setError(t("app.errorSpreadsheetRequired"));
       return;
     }
-
     setIsLoading(true);
     try {
-      const response = await window.electronAPI.loadPeopleFromSheets({
-        spreadsheetId: spreadsheetId.trim(),
-        serviceAccountKeyPath: serviceAccountKeyPath.trim(),
-        sheetNames
-      });
+      let response: PeopleResponse;
+      if (window.electronAPI) {
+        response = await window.electronAPI.loadPeopleFromSheets({
+          spreadsheetId: spreadsheetId.trim(),
+          sheetNames
+        });
+      } else {
+        const baseUrlRaw = webApiBaseUrl.trim() || window.location.origin;
+        const baseUrl = baseUrlRaw.replace(/\/+$/, "");
+        const http = await fetch(`${baseUrl}/sheets/loadPeople`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            spreadsheetId: spreadsheetId.trim(),
+            sheetNames
+          })
+        });
+        if (!http.ok) {
+          const errText = await http.text();
+          try {
+            const parsed = JSON.parse(errText) as { error?: string };
+            throw new Error(parsed.error || errText);
+          } catch {
+            throw new Error(errText || t("app.errorLoadSheets"));
+          }
+        }
+        response = (await http.json()) as PeopleResponse;
+      }
       setPeople(response.people);
       setSelectedId((old) => (response.people.some((person) => person.id === old) ? old : null));
       setCheckedForIllustrator((prev) => {
@@ -224,23 +303,82 @@ function App() {
       localStorage.setItem("sheet.volunteerGuestList", sheetNames.volunteerGuestList);
       localStorage.setItem("sheet.volunteers", sheetNames.volunteers);
       localStorage.setItem("sheet.tempGuestList", sheetNames.tempGuestList);
+      if (!isDesktopApp) {
+        localStorage.setItem("webApiBaseUrl", webApiBaseUrl.trim());
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : t("app.errorLoadSheets"));
     } finally {
       setIsLoading(false);
     }
-  }, [spreadsheetId, serviceAccountKeyPath, sheetNames, t]);
+  }, [spreadsheetId, serviceAccountConfigured, sheetNames, t, isDesktopApp, webApiBaseUrl]);
 
   const refreshFromSheetsRef = useRef(refreshFromSheets);
   refreshFromSheetsRef.current = refreshFromSheets;
 
   useEffect(() => {
+    try {
+      localStorage.setItem("spreadsheetId", spreadsheetId);
+    } catch {
+      // ignore storage errors
+    }
+  }, [spreadsheetId]);
+
+  useEffect(() => {
+    if (window.electronAPI) {
+      void window.electronAPI
+        .getServiceAccountStatus()
+        .then((status) => {
+          setServiceAccountConfigured(Boolean(status?.configured));
+          setServiceAccountEmail(status?.clientEmail ?? "");
+        })
+        .catch(() => {
+          setServiceAccountConfigured(false);
+          setServiceAccountEmail("");
+        });
+      return;
+    }
+    const baseUrlRaw = webApiBaseUrl.trim() || window.location.origin;
+    const baseUrl = baseUrlRaw.replace(/\/+$/, "");
+    void fetch(`${baseUrl}/sheets/status`)
+      .then(async (r) => {
+        if (!r.ok) throw new Error();
+        return r.json();
+      })
+      .then((status) => {
+        setServiceAccountConfigured(Boolean(status?.configured));
+        setServiceAccountEmail(status?.clientEmail ?? "");
+        if (!spreadsheetId.trim() && typeof status?.defaultSpreadsheetId === "string") {
+          setSpreadsheetId(status.defaultSpreadsheetId);
+        }
+      })
+      .catch(() => {
+        setServiceAccountConfigured(false);
+        setServiceAccountEmail("");
+      });
+  }, [webApiBaseUrl, spreadsheetId]);
+
+  useEffect(() => {
     if (!window.electronAPI) return;
-    if (!spreadsheetId.trim() || !serviceAccountKeyPath.trim()) return;
-    void refreshFromSheetsRef.current();
-    // Intentionally once on mount: use persisted settings from the first paint only.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- startup auto-refresh only
+    if (typeof window.electronAPI.networkShareGetStatus !== "function") return;
+    void window.electronAPI
+      .networkShareGetStatus()
+      .then((status) => {
+        setNetworkShareRunning(status.running);
+        setNetworkShareUrls(status.networkUrls);
+      })
+      .catch(() => {
+        setNetworkShareRunning(false);
+        setNetworkShareUrls([]);
+      });
   }, []);
+
+  useEffect(() => {
+    if (!spreadsheetId.trim()) return;
+    if (!serviceAccountConfigured) return;
+    void refreshFromSheetsRef.current();
+    // Intentionally auto-refresh only when startup settings are ready.
+  }, [spreadsheetId, serviceAccountConfigured, isDesktopApp, webApiBaseUrl]);
 
   return (
     <main className="app">
@@ -256,6 +394,47 @@ function App() {
           </button>
         </div>
       </header>
+      {isDesktopApp && (
+        <section className="network-share-card">
+          <div className="network-share-head">
+            <div>
+              <h3>{t("app.networkShareTitle")}</h3>
+              <p>{t("app.networkShareDescription")}</p>
+            </div>
+            <button
+              type="button"
+              className={`network-share-toggle ${networkShareRunning ? "is-on" : ""}`}
+              onClick={() => void toggleNetworkShare()}
+              aria-pressed={networkShareRunning}
+            >
+              <span className="network-share-toggle-dot" />
+              {networkShareRunning ? t("app.networkShareOn") : t("app.networkShareOff")}
+            </button>
+          </div>
+          {networkShareRunning && networkShareUrls.length > 0 ? (
+            <div className="network-share-url-row">
+              <span className="network-share-url-label">{t("app.networkShareRunningOn")}:</span>
+              <a href={networkShareUrls[0]} target="_blank" rel="noreferrer" className="network-share-link">
+                {networkShareUrls[0]}
+              </a>
+              <button
+                type="button"
+                className="icon-button network-share-copy-btn"
+                onClick={() => void copyNetworkUrl(networkShareUrls[0])}
+                aria-label={t("app.copyNetworkUrl")}
+                title={t("app.copyNetworkUrl")}
+              >
+                ⧉
+              </button>
+              {copiedNetworkUrl === networkShareUrls[0] && (
+                <span className="network-share-copied">{t("app.copied")}</span>
+              )}
+            </div>
+          ) : (
+            <p className="network-share-off-hint">{t("app.networkShareOffHint")}</p>
+          )}
+        </section>
+      )}
 
       <CanvaSettingsModal isOpen={isCanvaSettingsOpen} onClose={() => setIsCanvaSettingsOpen(false)} />
       <GoogleSheetsHelpModal isOpen={isSheetsHelpOpen} onClose={() => setIsSheetsHelpOpen(false)} />
@@ -283,16 +462,31 @@ function App() {
             />
           </label>
           <label className="key-picker">
-            {t("app.serviceAccountPath")}
+            {t("app.serviceAccountImport")}
             <input
-              value={serviceAccountKeyPath}
-              onChange={(event) => setServiceAccountKeyPath(event.target.value)}
-              placeholder="/path/to/service-account.json"
+              value={
+                serviceAccountConfigured
+                  ? serviceAccountEmail || t("app.serviceAccountConfigured")
+                  : t("app.serviceAccountNotConfigured")
+              }
+              readOnly
             />
-            <button type="button" onClick={pickKeyFile}>
-              {t("common.browse")}
-            </button>
+            {isDesktopApp ? (
+              <button type="button" onClick={importKeyFile}>
+                {t("app.importJson")}
+              </button>
+            ) : null}
           </label>
+          {!isDesktopApp && (
+            <label>
+              {t("app.webApiBaseUrl")}
+              <input
+                value={webApiBaseUrl}
+                onChange={(event) => setWebApiBaseUrl(event.target.value)}
+                placeholder="https://api.example.com"
+              />
+            </label>
+          )}
           <label>
             {t("app.volunteersSheet")}
             <input

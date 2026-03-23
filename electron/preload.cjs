@@ -1,8 +1,12 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("electronAPI", {
-  pickServiceAccountKey: () => ipcRenderer.invoke("dialog:pickServiceAccountKey"),
+  importServiceAccountKey: () => ipcRenderer.invoke("dialog:importServiceAccountKey"),
+  getServiceAccountStatus: () => ipcRenderer.invoke("sheets:getServiceAccountStatus"),
   loadPeopleFromSheets: (payload) => ipcRenderer.invoke("sheets:loadPeople", payload),
+  networkShareGetStatus: () => ipcRenderer.invoke("networkShare:getStatus"),
+  networkShareStart: (payload) => ipcRenderer.invoke("networkShare:start", payload),
+  networkShareStop: () => ipcRenderer.invoke("networkShare:stop"),
   saveBinaryFile: (payload) => ipcRenderer.invoke("dialog:saveBinaryFile", payload),
   canvaGetStatus: () => ipcRenderer.invoke("canva:getStatus"),
   canvaSaveCredentials: (payload) => ipcRenderer.invoke("canva:saveCredentials", payload),

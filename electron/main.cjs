@@ -1,10 +1,41 @@
 const { app, BrowserWindow, dialog, ipcMain, shell } = require("electron");
 const fs = require("fs/promises");
 const path = require("path");
+const os = require("os");
+const http = require("http");
 const { loadPeopleFromSheets } = require("./sheets.cjs");
 const canva = require("./canva.cjs");
 
 const isDev = !app.isPackaged;
+const SERVICE_ACCOUNT_FILE_NAME = "google-service-account.json";
+const NETWORK_SHARE_PORT = 4173;
+const NETWORK_SHARE_HOST = "0.0.0.0";
+
+const networkShareState = {
+  server: null,
+  running: false,
+  port: NETWORK_SHARE_PORT,
+  localUrl: "",
+  networkUrls: [],
+  defaultSpreadsheetId: ""
+};
+
+function getServiceAccountStoragePath() {
+  return path.join(app.getPath("userData"), SERVICE_ACCOUNT_FILE_NAME);
+}
+
+async function readStoredServiceAccount() {
+  const filePath = getServiceAccountStoragePath();
+  const raw = await fs.readFile(filePath, "utf-8");
+  const parsed = JSON.parse(raw);
+  if (!parsed || typeof parsed !== "object") {
+    throw new Error("Invalid service account JSON.");
+  }
+  if (typeof parsed.client_email !== "string" || typeof parsed.private_key !== "string") {
+    throw new Error("Missing required service account fields.");
+  }
+  return parsed;
+}
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -28,7 +59,161 @@ function createWindow() {
   }
 }
 
-ipcMain.handle("dialog:pickServiceAccountKey", async () => {
+function getRendererDistRoot() {
+  return path.join(__dirname, "..", "dist");
+}
+
+function mimeTypeFor(filePath) {
+  if (filePath.endsWith(".html")) return "text/html; charset=utf-8";
+  if (filePath.endsWith(".js")) return "application/javascript; charset=utf-8";
+  if (filePath.endsWith(".css")) return "text/css; charset=utf-8";
+  if (filePath.endsWith(".json")) return "application/json; charset=utf-8";
+  if (filePath.endsWith(".svg")) return "image/svg+xml";
+  if (filePath.endsWith(".png")) return "image/png";
+  if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) return "image/jpeg";
+  if (filePath.endsWith(".woff2")) return "font/woff2";
+  if (filePath.endsWith(".woff")) return "font/woff";
+  if (filePath.endsWith(".wasm")) return "application/wasm";
+  return "application/octet-stream";
+}
+
+function getLocalNetworkUrls(port) {
+  const ifaces = os.networkInterfaces();
+  const urls = [];
+  for (const key of Object.keys(ifaces)) {
+    const entries = ifaces[key] || [];
+    for (const entry of entries) {
+      if (entry.family === "IPv4" && !entry.internal) {
+        urls.push(`http://${entry.address}:${port}`);
+      }
+    }
+  }
+  return urls;
+}
+
+async function startNetworkShareServer(payload) {
+  if (networkShareState.running) return networkShareState;
+  const defaultSpreadsheetId = String(payload?.spreadsheetId ?? "").trim();
+  if (!defaultSpreadsheetId) {
+    throw new Error("Spreadsheet ID is required to start network sharing.");
+  }
+  const distRoot = getRendererDistRoot();
+  try {
+    await fs.access(path.join(distRoot, "index.html"));
+  } catch {
+    throw new Error("Web build not found. Run npm run build:web first.");
+  }
+
+  await readStoredServiceAccount();
+
+  const server = http.createServer(async (req, res) => {
+    try {
+      const method = req.method || "GET";
+      const rawUrl = req.url || "/";
+      const urlPath = rawUrl.split("?")[0];
+
+      if (urlPath === "/sheets/status" && method === "GET") {
+        try {
+          const parsed = await readStoredServiceAccount();
+          res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+          res.end(
+            JSON.stringify({
+              configured: true,
+              clientEmail: parsed.client_email,
+              defaultSpreadsheetId: networkShareState.defaultSpreadsheetId
+            })
+          );
+        } catch {
+          res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+          res.end(
+            JSON.stringify({
+              configured: false,
+              clientEmail: "",
+              defaultSpreadsheetId: networkShareState.defaultSpreadsheetId
+            })
+          );
+        }
+        return;
+      }
+
+      if (urlPath === "/sheets/loadPeople" && method === "POST") {
+        let body = "";
+        await new Promise((resolve, reject) => {
+          req.on("data", (chunk) => {
+            body += chunk;
+            if (body.length > 1024 * 1024) {
+              reject(new Error("Payload too large."));
+            }
+          });
+          req.on("end", resolve);
+          req.on("error", reject);
+        });
+        const parsedBody = body ? JSON.parse(body) : {};
+        const spreadsheetId = String(parsedBody?.spreadsheetId ?? "").trim() || networkShareState.defaultSpreadsheetId;
+        const response = await loadPeopleFromSheets({
+          spreadsheetId,
+          sheetNames: parsedBody?.sheetNames,
+          serviceAccountKeyPath: getServiceAccountStoragePath()
+        });
+        res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+        res.end(JSON.stringify(response));
+        return;
+      }
+
+      // Static files + SPA fallback.
+      let requestedPath = urlPath === "/" ? "index.html" : urlPath;
+      requestedPath = decodeURIComponent(requestedPath).replace(/^[/\\]+/, "");
+      const normalized = path.normalize(requestedPath).replace(/^(\.\.[/\\])+/, "");
+      let absolute = path.join(distRoot, normalized);
+      if (!absolute.startsWith(distRoot)) {
+        res.writeHead(403);
+        res.end("Forbidden");
+        return;
+      }
+      let fileData;
+      try {
+        fileData = await fs.readFile(absolute);
+      } catch {
+        absolute = path.join(distRoot, "index.html");
+        fileData = await fs.readFile(absolute);
+      }
+      res.writeHead(200, { "Content-Type": mimeTypeFor(absolute) });
+      res.end(fileData);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Server error";
+      res.writeHead(500, { "Content-Type": "application/json; charset=utf-8" });
+      res.end(JSON.stringify({ error: message }));
+    }
+  });
+
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(NETWORK_SHARE_PORT, NETWORK_SHARE_HOST, () => resolve(undefined));
+  });
+
+  networkShareState.server = server;
+  networkShareState.running = true;
+  networkShareState.port = NETWORK_SHARE_PORT;
+  networkShareState.localUrl = `http://localhost:${NETWORK_SHARE_PORT}`;
+  networkShareState.networkUrls = getLocalNetworkUrls(NETWORK_SHARE_PORT);
+  networkShareState.defaultSpreadsheetId = defaultSpreadsheetId;
+  return networkShareState;
+}
+
+async function stopNetworkShareServer() {
+  if (!networkShareState.running || !networkShareState.server) return networkShareState;
+  await new Promise((resolve, reject) => {
+    networkShareState.server.close((err) => (err ? reject(err) : resolve(undefined)));
+  });
+  networkShareState.server = null;
+  networkShareState.running = false;
+  networkShareState.localUrl = "";
+  networkShareState.networkUrls = [];
+  networkShareState.defaultSpreadsheetId = "";
+  return networkShareState;
+}
+
+ipcMain.handle("dialog:importServiceAccountKey", async () => {
   const result = await dialog.showOpenDialog({
     title: "Choose Google Service Account JSON",
     properties: ["openFile"],
@@ -39,11 +224,67 @@ ipcMain.handle("dialog:pickServiceAccountKey", async () => {
     return null;
   }
 
-  return result.filePaths[0];
+  const selectedPath = result.filePaths[0];
+  const raw = await fs.readFile(selectedPath, "utf-8");
+  const parsed = JSON.parse(raw);
+  if (!parsed || typeof parsed !== "object") {
+    throw new Error("Invalid service account JSON.");
+  }
+  if (typeof parsed.client_email !== "string" || typeof parsed.private_key !== "string") {
+    throw new Error("Missing required service account fields.");
+  }
+  await fs.mkdir(app.getPath("userData"), { recursive: true });
+  await fs.writeFile(getServiceAccountStoragePath(), JSON.stringify(parsed, null, 2), "utf-8");
+  return { configured: true, clientEmail: parsed.client_email };
+});
+
+ipcMain.handle("sheets:getServiceAccountStatus", async () => {
+  try {
+    const parsed = await readStoredServiceAccount();
+    return { configured: true, clientEmail: parsed.client_email };
+  } catch {
+    return { configured: false, clientEmail: "" };
+  }
 });
 
 ipcMain.handle("sheets:loadPeople", async (_, payload) => {
-  return loadPeopleFromSheets(payload);
+  const serviceAccountKeyPath = getServiceAccountStoragePath();
+  try {
+    await readStoredServiceAccount();
+  } catch {
+    throw new Error("Service account JSON is not imported yet.");
+  }
+  return loadPeopleFromSheets({
+    ...(payload ?? {}),
+    serviceAccountKeyPath
+  });
+});
+
+ipcMain.handle("networkShare:getStatus", async () => ({
+  running: networkShareState.running,
+  localUrl: networkShareState.localUrl,
+  networkUrls: networkShareState.networkUrls,
+  defaultSpreadsheetId: networkShareState.defaultSpreadsheetId
+}));
+
+ipcMain.handle("networkShare:start", async (_, payload) => {
+  const state = await startNetworkShareServer(payload);
+  return {
+    running: state.running,
+    localUrl: state.localUrl,
+    networkUrls: state.networkUrls,
+    defaultSpreadsheetId: state.defaultSpreadsheetId
+  };
+});
+
+ipcMain.handle("networkShare:stop", async () => {
+  const state = await stopNetworkShareServer();
+  return {
+    running: state.running,
+    localUrl: state.localUrl,
+    networkUrls: state.networkUrls,
+    defaultSpreadsheetId: state.defaultSpreadsheetId
+  };
 });
 
 ipcMain.handle("dialog:saveBinaryFile", async (_, payload) => {
@@ -127,7 +368,15 @@ app.whenReady().then(() => {
 });
 
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
+  app.quit();
+});
+
+app.on("before-quit", () => {
+  if (networkShareState.server) {
+    try {
+      networkShareState.server.close();
+    } catch {
+      /* ignore */
+    }
   }
 });

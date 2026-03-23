@@ -32,7 +32,7 @@ npm run dev
 
 3. In the app:
    - Enter your Spreadsheet ID
-   - Select your service account JSON key file
+   - Import your service account JSON key
    - Confirm/adjust sheet tab names
    - Click **Refresh from Sheets**
    - Select a person, then open **Badge illustrator**
@@ -96,6 +96,45 @@ Create web build:
 ```bash
 npm run build:web
 ```
+
+## Future web integration (ready path)
+
+The UI now supports two data modes:
+
+- **Desktop (Electron):** import Service Account JSON into app storage, then refresh from Sheets.
+- **Web app (HTTP API):** set a **Web API URL** in the UI. The browser calls your backend instead of Electron APIs.
+
+Recommended backend contract for web mode:
+
+- `GET /sheets/status` → `{ configured: boolean, clientEmail?: string }`
+- `POST /sheets/loadPeople` with `{ spreadsheetId, sheetNames }` → same shape as `PeopleResponse` in `src/types.ts`
+
+Security note: for web mode, keep Google credentials on the backend only (never in browser localStorage).
+
+### Run web mode locally
+
+1. Export credentials as JSON string (backend only):
+
+```bash
+export GOOGLE_SERVICE_ACCOUNT_JSON='{"type":"service_account",...}'
+```
+
+2. (Optional) Restrict allowed spreadsheet IDs:
+
+```bash
+export SHEETS_SPREADSHEET_ALLOWLIST="1AbCd...,1XyZ..."
+```
+
+3. Start frontend + web API:
+
+```bash
+npm run dev:webapp
+```
+
+4. In the web UI:
+   - Set **Web API URL** to `http://127.0.0.1:8787`
+   - Enter spreadsheet ID
+   - Click **Refresh from Sheets**
 
 Create desktop installers:
 

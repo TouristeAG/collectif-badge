@@ -29,9 +29,12 @@ function makeRecord(source, rowNumber, category, displayName, details = {}) {
   };
 }
 
-async function createSheetsClient(serviceAccountPath) {
-  const raw = await fs.readFile(serviceAccountPath, "utf-8");
-  const credentials = JSON.parse(raw);
+async function createSheetsClient(serviceAccountPath, serviceAccountCredentials) {
+  let credentials = serviceAccountCredentials;
+  if (!credentials) {
+    const raw = await fs.readFile(serviceAccountPath, "utf-8");
+    credentials = JSON.parse(raw);
+  }
   const auth = new google.auth.GoogleAuth({
     credentials,
     scopes: [READONLY_SCOPE]
@@ -137,6 +140,10 @@ function parseTempGuestList(rows) {
 async function loadPeopleFromSheets(payload) {
   const spreadsheetId = clean(payload?.spreadsheetId);
   const serviceAccountKeyPath = clean(payload?.serviceAccountKeyPath);
+  const serviceAccountCredentials =
+    payload?.serviceAccountCredentials && typeof payload.serviceAccountCredentials === "object"
+      ? payload.serviceAccountCredentials
+      : null;
   const sheetNames = {
     ...DEFAULT_SHEET_NAMES,
     ...(payload?.sheetNames ?? {})
@@ -145,11 +152,11 @@ async function loadPeopleFromSheets(payload) {
   if (!spreadsheetId) {
     throw new Error("Spreadsheet ID is required.");
   }
-  if (!serviceAccountKeyPath) {
-    throw new Error("Service account key path is required.");
+  if (!serviceAccountKeyPath && !serviceAccountCredentials) {
+    throw new Error("Service account credentials are required.");
   }
 
-  const sheets = await createSheetsClient(serviceAccountKeyPath);
+  const sheets = await createSheetsClient(serviceAccountKeyPath, serviceAccountCredentials);
   const [volunteerRows, guestRows, volunteerGuestRows, tempGuestRows] = await Promise.all([
     readRange(sheets, spreadsheetId, `${sheetNames.volunteers}!A2:K`),
     readRange(sheets, spreadsheetId, `${sheetNames.guestList}!A2:I`),

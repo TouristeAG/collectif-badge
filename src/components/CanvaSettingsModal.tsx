@@ -292,6 +292,26 @@ export function CanvaSettingsModal({ isOpen, onClose }: CanvaSettingsModalProps)
             <p className="hint">{t("canva.disconnectHint")}</p>
           </div>
 
+          <div className="settings-section">
+            <h3>{t("settings.hostingSection")}</h3>
+            <p className="hint">{t("settings.hostingIntro")}</p>
+            <ol className="settings-steps-list">
+              <li>{t("settings.hostingStep1")}</li>
+              <li>{t("settings.hostingStep2")}</li>
+              <li>{t("settings.hostingStep3")}</li>
+              <li>{t("settings.hostingStep4")}</li>
+            </ol>
+            <p className="hint">{t("settings.hostingCmdExport")}</p>
+            <pre className="redirect-uri-box">{t("settings.hostingCmdExportValue")}</pre>
+            <p className="hint">{t("settings.hostingCmdApi")}</p>
+            <pre className="redirect-uri-box">{t("settings.hostingCmdApiValue")}</pre>
+            <p className="hint">{t("settings.hostingCmdWeb")}</p>
+            <pre className="redirect-uri-box">{t("settings.hostingCmdWebValue")}</pre>
+            <p className="hint">{t("settings.hostingCmdIp")}</p>
+            <pre className="redirect-uri-box">{t("settings.hostingCmdIpValue")}</pre>
+            <p className="hint">{t("settings.hostingOutro")}</p>
+          </div>
+
           {message && <p className="settings-modal-message">{message}</p>}
         </div>
       </section>

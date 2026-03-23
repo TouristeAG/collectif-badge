@@ -8,8 +8,27 @@ export interface CanvaStatus {
 }
 
 interface ElectronAPI {
-  pickServiceAccountKey: () => Promise<string | null>;
+  importServiceAccountKey: () => Promise<{ configured: boolean; clientEmail: string } | null>;
+  getServiceAccountStatus: () => Promise<{ configured: boolean; clientEmail: string }>;
   loadPeopleFromSheets: (payload: SheetsLoadPayload) => Promise<PeopleResponse>;
+  networkShareGetStatus?: () => Promise<{
+    running: boolean;
+    localUrl: string;
+    networkUrls: string[];
+    defaultSpreadsheetId: string;
+  }>;
+  networkShareStart?: (payload: { spreadsheetId: string }) => Promise<{
+    running: boolean;
+    localUrl: string;
+    networkUrls: string[];
+    defaultSpreadsheetId: string;
+  }>;
+  networkShareStop?: () => Promise<{
+    running: boolean;
+    localUrl: string;
+    networkUrls: string[];
+    defaultSpreadsheetId: string;
+  }>;
   saveBinaryFile: (payload: {
     defaultFileName: string;
     filters: Array<{ name: string; extensions: string[] }>;

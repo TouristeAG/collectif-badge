@@ -1609,7 +1609,8 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
 
       if (previewBenevoleRightGapRef.current == null) return;
       const targetTotal = rawGapWithoutOffset - previewBenevoleRightGapRef.current;
-      const targetAligned = targetTotal - userPx;
+      // Keep user edge adjustment additive across remount/reselect.
+      const targetAligned = targetTotal;
       setPreviewRoleOffsetX((previous) => (Math.abs(previous - targetAligned) <= 0.25 ? previous : targetAligned));
     };
 
@@ -1670,7 +1671,8 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
 
       if (exportBenevoleRightGapRef.current == null) return;
       const targetTotal = rawGapWithoutOffset - exportBenevoleRightGapRef.current;
-      const targetAligned = targetTotal - userPx;
+      // Keep user edge adjustment additive across remount/reselect.
+      const targetAligned = targetTotal;
       setExportRoleOffsetX((previous) => (Math.abs(previous - targetAligned) <= 0.25 ? previous : targetAligned));
     };
 
