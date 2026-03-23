@@ -157,6 +157,33 @@
   box-shadow: var(--shadow-card);
 }
 
+.update-banner {
+  border-color: rgba(59, 130, 246, 0.6);
+}
+
+.update-banner-mandatory {
+  border-color: rgba(220, 38, 38, 0.75);
+}
+
+.update-blocking-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(2, 6, 23, 0.72);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.update-blocking-modal {
+  width: min(520px, 96vw);
+  border: 1px solid rgba(220, 38, 38, 0.75);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, #121a28, #0a0e16);
+  box-shadow: var(--shadow-float);
+  padding: 1rem 1.1rem;
+}
+
 .setup-card-header {
   display: flex;
   align-items: center;

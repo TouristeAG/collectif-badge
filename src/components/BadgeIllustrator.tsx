@@ -182,10 +182,39 @@ function triggerBrowserDownload(blob: Blob, fileName: string) {
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = fileName;
+  anchor.rel = "noopener";
+  anchor.target = "_self";
   document.body.appendChild(anchor);
-  anchor.click();
+  anchor.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
   document.body.removeChild(anchor);
+  // Fallback for browsers that ignore `download` on blob URLs in this context.
+  if (typeof anchor.download !== "string" || anchor.download.length === 0) {
+    window.open(url, "_blank", "noopener");
+  }
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+function createRuntimeUUID(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  const bytes = new Uint8Array(16);
+  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  // RFC4122 v4-compatible formatting.
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0"));
+  return [
+    hex.slice(0, 4).join(""),
+    hex.slice(4, 6).join(""),
+    hex.slice(6, 8).join(""),
+    hex.slice(8, 10).join(""),
+    hex.slice(10, 16).join(""),
+  ].join("-");
 }
 
 function splitName(displayName: string): { firstName: string; lastName: string } {
@@ -972,6 +1001,7 @@ function SetAsDefaultButton({ onClick, label }: { onClick: () => void; label?: s
 
 export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
   const { t } = useTranslation();
+  const canUseCanvaExport = Boolean(window.electronAPI?.canvaGetStatus && window.electronAPI?.canvaSendPdf);
 
   const categoryRole = useCallback(
     (person: PersonRecord) => {
@@ -2029,11 +2059,11 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
         }
 
         if (format === "bs") {
-          const docUUID = crypto.randomUUID();
-          const dbDocUUID = crypto.randomUUID();
-          const dbDataUUID = crypto.randomUUID();
-          const imgSettingsDocUUID = crypto.randomUUID();
-          const imgSettingsDataUUID = crypto.randomUUID();
+          const docUUID = createRuntimeUUID();
+          const dbDocUUID = createRuntimeUUID();
+          const dbDataUUID = createRuntimeUUID();
+          const imgSettingsDocUUID = createRuntimeUUID();
+          const imgSettingsDataUUID = createRuntimeUUID();
           const sqliteBytes = bsBase64ToUint8Array(BADGY_EMPTY_SQLITE_B64);
 
           if (batch) {
@@ -2063,8 +2093,8 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
             const backBgUID = generateBsHexUID();
             const frontImgUID = generateBsHexUID();
             const backImgUID = generateBsHexUID();
-            const frontImgBinUUID = crypto.randomUUID();
-            const backImgBinUUID = crypto.randomUUID();
+            const frontImgBinUUID = createRuntimeUUID();
+            const backImgBinUUID = createRuntimeUUID();
 
             const zip = new JSZip();
             zip.file("document/info.xml", buildBsInfoXml(docUUID));
@@ -2116,8 +2146,8 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
           const { front, back } = await captureBothSides("png");
           const frontUID = generateBsHexUID();
           const backUID = generateBsHexUID();
-          const frontBinUUID = crypto.randomUUID();
-          const backBinUUID = crypto.randomUUID();
+          const frontBinUUID = createRuntimeUUID();
+          const backBinUUID = createRuntimeUUID();
           const frontBytes = bsBase64ToUint8Array(stripDataUrlPrefix(front));
           const backBytes = bsBase64ToUint8Array(stripDataUrlPrefix(back));
 
@@ -3432,9 +3462,11 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
             <button type="button" onClick={() => handleExport("pdf")} disabled={isExporting}>
               {t("illustrator.exportPdf")}
             </button>
-            <button type="button" onClick={() => handleExport("canva")} disabled={isExporting}>
-              {t("illustrator.exportCanva")}
-            </button>
+            {canUseCanvaExport && (
+              <button type="button" onClick={() => handleExport("canva")} disabled={isExporting}>
+                {t("illustrator.exportCanva")}
+              </button>
+            )}
             <button type="button" onClick={() => handleExport("bs")} disabled={isExporting}>
               {t("illustrator.exportBs")}
             </button>

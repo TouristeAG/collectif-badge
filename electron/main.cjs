@@ -3,6 +3,7 @@ const fs = require("fs/promises");
 const path = require("path");
 const os = require("os");
 const http = require("http");
+const https = require("https");
 const { loadPeopleFromSheets } = require("./sheets.cjs");
 const canva = require("./canva.cjs");
 
@@ -10,6 +11,9 @@ const isDev = !app.isPackaged;
 const SERVICE_ACCOUNT_FILE_NAME = "google-service-account.json";
 const NETWORK_SHARE_PORT = 4173;
 const NETWORK_SHARE_HOST = "0.0.0.0";
+const UPDATE_METADATA_URL =
+  "https://raw.githubusercontent.com/TouristeAG/collectif-badge/main/version.json";
+const UPDATE_FALLBACK_URL = "https://github.com/TouristeAG/collectif-badge/releases/latest";
 
 const networkShareState = {
   server: null,
@@ -18,6 +22,17 @@ const networkShareState = {
   localUrl: "",
   networkUrls: [],
   defaultSpreadsheetId: ""
+};
+let updateStatusCache = {
+  checkedAt: null,
+  currentVersion: app.getVersion(),
+  latestVersion: null,
+  updateAvailable: false,
+  mandatory: false,
+  minRequiredVersion: null,
+  releaseUrl: UPDATE_FALLBACK_URL,
+  notes: "",
+  error: ""
 };
 
 function getServiceAccountStoragePath() {
@@ -61,6 +76,83 @@ function createWindow() {
 
 function getRendererDistRoot() {
   return path.join(__dirname, "..", "dist");
+}
+
+function normalizeVersion(version) {
+  return String(version ?? "")
+    .trim()
+    .replace(/^v/i, "");
+}
+
+function compareVersions(a, b) {
+  const pa = normalizeVersion(a).split(".").map((x) => Number.parseInt(x, 10) || 0);
+  const pb = normalizeVersion(b).split(".").map((x) => Number.parseInt(x, 10) || 0);
+  const maxLen = Math.max(pa.length, pb.length);
+  for (let i = 0; i < maxLen; i++) {
+    const va = pa[i] ?? 0;
+    const vb = pb[i] ?? 0;
+    if (va > vb) return 1;
+    if (va < vb) return -1;
+  }
+  return 0;
+}
+
+function fetchJson(url) {
+  return new Promise((resolve, reject) => {
+    https
+      .get(url, (response) => {
+        if (!response || response.statusCode == null) {
+          reject(new Error("Update request failed."));
+          return;
+        }
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          reject(new Error(`Update metadata HTTP ${response.statusCode}`));
+          return;
+        }
+        let body = "";
+        response.setEncoding("utf8");
+        response.on("data", (chunk) => {
+          body += chunk;
+        });
+        response.on("end", () => {
+          try {
+            resolve(JSON.parse(body));
+          } catch {
+            reject(new Error("Invalid update metadata JSON."));
+          }
+        });
+      })
+      .on("error", reject);
+  });
+}
+
+async function checkForUpdatesFromRemote() {
+  const currentVersion = app.getVersion();
+  const metadata = await fetchJson(UPDATE_METADATA_URL);
+  const latestVersion = normalizeVersion(metadata?.version || currentVersion);
+  const minRequiredVersion = normalizeVersion(metadata?.minRequiredVersion || "");
+  const updateAvailable = compareVersions(currentVersion, latestVersion) < 0;
+  const forcedByMinRequired = minRequiredVersion
+    ? compareVersions(currentVersion, minRequiredVersion) < 0
+    : false;
+  const mandatory = forcedByMinRequired || (Boolean(metadata?.mandatory) && updateAvailable);
+  const releaseUrl = typeof metadata?.releaseUrl === "string" && metadata.releaseUrl.trim()
+    ? metadata.releaseUrl.trim()
+    : UPDATE_FALLBACK_URL;
+  const notes = typeof metadata?.notes === "string" ? metadata.notes : "";
+  const result = {
+    checkedAt: Date.now(),
+    currentVersion,
+    latestVersion,
+    updateAvailable,
+    mandatory,
+    minRequiredVersion: minRequiredVersion || null,
+    releaseUrl,
+    notes,
+    error: ""
+  };
+  updateStatusCache = result;
+  return result;
 }
 
 function mimeTypeFor(filePath) {
@@ -287,6 +379,32 @@ ipcMain.handle("networkShare:stop", async () => {
   };
 });
 
+ipcMain.handle("updater:getStatus", async () => updateStatusCache);
+
+ipcMain.handle("updater:checkNow", async () => {
+  try {
+    return await checkForUpdatesFromRemote();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Update check failed.";
+    updateStatusCache = {
+      ...updateStatusCache,
+      checkedAt: Date.now(),
+      error: message
+    };
+    return updateStatusCache;
+  }
+});
+
+ipcMain.handle("updater:openUpdatePage", async () => {
+  const url = updateStatusCache.releaseUrl || UPDATE_FALLBACK_URL;
+  await shell.openExternal(url);
+  return true;
+});
+
+ipcMain.handle("app:quit", () => {
+  app.quit();
+});
+
 ipcMain.handle("dialog:saveBinaryFile", async (_, payload) => {
   const { defaultFileName, filters, dataBase64, dataBytes, openAfterSave } = payload ?? {};
   const result = await dialog.showSaveDialog({
@@ -359,6 +477,9 @@ ipcMain.handle("canva:sendPdf", async (_, payload) => {
 
 app.whenReady().then(() => {
   createWindow();
+  void checkForUpdatesFromRemote().catch(() => {
+    /* ignore startup update failures */
+  });
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {

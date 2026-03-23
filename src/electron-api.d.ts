@@ -29,6 +29,30 @@ interface ElectronAPI {
     networkUrls: string[];
     defaultSpreadsheetId: string;
   }>;
+  updaterGetStatus?: () => Promise<{
+    checkedAt: number | null;
+    currentVersion: string;
+    latestVersion: string | null;
+    updateAvailable: boolean;
+    mandatory: boolean;
+    minRequiredVersion: string | null;
+    releaseUrl: string;
+    notes: string;
+    error: string;
+  }>;
+  updaterCheckNow?: () => Promise<{
+    checkedAt: number | null;
+    currentVersion: string;
+    latestVersion: string | null;
+    updateAvailable: boolean;
+    mandatory: boolean;
+    minRequiredVersion: string | null;
+    releaseUrl: string;
+    notes: string;
+    error: string;
+  }>;
+  updaterOpenUpdatePage?: () => Promise<boolean>;
+  appQuit?: () => Promise<void>;
   saveBinaryFile: (payload: {
     defaultFileName: string;
     filters: Array<{ name: string; extensions: string[] }>;

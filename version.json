@@ -1,0 +1,7 @@
+{
+  "version": "0.0.0",
+  "mandatory": false,
+  "minRequiredVersion": "0.0.0",
+  "releaseUrl": "https://github.com/TouristeAG/collectif-badge/releases/latest",
+  "notes": "Update metadata for desktop in-app updater."
+}

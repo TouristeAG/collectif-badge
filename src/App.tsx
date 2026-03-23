@@ -57,6 +57,17 @@ const PersonListRow = memo(function PersonListRow({
 function App() {
   const { t } = useTranslation();
   const isDesktopApp = Boolean(window.electronAPI);
+  const [updateStatus, setUpdateStatus] = useState<{
+    checkedAt: number | null;
+    currentVersion: string;
+    latestVersion: string | null;
+    updateAvailable: boolean;
+    mandatory: boolean;
+    minRequiredVersion: string | null;
+    releaseUrl: string;
+    notes: string;
+    error: string;
+  } | null>(null);
 
   useEffect(() => {
     document.title = t("meta.title");
@@ -374,6 +385,16 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (!window.electronAPI?.updaterCheckNow) return;
+    void window.electronAPI
+      .updaterCheckNow()
+      .then((status) => setUpdateStatus(status))
+      .catch(() => {
+        /* ignore updater bootstrap failures */
+      });
+  }, []);
+
+  useEffect(() => {
     if (!spreadsheetId.trim()) return;
     if (!serviceAccountConfigured) return;
     void refreshFromSheetsRef.current();
@@ -382,6 +403,46 @@ function App() {
 
   return (
     <main className="app">
+      {isDesktopApp && updateStatus?.updateAvailable && (
+        <div className={`setup-card ${updateStatus.mandatory ? "update-banner-mandatory" : "update-banner"}`}>
+          <div className="setup-card-header" style={{ marginBottom: "0.5rem" }}>
+            <h2>{updateStatus.mandatory ? t("app.updateMandatoryTitle") : t("app.updateAvailableTitle")}</h2>
+          </div>
+          <p className="hint" style={{ margin: 0 }}>
+            {t("app.updateBody", {
+              current: updateStatus.currentVersion,
+              latest: updateStatus.latestVersion ?? "?",
+            })}
+          </p>
+          {updateStatus.notes ? (
+            <p className="hint" style={{ marginTop: "0.35rem" }}>
+              {updateStatus.notes}
+            </p>
+          ) : null}
+          <div className="topbar-actions" style={{ marginTop: "0.6rem" }}>
+            <button
+              type="button"
+              className="primary"
+              onClick={() => void window.electronAPI?.updaterOpenUpdatePage?.()}
+            >
+              {t("app.updateNow")}
+            </button>
+            {!updateStatus.mandatory && (
+              <button
+                type="button"
+                onClick={() => setUpdateStatus((prev) => (prev ? { ...prev, updateAvailable: false } : prev))}
+              >
+                {t("app.updateLater")}
+              </button>
+            )}
+            {updateStatus.mandatory && (
+              <button type="button" onClick={() => void window.electronAPI?.appQuit?.()}>
+                {t("app.quitApp")}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       <header className="topbar">
         <div>
           <h1>{t("meta.title")}</h1>
@@ -711,6 +772,32 @@ function App() {
               key={illustratorPeople.map((p) => p.id).join("|")}
               people={illustratorPeople as [PersonRecord, ...PersonRecord[]]}
             />
+          </section>
+        </div>
+      )}
+      {isDesktopApp && updateStatus?.mandatory && updateStatus.updateAvailable && (
+        <div className="update-blocking-overlay">
+          <section className="update-blocking-modal">
+            <h2 style={{ marginTop: 0 }}>{t("app.updateMandatoryTitle")}</h2>
+            <p className="hint">
+              {t("app.updateBody", {
+                current: updateStatus.currentVersion,
+                latest: updateStatus.latestVersion ?? "?",
+              })}
+            </p>
+            {updateStatus.notes ? <p className="hint">{updateStatus.notes}</p> : null}
+            <div className="topbar-actions">
+              <button
+                type="button"
+                className="primary"
+                onClick={() => void window.electronAPI?.updaterOpenUpdatePage?.()}
+              >
+                {t("app.updateNow")}
+              </button>
+              <button type="button" onClick={() => void window.electronAPI?.appQuit?.()}>
+                {t("app.quitApp")}
+              </button>
+            </div>
           </section>
         </div>
       )}
