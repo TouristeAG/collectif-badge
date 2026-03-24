@@ -63,3 +63,10 @@ body {
     linear-gradient(180deg, var(--color-bg-deep) 0%, var(--color-bg-page) 38%, #0c1018 100%);
   background-attachment: fixed;
 }
+
+/* iOS Safari stutters badly with fixed background on scroll; switch to scroll on touch devices */
+@media (max-width: 760px) {
+  body {
+    background-attachment: scroll;
+  }
+}

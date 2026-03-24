@@ -2285,6 +2285,9 @@ body.electron-app .settings-modal-backdrop {
 
   .badge-preview-panel {
     flex: 0 1 auto;
+    /* Move preview above settings in the stacked single-column grid so the
+       card is immediately visible without scrolling */
+    order: -1;
   }
 
   /* Shorter vertical space: cap preview height a bit more so ratio stays visible above the fold */
@@ -2330,7 +2333,8 @@ body.electron-app .settings-modal-backdrop {
 
 @media (max-width: 760px) {
   .app {
-    padding: 1rem;
+    /* Extra bottom padding so the floating action button never obscures content */
+    padding: 1rem 1rem calc(5rem + env(safe-area-inset-bottom, 0px));
   }
 
   .app-hero-surface {
@@ -2361,12 +2365,23 @@ body.electron-app .settings-modal-backdrop {
     grid-template-columns: 1fr 1fr;
   }
 
+  /* Remove fixed min-height so panels size naturally when stacked */
+  .workspace {
+    min-height: 0;
+  }
+
   .list-toolbar {
     grid-template-columns: 1fr;
   }
 
   .detail-panel dl {
     grid-template-columns: 1fr;
+  }
+
+  /* Larger touch target for the checkbox column */
+  .person-select-cell {
+    min-width: 2.75rem;
+    justify-content: center;
   }
 
   .illustrator-toolbar {
@@ -2401,9 +2416,117 @@ body.electron-app .settings-modal-backdrop {
     width: 100%;
   }
 
+  .illustrator-modal-backdrop {
+    padding: 0.5rem;
+  }
+
   .floating-illustrator-btn {
-    left: 1rem;
-    right: 1rem;
-    bottom: 0.9rem;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 0;
+    /* Respect home indicator on notched iPhones */
+    padding-bottom: max(0.9rem, env(safe-area-inset-bottom, 0.9rem));
+    padding-top: 0.9rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    text-align: center;
+  }
+}
+
+/* ─── Phone (≤ 480 px) ─────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .app {
+    padding: 0.65rem 0.65rem calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    gap: 0.9rem;
+  }
+
+  .app-hero-surface {
+    padding: 0.85rem 0.9rem;
+  }
+
+  .topbar-logo-wrap {
+    width: 3.5rem;
+    height: 3.5rem;
+    padding: 0.35rem;
+  }
+
+  .topbar {
+    gap: 0.65rem;
+  }
+
+  .topbar-tagline {
+    font-size: 0.875rem;
+  }
+
+  .stats {
+    gap: 0.6rem;
+  }
+
+  .stats article {
+    padding: 0.8rem 0.85rem 0.75rem;
+  }
+
+  .stats strong {
+    font-size: 1.35rem;
+  }
+
+  /* Remove redundant category pill from list rows – category is shown in the secondary line */
+  .person-row-main {
+    grid-template-columns: 40px 1fr;
+  }
+
+  .person-row-main .pill {
+    display: none;
+  }
+
+  /* Constrain list height on small phones so both panels are reachable without excessive scroll */
+  .list {
+    max-height: 320px;
+  }
+
+  /* Full-screen illustrator modal – gives the badge the maximum possible canvas */
+  .illustrator-modal-backdrop {
+    padding: 0;
+  }
+
+  .illustrator-modal-window {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+
+  .illustrator-modal-header {
+    padding: 0.75rem 0.9rem;
+  }
+
+  /* Compact toolbar on phones – all rows collapse tighter */
+  .illustrator-toolbar {
+    padding: 0.6rem 0.75rem 0.7rem 0.85rem;
+    gap: 0.5rem;
+  }
+
+  .illustrator-toolbar-row {
+    gap: 0.5rem 0.75rem;
+  }
+
+  .illustrator-toolbar-row--secondary {
+    padding-top: 0.1rem;
+    gap: 0.5rem;
+  }
+
+  /* Cap preview card height so settings controls are still reachable below */
+  .badge-card-preview {
+    width: min(
+      100%,
+      calc(min(28vh, 240px) * 85.6 / 54)
+    );
+  }
+
+  /* Settings panel scrollable below the preview – tight but usable */
+  .badge-settings {
+    max-height: min(38vh, 300px);
   }
 }

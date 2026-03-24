@@ -122,8 +122,8 @@ interface ElectronExportAPI {
   canvaSendPdf?: (payload: { pdfBase64: string; title: string }) => Promise<{ editUrl: string }>;
 }
 
-function sanitizeFileName(value: string): string {
-  const safe = value
+function sanitizeFileName(value: string | undefined | null): string {
+  const safe = (value ?? "")
     .trim()
     .replace(/[\\/:*?"<>|]/g, "-")
     .replace(/\s+/g, "_");
@@ -217,10 +217,11 @@ function createRuntimeUUID(): string {
   ].join("-");
 }
 
-function splitName(displayName: string): { firstName: string; lastName: string } {
-  const parts = displayName.trim().split(/\s+/);
+function splitName(displayName: string | undefined | null): { firstName: string; lastName: string } {
+  const safe = String(displayName ?? "").trim();
+  const parts = safe.split(/\s+/).filter(Boolean);
   if (parts.length <= 1) {
-    return { firstName: displayName.trim(), lastName: "" };
+    return { firstName: safe, lastName: "" };
   }
   return {
     firstName: parts[0],
@@ -1796,6 +1797,11 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
         height: EXPORT_CARD_HEIGHT,
         pixelRatio: 2,
         backgroundColor: safeCardBackgroundColor,
+        // In a regular browser, html-to-image's font-family introspection can throw
+        // "can't access property 'trim'" on certain CSSFontFaceRule values.
+        // Fonts are already loaded via @fontsource at startup, so the canvas uses
+        // them from the browser cache without needing them re-embedded.
+        skipFonts: !window.electronAPI,
       };
       if (format === "png") {
         return toPng(node, options);

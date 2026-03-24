@@ -24,6 +24,28 @@ type PersonListRowProps = {
   onSelectId: (id: string) => void;
 };
 
+function normalizePersonRecord(person: PersonRecord, index: number): PersonRecord {
+  const fallbackId = person.id || `row-${person.source || "sheet"}-${person.rowNumber || index + 1}`;
+  return {
+    ...person,
+    id: String(fallbackId),
+    displayName: String(person.displayName ?? "").trim() || `Person ${index + 1}`,
+    abbreviation: typeof person.abbreviation === "string" ? person.abbreviation : "",
+    email: typeof person.email === "string" ? person.email : "",
+    phone: typeof person.phone === "string" ? person.phone : "",
+    venue: typeof person.venue === "string" ? person.venue : "",
+    notes: typeof person.notes === "string" ? person.notes : "",
+    artistName: typeof person.artistName === "string" ? person.artistName : "",
+  };
+}
+
+function normalizePeopleResponse(response: PeopleResponse): PeopleResponse {
+  return {
+    ...response,
+    people: (response.people ?? []).map(normalizePersonRecord),
+  };
+}
+
 const PersonListRow = memo(function PersonListRow({
   person,
   isSelected,
@@ -310,10 +332,11 @@ function App() {
         }
         response = (await http.json()) as PeopleResponse;
       }
-      setPeople(response.people);
-      setSelectedId((old) => (response.people.some((person) => person.id === old) ? old : null));
+      const normalizedResponse = normalizePeopleResponse(response);
+      setPeople(normalizedResponse.people);
+      setSelectedId((old) => (normalizedResponse.people.some((person) => person.id === old) ? old : null));
       setCheckedForIllustrator((prev) => {
-        const valid = new Set(response.people.map((person) => person.id));
+        const valid = new Set(normalizedResponse.people.map((person) => person.id));
         return new Set([...prev].filter((id) => valid.has(id)));
       });
       localStorage.setItem("spreadsheetId", spreadsheetId.trim());
