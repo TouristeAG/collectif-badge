@@ -835,6 +835,53 @@ button:disabled {
   line-height: 1.45;
 }
 
+.detail-spreadsheet-columns {
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  padding: 1rem 1.2rem 1.25rem;
+}
+
+.detail-spreadsheet-columns h3 {
+  margin: 0 0 0.35rem;
+  font-family: "Archivo Narrow", "Inter", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.detail-spreadsheet-columns-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+.detail-spreadsheet-columns dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  gap: 0.45rem 1rem;
+}
+
+.detail-spreadsheet-columns dt {
+  color: #7c8c9f;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  align-self: start;
+  padding-top: 0.15rem;
+}
+
+.detail-spreadsheet-columns dd {
+  margin: 0;
+  color: #e2e8f0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
 .badge-button {
   width: 100%;
   margin-top: 0.8rem;

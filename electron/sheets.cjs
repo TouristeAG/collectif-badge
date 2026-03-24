@@ -14,6 +14,16 @@ function clean(value) {
   return String(value ?? "").trim();
 }
 
+/** Maps row cells to spreadsheet column letters (A, B, …) for every non-empty value in the fetched range. */
+function rowToNonEmptyColumnMap(row, maxCols) {
+  const map = {};
+  for (let i = 0; i < maxCols; i++) {
+    const v = clean(row[i]);
+    if (v) map[String.fromCharCode(65 + i)] = v;
+  }
+  return map;
+}
+
 function yesNoToBoolean(value) {
   return clean(value).toLowerCase() === "yes";
 }
@@ -63,7 +73,8 @@ function parseVolunteers(rows) {
         phone: clean(row[4]),
         active: yesNoToBoolean(row[8]),
         rank: clean(row[7]),
-        nfcCardUid: clean(row[10])
+        nfcCardUid: clean(row[10]),
+        sheetColumns: rowToNonEmptyColumnMap(row, 11)
       })
     );
   });
@@ -90,7 +101,8 @@ function parseGuestList(rows) {
           invitations: Number.parseInt(clean(row[3]), 10) || 0,
           venue: clean(row[4]),
           notes: clean(row[5]),
-          nfcCardUid: clean(row[8])
+          nfcCardUid: clean(row[8]),
+          sheetColumns: rowToNonEmptyColumnMap(row, 9)
         }
       )
     );
@@ -130,7 +142,8 @@ function parseTempGuestList(rows) {
         eventDate: clean(row[1]),
         artistName: clean(row[2]),
         artistContactPhone: clean(row[3]),
-        notes: clean(row[5])
+        notes: clean(row[5]),
+        sheetColumns: rowToNonEmptyColumnMap(row, 6)
       })
     );
   });

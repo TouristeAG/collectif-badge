@@ -23,6 +23,8 @@ export interface PersonRecord {
   artistName?: string;
   artistContactPhone?: string;
   notes?: string;
+  /** Non-empty cells from the sheet row, keyed by column letter (A, B, …) within the range we read. */
+  sheetColumns?: Record<string, string>;
 }
 
 export interface SheetNames {

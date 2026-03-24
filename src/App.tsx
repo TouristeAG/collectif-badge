@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import "./App.css";
 import { BadgeIllustrator } from "./components/BadgeIllustrator";
@@ -689,6 +689,13 @@ function App() {
                   {selectedPerson.source} (row {selectedPerson.rowNumber})
                 </dd>
 
+                {selectedPerson.eventManagerId && (
+                  <>
+                    <dt>{t("app.detailEventManagerId")}</dt>
+                    <dd>{selectedPerson.eventManagerId}</dd>
+                  </>
+                )}
+
                 {selectedPerson.abbreviation && (
                   <>
                     <dt>{t("app.detailAbbreviation")}</dt>
@@ -762,6 +769,23 @@ function App() {
                   </>
                 )}
               </dl>
+
+              {selectedPerson.sheetColumns && Object.keys(selectedPerson.sheetColumns).length > 0 && (
+                <div className="detail-spreadsheet-columns">
+                  <h3>{t("app.detailSpreadsheetColumnsTitle")}</h3>
+                  <p className="detail-spreadsheet-columns-hint">{t("app.detailSpreadsheetColumnsHint")}</p>
+                  <dl>
+                    {Object.keys(selectedPerson.sheetColumns)
+                      .sort()
+                      .map((letter) => (
+                        <Fragment key={letter}>
+                          <dt>{t("app.detailColumnLetter", { letter })}</dt>
+                          <dd>{selectedPerson.sheetColumns?.[letter]}</dd>
+                        </Fragment>
+                      ))}
+                  </dl>
+                </div>
+              )}
             </>
           ) : (
             <div className="empty-detail">
