@@ -348,6 +348,21 @@ export function CanvaSettingsModal({ isOpen, onClose }: CanvaSettingsModalProps)
             <p className="hint">{t("settings.hostingOutro")}</p>
           </div>
 
+          <div className="settings-section">
+            <h3>{t("settings.networkShareFixSection")}</h3>
+            <p className="hint">{t("settings.networkShareFixIntro")}</p>
+            <ol className="settings-steps-list">
+              <li>{t("settings.networkShareFixStep1")}</li>
+              <li>{t("settings.networkShareFixStep2")}</li>
+              <li>{t("settings.networkShareFixStep3")}</li>
+            </ol>
+            <p className="hint">{t("settings.networkShareFixCmdRun")}</p>
+            <pre className="redirect-uri-box">{t("settings.networkShareFixCmdRunValue")}</pre>
+            <p className="hint">{t("settings.networkShareFixCmdVerify")}</p>
+            <pre className="redirect-uri-box">{t("settings.networkShareFixCmdVerifyValue")}</pre>
+            <p className="hint">{t("settings.networkShareFixOutro")}</p>
+          </div>
+
           {message && <p className="settings-modal-message">{message}</p>}
         </div>
       </section>

@@ -1,9 +1,46 @@
 const http = require("http");
+const fs = require("fs");
+const path = require("path");
 const { loadPeopleFromSheets } = require("../electron/sheets.cjs");
 
 const PORT = Number.parseInt(process.env.WEB_API_PORT || "8787", 10);
-const HOST = process.env.WEB_API_HOST || "127.0.0.1";
+// Default to 0.0.0.0 so the server is reachable from other devices on the LAN.
+// Set WEB_API_HOST=127.0.0.1 to restrict to localhost only.
+const HOST = process.env.WEB_API_HOST || "0.0.0.0";
 const ALLOW_ORIGIN = process.env.WEB_API_ALLOW_ORIGIN || "*";
+
+const DIST_DIR = path.resolve(__dirname, "../dist");
+
+const MIME_TYPES = {
+  ".html": "text/html; charset=utf-8",
+  ".js":   "application/javascript; charset=utf-8",
+  ".mjs":  "application/javascript; charset=utf-8",
+  ".css":  "text/css; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".png":  "image/png",
+  ".jpg":  "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".svg":  "image/svg+xml",
+  ".ico":  "image/x-icon",
+  ".woff": "font/woff",
+  ".woff2":"font/woff2",
+  ".ttf":  "font/ttf",
+  ".wasm": "application/wasm",
+};
+
+function serveStatic(res, filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  const contentType = MIME_TYPES[ext] || "application/octet-stream";
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      res.writeHead(500);
+      res.end("Internal error reading file.");
+      return;
+    }
+    res.writeHead(200, { "Content-Type": contentType });
+    res.end(data);
+  });
+}
 const SERVICE_ACCOUNT_JSON = process.env.GOOGLE_SERVICE_ACCOUNT_JSON || "";
 const SPREADSHEET_ID_ALLOWLIST = (process.env.SHEETS_SPREADSHEET_ALLOWLIST || "")
   .split(",")
@@ -110,10 +147,57 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Serve static files from dist/ for web mode
+  if (method === "GET" && fs.existsSync(DIST_DIR)) {
+    // Strip query string
+    const urlPath = url.split("?")[0];
+    // Prevent path traversal
+    const safePath = path.normalize(urlPath).replace(/^(\.\.[/\\])+/, "");
+    const candidate = path.join(DIST_DIR, safePath);
+
+    if (candidate.startsWith(DIST_DIR) && fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+      serveStatic(res, candidate);
+      return;
+    }
+
+    // SPA fallback: serve index.html for any non-asset route
+    const indexPath = path.join(DIST_DIR, "index.html");
+    if (fs.existsSync(indexPath)) {
+      serveStatic(res, indexPath);
+      return;
+    }
+  }
+
   sendJson(res, 404, { error: "Not found." });
 });
 
+function getLanIp() {
+  try {
+    const os = require("os");
+    const ifaces = os.networkInterfaces();
+    for (const name of Object.keys(ifaces)) {
+      for (const iface of ifaces[name]) {
+        if (iface.family === "IPv4" && !iface.internal) return iface.address;
+      }
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
 server.listen(PORT, HOST, () => {
+  const lanIp = getLanIp();
   // eslint-disable-next-line no-console
-  console.log(`Web Sheets API listening on http://${HOST}:${PORT}`);
+  console.log(`\nWeb server listening on:`);
+  // eslint-disable-next-line no-console
+  console.log(`  Local:   http://127.0.0.1:${PORT}`);
+  if (lanIp) {
+    // eslint-disable-next-line no-console
+    console.log(`  Network: http://${lanIp}:${PORT}  ← share this with others on your LAN`);
+  }
+  if (!fs.existsSync(DIST_DIR)) {
+    // eslint-disable-next-line no-console
+    console.warn(`\n  ⚠  dist/ folder not found — run "npm run build:web" first, then restart.\n`);
+  }
+  // eslint-disable-next-line no-console
+  console.log();
 });

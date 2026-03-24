@@ -8,10 +8,12 @@
     "dev:web": "vite --port 5173",
     "dev:web:api": "node server/web-api.cjs",
     "dev:webapp": "concurrently -k \"npm:dev:web\" \"npm:dev:web:api\"",
+    "serve:webapp": "npm run build:web && node server/web-api.cjs",
     "dev": "concurrently -k \"npm:dev:web\" \"wait-on tcp:5173 && electron .\"",
     "start": "electron .",
     "build:web": "tsc -b && vite build",
     "build": "npm run build:web && electron-builder",
+    "postbuild": "zsh scripts/adhoc-sign-builds.sh",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -60,6 +62,12 @@
     "directories": {
       "buildResources": "build"
     },
+    "extraResources": [
+      {
+        "from": "scripts/sign-and-allow.sh",
+        "to": "scripts/sign-and-allow.sh"
+      }
+    ],
     "mac": {
       "target": [
         {
