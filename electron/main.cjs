@@ -169,16 +169,39 @@ function mimeTypeFor(filePath) {
   return "application/octet-stream";
 }
 
+function isIpv4(entry) {
+  return entry.family === "IPv4" || entry.family === 4;
+}
+
+/**
+ * Prefer en* (Wi‑Fi / Ethernet on macOS) over VPN (utun), bridges, Docker, etc.
+ * The first URL was often a virtual interface — colleagues then see resets or timeouts.
+ */
 function getLocalNetworkUrls(port) {
   const ifaces = os.networkInterfaces();
-  const urls = [];
-  for (const key of Object.keys(ifaces)) {
-    const entries = ifaces[key] || [];
+  const scored = [];
+  for (const name of Object.keys(ifaces)) {
+    const entries = ifaces[name] || [];
     for (const entry of entries) {
-      if (entry.family === "IPv4" && !entry.internal) {
-        urls.push(`http://${entry.address}:${port}`);
-      }
+      if (!isIpv4(entry) || entry.internal) continue;
+      const addr = entry.address;
+      if (!addr || addr.startsWith("169.254.")) continue;
+      let score = 80;
+      if (/^en\d/.test(name)) score = 0;
+      else if (/^bridge\d|^awdl\d|^llw\d|^utun\d/i.test(name)) score = 60;
+      else if (/docker|vnic|vmnet|vEthernet|vboxnet|virbr/i.test(name)) score = 50;
+      scored.push({ score, name, addr, url: `http://${addr}:${port}` });
     }
+  }
+  scored.sort(
+    (a, b) => a.score - b.score || a.name.localeCompare(b.name) || a.addr.localeCompare(b.addr)
+  );
+  const seen = new Set();
+  const urls = [];
+  for (const row of scored) {
+    if (seen.has(row.addr)) continue;
+    seen.add(row.addr);
+    urls.push(row.url);
   }
   return urls;
 }

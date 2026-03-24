@@ -1,6 +1,7 @@
 {
   "meta": {
-    "title": "COLLECTIF BADGÉ"
+    "title": "COLLECTIF BADGÉ",
+    "brandLogoAlt": "Collectif Nocturne logo"
   },
   "common": {
     "close": "Close",
@@ -28,7 +29,15 @@
     "hostingCmdWebValue": "npm run dev:web -- --host 0.0.0.0 --port 5173",
     "hostingCmdIp": "Command (macOS) — get your local IP to share:",
     "hostingCmdIpValue": "ipconfig getifaddr en0",
-    "hostingOutro": "Teammates open http://YOUR_IP:5173 and set API URL to http://YOUR_IP:8787. The Google key stays server-side and is never sent to browsers."
+    "hostingOutro": "Teammates open http://YOUR_IP:5173 and set API URL to http://YOUR_IP:8787. The Google key stays server-side and is never sent to browsers.",
+    "updatesSection": "Updates",
+    "updatesIntro": "Manually check whether a newer app version is available.",
+    "checkUpdates": "Check for updates",
+    "checkingUpdates": "Checking…",
+    "updatesUnavailable": "Update check is unavailable in this session.",
+    "upToDate": "App is up to date (version {{version}}).",
+    "updateFound": "Update found: {{current}} → {{latest}}.",
+    "updateCheckFailed": "Could not check for updates."
   },
   "sheetsHelp": {
     "title": "Google Cloud and Google Sheets",
@@ -72,6 +81,7 @@
     "stopNetworkShare": "Stop network sharing",
     "networkShareToggleLabel": "Network sharing",
     "networkShareRunningOn": "Web app available at",
+    "networkShareMultiUrlHint": "If one link fails, try the others (Wi‑Fi / Ethernet are listed first).",
     "copyNetworkUrl": "Copy network URL",
     "copied": "Copied",
     "spreadsheetId": "Spreadsheet ID",
@@ -196,12 +206,16 @@
     "title": "Badge illustrator",
     "subtitle": "Select a side and configure overlays.",
     "peopleTabsLabel": "People in this session",
+    "sideSwitchAria": "Badge side to show and export",
     "frontSide": "Front of badge",
     "backSide": "Back of badge",
+    "frontSideShort": "Front",
+    "backSideShort": "Back",
     "cardBackground": "Card background",
     "ariaCardBgColor": "Select badge card background colour",
     "setBackgroundDefault": "Set background as default",
     "resetFactory": "Reset all to original defaults",
+    "resetFactoryShort": "Reset",
     "defaultsSaved": "Saved as default.",
     "factoryRestored": "Restored original factory defaults.",
     "setAsDefault": "Set as default",
@@ -214,13 +228,9 @@
     "axisZ": "Z (rotation)",
     "showQr": "Show QR contact code (top-right)",
     "showNfc": "Show NFC mark (bottom-right)",
-    "qrSectionTitle": "Front QR code — position & size",
-    "qrSectionHint": "Anchor (top / right / width) plus fine X, Y, Z and zoom. Design-pixel X/Y match the logo sliders.",
-    "top": "Top",
-    "right": "Right",
-    "width": "Width",
-    "bottom": "Bottom",
-    "nfcSectionTitle": "NFC mark — position & size",
+    "qrSectionTitle": "Front QR code",
+    "qrSectionHint": "X, Y, Z and zoom — design-pixel X/Y work like the logo sliders.",
+    "nfcSectionTitle": "NFC mark",
     "vcardTitle": "vCard fields (prefilled from Google Sheets)",
     "vcardFirstName": "First name",
     "vcardLastName": "Last name",

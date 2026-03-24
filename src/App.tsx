@@ -5,6 +5,7 @@ import { BadgeIllustrator } from "./components/BadgeIllustrator";
 import { CanvaSettingsButton, CanvaSettingsModal } from "./components/CanvaSettingsModal";
 import { GoogleSheetsHelpModal } from "./components/GoogleSheetsHelp";
 import type { PeopleResponse, PersonCategory, PersonRecord, SheetNames } from "./types";
+import collectifnocturneLogo from "./assets/logo/collectifnocturne.png";
 
 const DEFAULT_SHEET_NAMES: SheetNames = {
   guestList: "Guest List",
@@ -72,6 +73,12 @@ function App() {
   useEffect(() => {
     document.title = t("meta.title");
   }, [t]);
+
+  useEffect(() => {
+    if (!isDesktopApp) return;
+    document.body.classList.add("electron-app");
+    return () => document.body.classList.remove("electron-app");
+  }, [isDesktopApp]);
 
   const CATEGORY_OPTIONS = useMemo(
     () =>
@@ -443,18 +450,30 @@ function App() {
           </div>
         </div>
       )}
-      <header className="topbar">
-        <div>
-          <h1>{t("meta.title")}</h1>
-          <p>{t("app.tagline")}</p>
-        </div>
-        <div className="topbar-actions">
-          <CanvaSettingsButton onClick={() => setIsCanvaSettingsOpen(true)} />
-          <button className="primary" onClick={refreshFromSheets} disabled={isLoading}>
-            {isLoading ? t("app.refreshing") : t("app.refreshSheets")}
-          </button>
-        </div>
-      </header>
+      <div className="app-hero-surface">
+        <header className="topbar">
+          <div className="topbar-brand">
+            <div className="topbar-logo-wrap">
+              <img
+                className="topbar-logo"
+                src={collectifnocturneLogo}
+                alt={t("meta.brandLogoAlt")}
+                decoding="async"
+              />
+            </div>
+            <div className="topbar-titles">
+              <h1>{t("meta.title")}</h1>
+              <p className="topbar-tagline">{t("app.tagline")}</p>
+            </div>
+          </div>
+          <div className="topbar-actions">
+            <CanvaSettingsButton onClick={() => setIsCanvaSettingsOpen(true)} />
+            <button className="primary topbar-refresh" onClick={refreshFromSheets} disabled={isLoading}>
+              {isLoading ? t("app.refreshing") : t("app.refreshSheets")}
+            </button>
+          </div>
+        </header>
+      </div>
       {isDesktopApp && (
         <section className="network-share-card">
           <div className="network-share-head">
@@ -473,23 +492,32 @@ function App() {
             </button>
           </div>
           {networkShareRunning && networkShareUrls.length > 0 ? (
-            <div className="network-share-url-row">
+            <div className="network-share-url-block">
               <span className="network-share-url-label">{t("app.networkShareRunningOn")}:</span>
-              <a href={networkShareUrls[0]} target="_blank" rel="noreferrer" className="network-share-link">
-                {networkShareUrls[0]}
-              </a>
-              <button
-                type="button"
-                className="icon-button network-share-copy-btn"
-                onClick={() => void copyNetworkUrl(networkShareUrls[0])}
-                aria-label={t("app.copyNetworkUrl")}
-                title={t("app.copyNetworkUrl")}
-              >
-                ⧉
-              </button>
-              {copiedNetworkUrl === networkShareUrls[0] && (
-                <span className="network-share-copied">{t("app.copied")}</span>
-              )}
+              {networkShareUrls.length > 1 ? (
+                <p className="network-share-multi-hint">{t("app.networkShareMultiUrlHint")}</p>
+              ) : null}
+              <ul className="network-share-url-list">
+                {networkShareUrls.map((url) => (
+                  <li key={url} className="network-share-url-row">
+                    <a href={url} target="_blank" rel="noreferrer" className="network-share-link">
+                      {url}
+                    </a>
+                    <button
+                      type="button"
+                      className="icon-button network-share-copy-btn"
+                      onClick={() => void copyNetworkUrl(url)}
+                      aria-label={t("app.copyNetworkUrl")}
+                      title={t("app.copyNetworkUrl")}
+                    >
+                      ⧉
+                    </button>
+                    {copiedNetworkUrl === url ? (
+                      <span className="network-share-copied">{t("app.copied")}</span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
             </div>
           ) : (
             <p className="network-share-off-hint">{t("app.networkShareOffHint")}</p>

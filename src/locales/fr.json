@@ -1,6 +1,7 @@
 {
   "meta": {
-    "title": "COLLECTIF BADGÉ"
+    "title": "COLLECTIF BADGÉ",
+    "brandLogoAlt": "Logo Collectif Nocturne"
   },
   "common": {
     "close": "Fermer",
@@ -28,7 +29,15 @@
     "hostingCmdWebValue": "npm run dev:web -- --host 0.0.0.0 --port 5173",
     "hostingCmdIp": "Commande (macOS) — trouver votre IP locale à partager :",
     "hostingCmdIpValue": "ipconfig getifaddr en0",
-    "hostingOutro": "Vos collègues ouvrent http://VOTRE_IP:5173 puis renseignent l’URL API http://VOTRE_IP:8787. La clé Google reste côté serveur et n’est jamais envoyée au navigateur."
+    "hostingOutro": "Vos collègues ouvrent http://VOTRE_IP:5173 puis renseignent l’URL API http://VOTRE_IP:8787. La clé Google reste côté serveur et n’est jamais envoyée au navigateur.",
+    "updatesSection": "Mises à jour",
+    "updatesIntro": "Vérifiez manuellement s’il existe une nouvelle version de l’application.",
+    "checkUpdates": "Vérifier les mises à jour",
+    "checkingUpdates": "Vérification…",
+    "updatesUnavailable": "Vérification des mises à jour indisponible dans cette session.",
+    "upToDate": "Application à jour (version {{version}}).",
+    "updateFound": "Mise à jour trouvée : {{current}} → {{latest}}.",
+    "updateCheckFailed": "Impossible de vérifier les mises à jour."
   },
   "sheetsHelp": {
     "title": "Google Cloud et Google Sheets",
@@ -72,6 +81,7 @@
     "stopNetworkShare": "Arrêter le partage réseau",
     "networkShareToggleLabel": "Partage réseau",
     "networkShareRunningOn": "Webapp disponible sur",
+    "networkShareMultiUrlHint": "Si un lien ne fonctionne pas, essayez les autres (Wi‑Fi / Ethernet en premier dans la liste).",
     "copyNetworkUrl": "Copier le lien réseau",
     "copied": "Copié",
     "spreadsheetId": "ID du tableur",
@@ -196,12 +206,16 @@
     "title": "Illustrateur de badge",
     "subtitle": "Choisissez une face et configurez les éléments superposés.",
     "peopleTabsLabel": "Personnes dans cette session",
+    "sideSwitchAria": "Face du badge à afficher et à exporter",
     "frontSide": "Recto du badge",
     "backSide": "Verso du badge",
+    "frontSideShort": "Recto",
+    "backSideShort": "Verso",
     "cardBackground": "Fond de la carte",
     "ariaCardBgColor": "Choisir la couleur de fond du badge",
     "setBackgroundDefault": "Définir ce fond par défaut",
     "resetFactory": "Tout réinitialiser aux réglages d’usine",
+    "resetFactoryShort": "Réinitialiser",
     "defaultsSaved": "Enregistré comme valeur par défaut.",
     "factoryRestored": "Réglages d’usine d’origine restaurés.",
     "setAsDefault": "Définir par défaut",
@@ -214,13 +228,9 @@
     "axisZ": "Z (rotation)",
     "showQr": "Afficher le QR code de contact (haut à droite)",
     "showNfc": "Afficher le pictogramme NFC (bas à droite)",
-    "qrSectionTitle": "QR code recto — position et taille",
-    "qrSectionHint": "Ancrage (haut / droite / largeur) plus réglages fins X, Y, Z et zoom. Les X/Y en pixels de conception suivent la même logique que les curseurs du logo.",
-    "top": "Haut",
-    "right": "Droite",
-    "width": "Largeur",
-    "bottom": "Bas",
-    "nfcSectionTitle": "Pictogramme NFC — position et taille",
+    "qrSectionTitle": "QR code recto",
+    "qrSectionHint": "X, Y, Z et zoom — les X/Y en pixels de conception suivent la même logique que le logo.",
+    "nfcSectionTitle": "Pictogramme NFC",
     "vcardTitle": "Champs vCard (préremplis depuis Google Sheets)",
     "vcardFirstName": "Prénom",
     "vcardLastName": "Nom",

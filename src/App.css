@@ -1,23 +1,124 @@
 .app {
-  max-width: 1440px;
+  max-width: 1320px;
   margin: 0 auto;
-  padding: 1.5rem 1.5rem 2rem;
+  padding: 1.75rem 1.5rem 2.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.5rem;
+}
+
+.app-hero-surface {
+  position: relative;
+  padding: 1.35rem 1.5rem;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(155deg, rgba(24, 32, 48, 0.72) 0%, rgba(14, 20, 32, 0.88) 45%, rgba(10, 14, 22, 0.92) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow:
+    var(--shadow-card),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.app-hero-surface::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 4px;
+  border-radius: 0 6px 6px 0;
+  background: var(--gradient-accent);
+  opacity: 0.88;
+  pointer-events: none;
 }
 
 .topbar {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  padding-left: 0.35rem;
+}
+
+.topbar-brand {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+/* Logo blanc (filtre) sur fond disque légèrement profond pour le contraste */
+.topbar-logo-wrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 5.85rem;
+  height: 5.85rem;
+  margin-top: 0.08rem;
+  padding: 0.55rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(51, 65, 85, 0.55) 0%, rgba(15, 23, 42, 0.72) 62%, rgba(15, 23, 42, 0.45) 100%),
+    linear-gradient(165deg, rgba(59, 130, 246, 0.14) 0%, rgba(15, 23, 42, 0.55) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 0 0 1px rgba(59, 130, 246, 0.18),
+    0 8px 36px rgba(37, 99, 235, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.topbar-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  /* Rend le graphisme du PNG en blanc (même principe que le logo sur le badge) */
+  filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.25));
+  pointer-events: none;
+  user-select: none;
+}
+
+.topbar-titles {
+  min-width: 0;
+}
+
+.topbar h1 {
+  margin: 0 0 0.35rem;
+  font-family: "Archivo Black", "Inter", sans-serif;
+  font-size: clamp(1.65rem, 4vw, 2.15rem);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: #f8fafc;
+  text-shadow: 0 1px 24px rgba(59, 130, 246, 0.12);
+}
+
+.topbar-tagline {
+  margin: 0;
+  max-width: 36rem;
+  color: var(--color-text-secondary);
+  font-size: 0.98rem;
+  line-height: 1.5;
+  font-weight: 400;
 }
 
 .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
+.topbar-refresh {
+  padding-left: 1.15rem;
+  padding-right: 1.15rem;
+  border-radius: var(--radius-md);
+  box-shadow:
+    0 2px 14px rgba(37, 99, 235, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .icon-button {
@@ -42,26 +143,12 @@
   box-shadow: 0 0 0 1px var(--color-accent-dim);
 }
 
-.topbar h1 {
-  margin: 0 0 0.3rem;
-  font-size: 1.85rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--color-text);
-}
-
-.topbar p {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: 0.95rem;
-}
-
 .network-share-card {
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: var(--radius-lg);
-  padding: 0.85rem 1rem;
-  background: linear-gradient(165deg, rgba(18, 24, 36, 0.95), rgba(10, 16, 26, 0.96));
-  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  padding: 1rem 1.2rem;
+  background: linear-gradient(168deg, rgba(20, 28, 42, 0.92), rgba(11, 17, 28, 0.94));
+  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .network-share-head {
@@ -73,8 +160,10 @@
 
 .network-share-head h3 {
   margin: 0;
-  font-size: 0.98rem;
-  color: var(--color-text);
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #f1f5f9;
 }
 
 .network-share-head p {
@@ -114,8 +203,30 @@
   box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.18);
 }
 
-.network-share-url-row {
+.network-share-url-block {
   margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.network-share-url-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.network-share-multi-hint {
+  margin: 0.15rem 0 0.25rem;
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.network-share-url-row {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -150,11 +261,26 @@
 }
 
 .setup-card {
-  border: 1px solid var(--color-border-strong);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.15);
   border-radius: var(--radius-lg);
-  padding: 1.15rem 1.25rem;
-  background: linear-gradient(180deg, rgba(20, 27, 38, 0.92), rgba(11, 18, 34, 0.88));
-  box-shadow: var(--shadow-card);
+  padding: 1.2rem 1.35rem;
+  background: linear-gradient(175deg, rgba(22, 30, 44, 0.94) 0%, rgba(12, 18, 30, 0.9) 100%);
+  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.setup-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 0 4px 4px 0;
+  background: linear-gradient(180deg, #60a5fa, #2563eb);
+  opacity: 0.55;
+  pointer-events: none;
 }
 
 .update-banner {
@@ -189,17 +315,17 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  margin: -0.15rem 0 0.85rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--color-border);
+  margin: -0.15rem 0 0.95rem;
+  padding: 0 0 0.85rem 0.5rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
 }
 
 .setup-card-header h2 {
   margin: 0;
-  font-size: 1.05rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--color-text);
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #f1f5f9;
 }
 
 .setup-card-help-btn {
@@ -243,7 +369,8 @@
 .form-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(200px, 1fr));
-  gap: 0.75rem;
+  gap: 1rem 1rem;
+  padding-left: 0.5rem;
 }
 
 label {
@@ -255,6 +382,15 @@ label {
   font-weight: 500;
 }
 
+.form-grid > label {
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 input,
 select,
 button {
@@ -263,11 +399,11 @@ button {
 
 input,
 select {
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg-inset);
+  border: 1px solid rgba(71, 85, 105, 0.55);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, rgba(12, 16, 24, 0.95), rgba(8, 11, 18, 0.98));
   color: var(--color-text);
-  padding: 0.55rem 0.75rem;
+  padding: 0.6rem 0.85rem;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -334,60 +470,95 @@ button:disabled {
 .stats {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.75rem;
+  gap: 0.85rem;
 }
 
 .stats article {
-  background: linear-gradient(180deg, rgba(20, 27, 38, 0.85), rgba(11, 18, 34, 0.9));
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 1rem 1rem 0.95rem;
+  position: relative;
+  background: linear-gradient(168deg, rgba(22, 30, 44, 0.88), rgba(12, 18, 28, 0.92));
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: var(--radius-lg);
+  padding: 1.05rem 1.1rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  gap: 0.35rem;
+  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+  overflow: hidden;
+}
+
+.stats article::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  opacity: 0.95;
+}
+
+.stats article:nth-child(1)::before {
+  background: linear-gradient(90deg, #60a5fa, #3b82f6);
+}
+.stats article:nth-child(2)::before {
+  background: linear-gradient(90deg, #4ade80, #22c55e);
+}
+.stats article:nth-child(3)::before {
+  background: linear-gradient(90deg, #a78bfa, #7c3aed);
+}
+.stats article:nth-child(4)::before {
+  background: linear-gradient(90deg, #fb923c, #ea580c);
+}
+.stats article:nth-child(5)::before {
+  background: linear-gradient(90deg, #c4b5fd, #8b5cf6);
 }
 
 .stats article:hover {
-  border-color: var(--color-border-strong);
+  border-color: rgba(148, 163, 184, 0.22);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
 }
 
 .stats strong {
-  font-size: 1.55rem;
+  font-family: "Archivo Narrow", "Inter", sans-serif;
+  font-size: 1.65rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--color-text);
+  letter-spacing: -0.03em;
+  color: #f8fafc;
+  line-height: 1.1;
 }
 
 .stats span {
   color: var(--color-text-secondary);
-  font-size: 0.84rem;
-  font-weight: 500;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .workspace {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 1rem;
-  min-height: 500px;
+  grid-template-columns: 1.12fr 0.88fr;
+  gap: 1.2rem;
+  min-height: 520px;
 }
 
 .list-panel,
 .detail-panel {
-  background: linear-gradient(180deg, rgba(20, 27, 38, 0.9), rgba(11, 18, 34, 0.92));
-  border: 1px solid var(--color-border-strong);
+  background: linear-gradient(175deg, rgba(22, 30, 42, 0.94) 0%, rgba(11, 17, 26, 0.96) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.14);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .list-toolbar {
   display: grid;
   grid-template-columns: 1fr 220px;
-  gap: 0.55rem;
-  padding: 0.85rem 1rem;
-  border-bottom: 1px solid var(--color-border);
-  background: rgba(8, 11, 16, 0.35);
+  gap: 0.65rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  background: linear-gradient(180deg, rgba(10, 14, 22, 0.65), rgba(8, 11, 18, 0.4));
 }
 
 .list-toolbar input,
@@ -414,16 +585,17 @@ button:disabled {
 
 .list-multi-hint {
   margin: 0;
-  padding: 0.5rem 1rem 0.35rem;
-  font-size: 0.78rem;
-  line-height: 1.35;
-  color: #94a3b8;
+  padding: 0.55rem 1.1rem 0.4rem;
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: #7c8c9f;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.06);
 }
 
 .list {
   max-height: 620px;
   overflow-y: auto;
-  padding: 0.45rem;
+  padding: 0.55rem 0.5rem;
   scrollbar-width: thin;
   scrollbar-color: rgba(59, 130, 246, 0.42) rgba(15, 23, 42, 0.42);
 }
@@ -458,27 +630,30 @@ button:disabled {
   display: grid;
   grid-template-columns: auto 1fr;
   align-items: stretch;
-  gap: 0.35rem;
+  gap: 0.4rem;
   border-radius: var(--radius-md);
-  padding: 0.35rem 0.5rem 0.35rem 0.25rem;
-  border: 1px solid rgba(51, 65, 85, 0.32);
-  margin-bottom: 0.35rem;
-  background: rgba(15, 23, 42, 0.2);
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  padding: 0.4rem 0.55rem 0.4rem 0.3rem;
+  border: 1px solid rgba(51, 65, 85, 0.28);
+  margin-bottom: 0.4rem;
+  background: rgba(15, 23, 42, 0.25);
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
   /* Limits layout/paint invalidation to the row when the list updates. */
   contain: layout style;
 }
 
 .person-row:hover {
-  background: rgba(30, 58, 138, 0.15);
-  border-color: rgba(71, 85, 105, 0.65);
+  background: rgba(30, 58, 138, 0.18);
+  border-color: rgba(96, 165, 250, 0.25);
   transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 }
 
 .person-row.selected {
-  background: linear-gradient(90deg, rgba(37, 99, 235, 0.24), rgba(30, 58, 138, 0.16));
-  border-color: rgba(96, 165, 250, 0.72);
-  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.22);
+  background: linear-gradient(95deg, rgba(37, 99, 235, 0.28), rgba(30, 58, 138, 0.14));
+  border-color: rgba(96, 165, 250, 0.55);
+  box-shadow:
+    0 0 0 1px rgba(96, 165, 250, 0.2),
+    0 6px 20px rgba(37, 99, 235, 0.12);
 }
 
 .person-select-cell {
@@ -550,8 +725,8 @@ button:disabled {
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 999px;
   display: grid;
   place-items: center;
@@ -559,7 +734,9 @@ button:disabled {
   color: #f8fafc;
   font-weight: 700;
   font-size: 0.95rem;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  box-shadow:
+    0 2px 10px rgba(37, 99, 235, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .person-main {
@@ -607,7 +784,9 @@ button:disabled {
 }
 
 .detail-panel {
-  padding: 1.1rem 1.15rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .detail-header {
@@ -615,30 +794,45 @@ button:disabled {
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 0.9rem;
+  margin: 0;
+  padding: 1.15rem 1.2rem 1rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  background: linear-gradient(180deg, rgba(12, 18, 28, 0.55), transparent);
 }
 
 .detail-header h2 {
   margin: 0;
-  font-size: 1.35rem;
+  font-family: "Archivo Narrow", "Inter", sans-serif;
+  font-size: 1.38rem;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: var(--color-text);
+  color: #f8fafc;
+  line-height: 1.15;
 }
 
-dl {
-  margin: 1rem 0;
+.detail-panel dl {
+  margin: 0;
+  padding: 1rem 1.2rem 1.25rem;
   display: grid;
   grid-template-columns: 170px 1fr;
-  gap: 0.5rem 0.75rem;
+  gap: 0.55rem 1rem;
 }
 
-dt {
-  color: #94a3b8;
+.detail-panel dt {
+  color: #7c8c9f;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  align-self: start;
+  padding-top: 0.2rem;
 }
 
-dd {
+.detail-panel dd {
   margin: 0;
+  color: #e2e8f0;
+  font-size: 0.92rem;
+  line-height: 1.45;
 }
 
 .badge-button {
@@ -675,66 +869,205 @@ dd {
 .badge-illustrator {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.85rem;
   flex: 1 1 auto;
   height: 100%;
   min-height: 0;
   min-width: 0;
-  padding: 0.35rem 0.15rem 0.15rem;
+  padding: 0.5rem 0.45rem 0.45rem;
   overflow-x: hidden;
   overflow-y: visible;
 }
 
 .badge-illustrator h3 {
   margin: 0 0 0.35rem;
-  font-size: 1.05rem;
+  font-family: "Archivo Narrow", "Inter", sans-serif;
+  font-size: 1.06rem;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: var(--color-text);
+  color: #f1f5f9;
 }
 
-.illustrator-topbar {
+/* ─── Illustrator: compact toolbar (no duplicate title — modal already provides context) ─── */
+.illustrator-toolbar {
+  flex-shrink: 0;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1.1rem;
-  border: 1px solid var(--color-border-strong);
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem 0.9rem 1.15rem;
+  border: 1px solid rgba(148, 163, 184, 0.14);
   border-radius: var(--radius-lg);
-  padding: 1rem 1.15rem;
-  background: var(--gradient-surface);
-  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  background: linear-gradient(155deg, rgba(24, 32, 48, 0.75) 0%, rgba(14, 20, 32, 0.9) 100%);
+  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   position: relative;
+  overflow: visible;
 }
 
-.illustrator-topbar::before {
+.illustrator-toolbar::before {
   content: "";
   position: absolute;
   left: 0;
   top: 12px;
   bottom: 12px;
   width: 3px;
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 5px 5px 0;
   background: var(--gradient-accent);
-  opacity: 0.85;
+  opacity: 0.88;
 }
 
-.illustrator-topbar-actions {
+.illustrator-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+  min-width: 0;
+}
+
+.illustrator-toolbar-row--primary {
+  justify-content: space-between;
+}
+
+.illustrator-toolbar-lead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.illustrator-context-chips {
+  min-width: 0;
+  flex: 1 1 12rem;
+}
+
+.illustrator-toolbar-row--secondary {
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding-top: 0.15rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.illustrator-card-bg-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.85rem;
+  min-width: 0;
+  flex: 1 1 220px;
+  margin: 0;
+  color: #cbd5e1;
+}
+
+.illustrator-card-bg-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  flex: 0 0 auto;
+}
+
+.illustrator-card-bg-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  min-width: 0;
+  flex: 1 1 min(280px, 100%);
+}
+
+.illustrator-card-bg-controls .background-color-inputs {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: min(300px, 100%);
+}
+
+.illustrator-card-bg-controls .btn-set-default--subtle {
+  align-self: flex-start;
+  max-width: 100%;
+  white-space: normal;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.illustrator-toolbar-row--secondary .btn-reset-factory {
+  flex: 0 0 auto;
+  align-self: center;
+}
+
+.illustrator-toolbar-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.illustrator-toolbar-messages .defaults-hint,
+.illustrator-toolbar-messages .export-notice {
+  margin: 0;
+}
+
+.illustrator-export-anchor {
+  position: relative;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 0.35rem;
+  z-index: 6;
+}
+
+.illustrator-export-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  bottom: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: min(280px, calc(100vw - 3rem));
+  max-width: min(320px, 92vw);
+  padding: 0.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: linear-gradient(175deg, rgba(22, 30, 42, 0.98), rgba(10, 14, 22, 0.99));
+  box-shadow: var(--shadow-float), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.illustrator-export-dropdown button {
+  width: 100%;
+  text-align: left;
+  border-radius: var(--radius-sm);
+  font-size: 0.84rem;
+  padding: 0.45rem 0.6rem;
+}
+
+.illustrator-export-dropdown button:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: var(--color-accent-mid);
+}
+
+.illustrator-export-trigger {
+  padding: 0.52rem 1.1rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow:
+    0 2px 14px rgba(37, 99, 235, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .badge-illustrator-person-tabs {
   display: flex;
   align-items: stretch;
-  gap: 0.35rem;
-  padding: 0.5rem 1rem 0.65rem;
-  margin: 0 0 0.35rem;
-  border: 1px solid var(--color-border-strong);
+  gap: 0.45rem;
+  padding: 0.55rem 1rem 0.7rem;
+  margin: 0 0 0.15rem;
+  border: 1px solid rgba(148, 163, 184, 0.12);
   border-radius: var(--radius-lg);
-  background: rgba(8, 11, 16, 0.45);
+  background: linear-gradient(180deg, rgba(12, 18, 28, 0.75), rgba(8, 11, 18, 0.55));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
@@ -753,10 +1086,10 @@ dd {
 .badge-illustrator-person-tab {
   flex: 0 0 auto;
   max-width: 200px;
-  padding: 0.45rem 0.75rem;
+  padding: 0.48rem 0.82rem;
   border-radius: var(--radius-md);
-  border: 1px solid var(--color-border-strong);
-  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(51, 65, 85, 0.35);
+  background: rgba(15, 23, 42, 0.45);
   color: var(--color-text-secondary);
   font: inherit;
   font-size: 0.82rem;
@@ -765,19 +1098,22 @@ dd {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .badge-illustrator-person-tab:hover {
-  border-color: rgba(59, 130, 246, 0.45);
-  color: var(--color-text);
+  border-color: rgba(96, 165, 250, 0.35);
+  color: #e2e8f0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
 }
 
 .badge-illustrator-person-tab.is-active {
-  border-color: rgba(59, 130, 246, 0.65);
-  background: rgba(37, 99, 235, 0.2);
-  color: #e2e8f0;
-  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+  border-color: rgba(96, 165, 250, 0.5);
+  background: linear-gradient(95deg, rgba(37, 99, 235, 0.28), rgba(30, 58, 138, 0.12));
+  color: #f8fafc;
+  box-shadow:
+    0 0 0 1px rgba(59, 130, 246, 0.18),
+    0 6px 18px rgba(37, 99, 235, 0.12);
 }
 
 .btn-reset-factory {
@@ -811,17 +1147,27 @@ dd {
 .slider-with-default {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
-  margin-bottom: 0.4rem;
-  padding: 0.15rem 0;
+  gap: 0.2rem;
+  margin-bottom: 0.32rem;
+  padding: 0.1rem 0;
+}
+
+.badge-settings .slider-with-default .btn-set-default--subtle {
+  align-self: flex-end;
+  margin-top: -0.1rem;
 }
 
 .switch-with-default {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.45rem;
+}
+
+.switch-with-default .btn-set-default--subtle {
+  flex-shrink: 0;
 }
 
 .btn-set-default {
@@ -843,6 +1189,25 @@ dd {
   border-style: solid;
   color: var(--color-accent-bright);
   background: var(--color-accent-dim);
+}
+
+.btn-set-default--subtle {
+  align-self: center;
+  padding: 0.18rem 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #64748b;
+}
+
+.btn-set-default--subtle:hover {
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.1);
+  border: none;
 }
 
 .background-color-control {
@@ -871,9 +1236,9 @@ dd {
   width: 44px;
   height: 38px;
   padding: 3px;
-  border-radius: var(--radius-sm);
-  background: var(--color-bg-inset);
-  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, rgba(12, 16, 24, 0.9), rgba(8, 11, 18, 0.95));
+  border: 1px solid rgba(71, 85, 105, 0.45);
   cursor: pointer;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -888,64 +1253,57 @@ dd {
   text-transform: lowercase;
 }
 
-.illustrator-title-block {
-  padding-left: 0.5rem;
-}
-
-.illustrator-title-block h3 {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: #f8fafc;
-}
-
-.illustrator-title-block .hint {
-  margin: 0.2rem 0 0;
-  font-size: 0.86rem;
-}
-
 .person-meta-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.45rem;
+  gap: 0.35rem;
   margin-top: 0.55rem;
 }
 
+.illustrator-context-chips .person-meta-chips {
+  margin-top: 0;
+}
+
 .meta-chip {
-  font-size: 0.74rem;
-  font-weight: 500;
-  border: 1px solid var(--color-border-strong);
+  font-size: 0.72rem;
+  font-weight: 600;
+  border: 1px solid rgba(148, 163, 184, 0.18);
   color: #e2e8f0;
-  background: rgba(15, 23, 42, 0.75);
+  background: linear-gradient(180deg, rgba(22, 30, 44, 0.6), rgba(15, 23, 42, 0.75));
   border-radius: 999px;
-  padding: 0.28rem 0.65rem;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  padding: 0.3rem 0.68rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.meta-chip--name {
+  border-color: rgba(96, 165, 250, 0.35);
+  background: linear-gradient(180deg, rgba(30, 58, 138, 0.35), rgba(15, 23, 42, 0.8));
+  color: #f1f5f9;
 }
 
 .side-switch {
   display: inline-flex;
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid rgba(148, 163, 184, 0.14);
   border-radius: var(--radius-md);
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.22);
 }
 
 .side-switch button {
   border: 0;
-  border-right: 1px solid var(--color-border);
+  border-right: 1px solid rgba(148, 163, 184, 0.1);
   border-radius: 0 !important;
-  background: rgba(8, 11, 16, 0.6);
-  min-width: 145px;
+  background: linear-gradient(180deg, rgba(12, 18, 28, 0.85), rgba(8, 11, 18, 0.75));
+  min-width: 5.25rem;
   font-weight: 600;
   color: var(--color-text-secondary);
-  padding: 0.6rem 1rem;
+  padding: 0.55rem 0.95rem;
   transition: color 0.15s ease, background 0.15s ease;
 }
 
 .side-switch button:hover:not(.active) {
-  color: var(--color-text);
-  background: rgba(30, 41, 59, 0.5);
+  color: #e2e8f0;
+  background: rgba(30, 41, 59, 0.55);
 }
 
 .side-switch button:last-child {
@@ -961,7 +1319,7 @@ dd {
 .badge-illustrator-body {
   display: grid;
   grid-template-columns: minmax(320px, 0.92fr) minmax(280px, 1.08fr);
-  gap: 1.1rem;
+  gap: 1.2rem;
   min-height: 0;
   flex: 1;
   overflow: hidden;
@@ -976,23 +1334,23 @@ dd {
 
 .badge-settings,
 .badge-preview-panel {
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid rgba(148, 163, 184, 0.14);
   border-radius: var(--radius-lg);
-  padding: 1rem 1rem 1.05rem;
-  background: linear-gradient(165deg, rgba(18, 24, 36, 0.97), rgba(8, 12, 20, 0.98));
+  padding: 1.1rem 1.15rem 1.15rem;
+  background: linear-gradient(175deg, rgba(22, 30, 42, 0.94) 0%, rgba(11, 17, 26, 0.96) 100%);
   min-height: 0;
   min-width: 0;
-  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.035);
 }
 
 .badge-settings {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.75rem;
   min-height: 0;
   max-height: 100%;
-  padding-right: 0.5rem;
+  padding-right: 0.55rem;
   scrollbar-width: thin;
   scrollbar-color: rgba(59, 130, 246, 0.35) rgba(15, 23, 42, 0.5);
 }
@@ -1016,44 +1374,36 @@ dd {
 .badge-preview-panel {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.85rem;
   align-items: stretch;
 }
 
 .badge-preview-header {
   flex-shrink: 0;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.badge-preview-heading {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.5rem 0.75rem;
-}
-
-.badge-preview-header h3 {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
+  gap: 0.35rem 0.65rem;
   margin: 0;
-  font-size: 1rem;
+  font-family: "Archivo Narrow", "Inter", sans-serif;
+  font-size: 1.02rem;
   font-weight: 700;
   letter-spacing: -0.02em;
+  color: #f1f5f9;
+  line-height: 1.25;
 }
 
-.badge-preview-header h3::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #22c55e;
-  box-shadow: 0 0 12px rgba(34, 197, 94, 0.7);
-  flex-shrink: 0;
-}
-
-.badge-preview-subtitle {
-  margin: 0;
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: var(--color-text-muted);
-  letter-spacing: 0.02em;
+.badge-preview-heading-meta {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #64748b;
 }
 
 /* Centers the card; allows shrinking in narrow / stacked layouts without squashing aspect ratio */
@@ -1068,11 +1418,11 @@ dd {
 }
 
 .settings-section {
-  border: 1px solid var(--color-border);
+  border: 1px solid rgba(148, 163, 184, 0.09);
   border-radius: var(--radius-md);
-  padding: 0.85rem 0.95rem;
-  background: linear-gradient(145deg, rgba(15, 23, 42, 0.55), rgba(8, 11, 18, 0.65));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  padding: 0.85rem 0.95rem 0.9rem 1rem;
+  background: linear-gradient(165deg, rgba(20, 28, 40, 0.55), rgba(11, 16, 26, 0.72));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
   position: relative;
 }
 
@@ -1083,23 +1433,25 @@ dd {
   top: 10px;
   bottom: 10px;
   width: 2px;
-  border-radius: 0 2px 2px 0;
-  background: linear-gradient(180deg, var(--color-accent-bright), var(--color-accent));
-  opacity: 0.5;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, #60a5fa, #2563eb);
+  opacity: 0.55;
 }
 
 .settings-section > h3 {
-  padding-left: 0.35rem;
+  padding-left: 0.4rem;
+  font-family: "Archivo Narrow", "Inter", sans-serif;
+  color: #f1f5f9;
 }
 
 .settings-section > h4 {
-  margin: 0 0 0.5rem;
-  padding-left: 0.35rem;
-  font-size: 0.82rem;
+  margin: 0 0 0.55rem;
+  padding-left: 0.4rem;
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-accent-bright);
+  letter-spacing: 0.07em;
+  color: #93c5fd;
 }
 
 .vcard-settings > h4 {
@@ -1111,21 +1463,23 @@ dd {
 }
 
 .logo-positioning-controls {
-  margin: 0.5rem 0 0.7rem;
+  margin: 0.45rem 0 0.15rem;
   margin-left: 0.35rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: 0.7rem 0.75rem;
-  background: rgba(2, 6, 12, 0.45);
+  padding: 0.65rem 0 0;
+  border: none;
+  border-radius: 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.09);
+  background: transparent;
+  box-shadow: none;
 }
 
 .logo-positioning-controls h4 {
-  margin: 0 0 0.65rem;
-  font-size: 0.78rem;
+  margin: 0 0 0.55rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-secondary);
+  letter-spacing: 0.07em;
+  color: #7c8c9f;
 }
 
 .range-row {
@@ -1282,11 +1636,11 @@ dd {
 
 .vcard-field {
   margin-bottom: 0.6rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: 0.65rem 0.7rem;
-  background: rgba(8, 11, 18, 0.5);
-  transition: border-color 0.15s ease;
+  border: 1px solid rgba(71, 85, 105, 0.35);
+  border-radius: var(--radius-md);
+  padding: 0.68rem 0.75rem;
+  background: linear-gradient(180deg, rgba(12, 16, 24, 0.75), rgba(8, 11, 18, 0.85));
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .vcard-field:focus-within {
@@ -1315,9 +1669,11 @@ dd {
   flex: 0 0 auto;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  border: 1px solid rgba(148, 163, 184, 0.28);
   box-shadow:
-    0 28px 56px rgba(0, 0, 0, 0.5),
+    0 32px 64px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(59, 130, 246, 0.12),
+    0 0 48px rgba(37, 99, 235, 0.08),
     0 0 0 1px rgba(255, 255, 255, 0.06) inset,
     0 1px 0 rgba(255, 255, 255, 0.08) inset;
   background: #000;
@@ -1336,7 +1692,7 @@ dd {
   mix-blend-mode: normal;
   filter: brightness(0) invert(1);
   transform-origin: center center;
-  transition: transform 0.15s ease-out;
+  /* No transform transition: illustrator updates transform every pointer event via direct DOM writes. */
 }
 
 .badge-background-tint {
@@ -1472,11 +1828,12 @@ dd {
   height: 100%;
   object-fit: cover;
   transform-origin: center center;
-  transition: transform 0.15s ease-out;
+  /* No transform transition: same as .badge-cover — live slider preview writes style.transform every event. */
 }
 
 .badge-card-preview--isolate {
-  contain: layout style;
+  contain: layout style paint;
+  isolation: isolate;
 }
 
 .back-photo-placeholder {
@@ -1559,10 +1916,34 @@ dd {
 }
 
 .empty-detail {
-  display: grid;
-  place-content: center;
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 280px;
+  margin: 1rem;
+  padding: 2rem 1.5rem;
   text-align: center;
+  border-radius: var(--radius-lg);
+  border: 1px dashed rgba(148, 163, 184, 0.18);
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(59, 130, 246, 0.06), transparent 70%),
+    rgba(8, 11, 18, 0.4);
+}
+
+.empty-detail h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #cbd5e1;
+}
+
+.empty-detail p {
+  margin: 0;
+  max-width: 22rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 
 .floating-illustrator-btn {
@@ -1570,48 +1951,11 @@ dd {
   right: 1.4rem;
   bottom: 1.2rem;
   z-index: 20;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
-}
-
-.floating-export-menu {
-  position: fixed;
-  right: 1.4rem;
-  bottom: 1.2rem;
-  z-index: 45;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.5rem;
-}
-
-.floating-export-options {
-  display: grid;
-  gap: 0.35rem;
-  min-width: 260px;
-  background: linear-gradient(180deg, rgba(18, 24, 36, 0.98), rgba(8, 11, 18, 0.99));
-  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md);
-  padding: 0.6rem;
-  box-shadow: var(--shadow-float);
-}
-
-.floating-export-options button {
-  width: 100%;
-  text-align: left;
-  border-radius: var(--radius-sm);
-  font-size: 0.86rem;
-}
-
-.floating-export-options button:hover {
-  background: rgba(59, 130, 246, 0.12);
-  border-color: var(--color-accent-mid);
-}
-
-.floating-export-btn {
-  min-width: 176px;
-  box-shadow: 0 12px 32px rgba(37, 99, 235, 0.35);
-  border-radius: var(--radius-md);
-  font-weight: 600;
+  box-shadow:
+    0 14px 36px rgba(37, 99, 235, 0.35),
+    0 4px 14px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .badge-export-surfaces {
@@ -1635,9 +1979,13 @@ dd {
 }
 
 .export-notice {
-  margin: 0;
+  margin: 0.35rem 0 0;
   font-size: 0.82rem;
   color: #93c5fd;
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--radius-sm);
+  background: rgba(30, 58, 138, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
 .illustrator-modal-backdrop {
@@ -1651,19 +1999,28 @@ dd {
   padding: 1.1rem;
 }
 
+/* Electron: backdrop blur forces expensive full-surface compositing each frame; browser build stays unchanged. */
+body.electron-app .illustrator-modal-backdrop {
+  backdrop-filter: none;
+  background: rgba(2, 6, 23, 0.92);
+}
+
 .illustrator-modal-window {
   width: min(96vw, 1700px);
   max-width: 100%;
   min-width: 0;
   height: min(93vh, 1200px);
   max-height: min(93vh, 100dvh - 2rem);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border-strong);
-  background: linear-gradient(180deg, #0f1624, #0a0e16);
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: linear-gradient(175deg, #121a28 0%, #0c121c 42%, #080c14 100%);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: var(--shadow-float), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  box-shadow:
+    var(--shadow-float),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 0 80px rgba(37, 99, 235, 0.06);
 }
 
 .illustrator-modal-window > .badge-illustrator {
@@ -1681,6 +2038,11 @@ dd {
   display: grid;
   place-items: center;
   padding: 1rem;
+}
+
+body.electron-app .settings-modal-backdrop {
+  backdrop-filter: none;
+  background: rgba(2, 6, 23, 0.94);
 }
 
 .settings-modal-window {
@@ -1801,23 +2163,46 @@ dd {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1rem 1.15rem;
-  border-bottom: 1px solid var(--color-border);
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(8, 11, 18, 0.98));
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  background: linear-gradient(180deg, rgba(18, 26, 38, 0.92), rgba(10, 14, 22, 0.88));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .illustrator-modal-header h2 {
   margin: 0;
-  font-size: 1.25rem;
+  font-family: "Archivo Narrow", "Inter", sans-serif;
+  font-size: 1.28rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #f8fafc;
+  line-height: 1.15;
 }
 
 .illustrator-modal-header p {
-  margin: 0.1rem 0 0;
+  margin: 0.25rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.4;
   color: #94a3b8;
+  max-width: 36rem;
 }
 
 .modal-close-btn {
-  min-width: 86px;
+  flex-shrink: 0;
+  min-width: 5.5rem;
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.5), rgba(15, 23, 42, 0.65));
+  color: #e2e8f0;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.modal-close-btn:hover {
+  border-color: rgba(96, 165, 250, 0.45);
+  background: rgba(59, 130, 246, 0.12);
+  color: #f8fafc;
 }
 
 @media (max-width: 1100px) {
@@ -1865,7 +2250,34 @@ dd {
   }
 
   .side-switch button {
-    min-width: min(145px, 42vw);
+    min-width: min(5.25rem, 28vw);
+  }
+
+  .illustrator-toolbar-row--primary {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .illustrator-toolbar-lead {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .illustrator-export-anchor {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .illustrator-export-trigger {
+    width: 100%;
+    text-align: center;
+  }
+
+  .illustrator-export-dropdown {
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: none;
   }
 }
 
@@ -1874,9 +2286,24 @@ dd {
     padding: 1rem;
   }
 
+  .app-hero-surface {
+    padding: 1.1rem 1.15rem;
+  }
+
+  .topbar-logo-wrap {
+    width: 4.5rem;
+    height: 4.5rem;
+    padding: 0.45rem;
+  }
+
   .topbar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .topbar-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
   .form-grid {
@@ -1891,12 +2318,36 @@ dd {
     grid-template-columns: 1fr;
   }
 
-  dl {
+  .detail-panel dl {
     grid-template-columns: 1fr;
   }
 
-  .illustrator-topbar {
+  .illustrator-toolbar {
+    padding: 0.75rem 0.85rem 0.85rem 1rem;
+  }
+
+  .illustrator-toolbar-row--secondary {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .illustrator-card-bg-field {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .illustrator-card-bg-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .illustrator-card-bg-controls .background-color-inputs {
+    max-width: none;
+  }
+
+  .illustrator-toolbar-row--secondary .btn-reset-factory {
+    width: 100%;
+    align-self: stretch;
   }
 
   .background-color-control {
@@ -1907,17 +2358,5 @@ dd {
     left: 1rem;
     right: 1rem;
     bottom: 0.9rem;
-  }
-
-  .floating-export-menu {
-    left: 1rem;
-    right: 1rem;
-    align-items: stretch;
-  }
-
-  .floating-export-options,
-  .floating-export-btn {
-    width: 100%;
-    min-width: 0;
   }
 }

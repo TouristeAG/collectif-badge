@@ -993,7 +993,7 @@ function mergeVCardFromStored(base: VCardSettings, stored: Partial<VCardSettings
 function SetAsDefaultButton({ onClick, label }: { onClick: () => void; label?: string }) {
   const { t } = useTranslation();
   return (
-    <button type="button" className="btn-set-default" onClick={onClick}>
+    <button type="button" className="btn-set-default btn-set-default--subtle" onClick={onClick}>
       {label ?? t("illustrator.setAsDefault")}
     </button>
   );
@@ -1111,6 +1111,11 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
   const exportBackRoleLabelRef = useRef<HTMLSpanElement>(null);
   const previewBenevoleRightGapRef = useRef<number | null>(null);
   const exportBenevoleRightGapRef = useRef<number | null>(null);
+  /** Avoid querySelector on every pointermove during slider drag (Electron jank). */
+  const cachedPreviewCoverEl = useRef<HTMLElement | null>(null);
+  const cachedPreviewQrEl = useRef<HTMLElement | null>(null);
+  const cachedPreviewNfcEl = useRef<HTMLElement | null>(null);
+  const cachedPreviewBackPhotoEl = useRef<HTMLElement | null>(null);
   const previewRoleOffsetXRef = useRef(0);
   const exportRoleOffsetXRef = useRef(0);
   const roleEdgeAdjustCqwByTypeRef = useRef<Record<BadgePersonType, number>>(FACTORY_ROLE_EDGE_CQW);
@@ -1407,7 +1412,13 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
   // are updated only once on drag end via the normal onValueChange path.
 
   const applyPreviewLogoTransform = useCallback(() => {
-    const el = previewCardRef.current?.querySelector<HTMLElement>(".badge-cover");
+    const root = previewCardRef.current;
+    if (!root) return;
+    let el = cachedPreviewCoverEl.current;
+    if (!el || !root.contains(el)) {
+      el = root.querySelector<HTMLElement>(".badge-cover");
+      cachedPreviewCoverEl.current = el;
+    }
     if (!el) return;
     const { zoom, x, y, z } = liveLogoRef.current;
     const scale = Math.max(0.2, zoom / 100);
@@ -1417,7 +1428,13 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
   }, []);
 
   const applyPreviewQrStyle = useCallback(() => {
-    const el = previewCardRef.current?.querySelector<HTMLElement>(".badge-qr");
+    const root = previewCardRef.current;
+    if (!root) return;
+    let el = cachedPreviewQrEl.current;
+    if (!el || !root.contains(el)) {
+      el = root.querySelector<HTMLElement>(".badge-qr");
+      cachedPreviewQrEl.current = el;
+    }
     if (!el) return;
     const { topPct, rightPct, widthPct, offsetX, offsetY, offsetZ, zoom } = liveQrRef.current;
     const xCqw = offsetX * DESIGN_X_TO_CQW;
@@ -1429,7 +1446,13 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
   }, []);
 
   const applyPreviewNfcStyle = useCallback(() => {
-    const el = previewCardRef.current?.querySelector<HTMLElement>(".badge-nfc");
+    const root = previewCardRef.current;
+    if (!root) return;
+    let el = cachedPreviewNfcEl.current;
+    if (!el || !root.contains(el)) {
+      el = root.querySelector<HTMLElement>(".badge-nfc");
+      cachedPreviewNfcEl.current = el;
+    }
     if (!el) return;
     const { bottomPct, rightPct, widthPct, offsetX, offsetY, offsetZ, zoom } = liveNfcRef.current;
     const xCqw = offsetX * DESIGN_X_TO_CQW;
@@ -1441,7 +1464,13 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
   }, []);
 
   const applyPreviewPhotoStyle = useCallback(() => {
-    const el = previewCardRef.current?.querySelector<HTMLElement>(".back-photo-img");
+    const root = previewCardRef.current;
+    if (!root) return;
+    let el = cachedPreviewBackPhotoEl.current;
+    if (!el || !root.contains(el)) {
+      el = root.querySelector<HTMLElement>(".back-photo-img");
+      cachedPreviewBackPhotoEl.current = el;
+    }
     if (!el) return;
     const { zoom, offsetX, offsetY, rotation } = livePhotoRef.current;
     const scale = Math.max(1, zoom / 100);
@@ -1457,17 +1486,11 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
   const onPreviewLogoOffsetY = useCallback((v: number) => { liveLogoRef.current.y = v; applyPreviewLogoTransform(); }, [applyPreviewLogoTransform]);
   const onPreviewLogoOffsetZ = useCallback((v: number) => { liveLogoRef.current.z = v; applyPreviewLogoTransform(); }, [applyPreviewLogoTransform]);
 
-  const onPreviewQrTopPct = useCallback((v: number) => { liveQrRef.current.topPct = v; applyPreviewQrStyle(); }, [applyPreviewQrStyle]);
-  const onPreviewQrRightPct = useCallback((v: number) => { liveQrRef.current.rightPct = v; applyPreviewQrStyle(); }, [applyPreviewQrStyle]);
-  const onPreviewQrWidthPct = useCallback((v: number) => { liveQrRef.current.widthPct = v; applyPreviewQrStyle(); }, [applyPreviewQrStyle]);
   const onPreviewQrOffsetX = useCallback((v: number) => { liveQrRef.current.offsetX = v; applyPreviewQrStyle(); }, [applyPreviewQrStyle]);
   const onPreviewQrOffsetY = useCallback((v: number) => { liveQrRef.current.offsetY = v; applyPreviewQrStyle(); }, [applyPreviewQrStyle]);
   const onPreviewQrOffsetZ = useCallback((v: number) => { liveQrRef.current.offsetZ = v; applyPreviewQrStyle(); }, [applyPreviewQrStyle]);
   const onPreviewQrZoom = useCallback((v: number) => { liveQrRef.current.zoom = v; applyPreviewQrStyle(); }, [applyPreviewQrStyle]);
 
-  const onPreviewNfcBottomPct = useCallback((v: number) => { liveNfcRef.current.bottomPct = v; applyPreviewNfcStyle(); }, [applyPreviewNfcStyle]);
-  const onPreviewNfcRightPct = useCallback((v: number) => { liveNfcRef.current.rightPct = v; applyPreviewNfcStyle(); }, [applyPreviewNfcStyle]);
-  const onPreviewNfcWidthPct = useCallback((v: number) => { liveNfcRef.current.widthPct = v; applyPreviewNfcStyle(); }, [applyPreviewNfcStyle]);
   const onPreviewNfcOffsetX = useCallback((v: number) => { liveNfcRef.current.offsetX = v; applyPreviewNfcStyle(); }, [applyPreviewNfcStyle]);
   const onPreviewNfcOffsetY = useCallback((v: number) => { liveNfcRef.current.offsetY = v; applyPreviewNfcStyle(); }, [applyPreviewNfcStyle]);
   const onPreviewNfcOffsetZ = useCallback((v: number) => { liveNfcRef.current.offsetZ = v; applyPreviewNfcStyle(); }, [applyPreviewNfcStyle]);
@@ -2561,61 +2584,108 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
 
   return (
     <div className="badge-illustrator">
-      <div className="illustrator-topbar">
-        <div className="illustrator-title-block">
-          <h3>{t("illustrator.title")}</h3>
-          <p className="hint">{t("illustrator.subtitle")}</p>
-          <div className="person-meta-chips">
-            <span className="meta-chip">{activePerson.displayName}</span>
-            <span className="meta-chip">{categoryRole(activePerson)}</span>
-            {activePerson.venue && <span className="meta-chip">{activePerson.venue}</span>}
+      <header className="illustrator-toolbar">
+        <div className="illustrator-toolbar-row illustrator-toolbar-row--primary">
+          <div className="illustrator-toolbar-lead">
+            <div className="side-switch" role="group" aria-label={t("illustrator.sideSwitchAria")}>
+              <button
+                type="button"
+                className={selectedSide === "front" ? "active" : ""}
+                onClick={() => setSelectedSide("front")}
+              >
+                {t("illustrator.frontSideShort")}
+              </button>
+              <button
+                type="button"
+                className={selectedSide === "back" ? "active" : ""}
+                onClick={() => setSelectedSide("back")}
+              >
+                {t("illustrator.backSideShort")}
+              </button>
+            </div>
+            <div className="illustrator-context-chips" aria-live="polite">
+              <div className="person-meta-chips">
+                <span className="meta-chip meta-chip--name">{activePerson.displayName}</span>
+                <span className="meta-chip">{categoryRole(activePerson)}</span>
+                {activePerson.venue && <span className="meta-chip">{activePerson.venue}</span>}
+              </div>
+            </div>
+          </div>
+          <div className="illustrator-export-anchor" ref={exportMenuRef}>
+            {isExportMenuOpen && (
+              <div className="illustrator-export-dropdown">
+                <button type="button" onClick={() => handleExport("png")} disabled={isExporting}>
+                  {t("illustrator.exportPng")}
+                </button>
+                <button type="button" onClick={() => handleExport("jpg")} disabled={isExporting}>
+                  {t("illustrator.exportJpg")}
+                </button>
+                <button type="button" onClick={() => handleExport("svg")} disabled={isExporting}>
+                  {t("illustrator.exportSvg")}
+                </button>
+                <button type="button" onClick={() => handleExport("pdf")} disabled={isExporting}>
+                  {t("illustrator.exportPdf")}
+                </button>
+                {canUseCanvaExport && (
+                  <button type="button" onClick={() => handleExport("canva")} disabled={isExporting}>
+                    {t("illustrator.exportCanva")}
+                  </button>
+                )}
+                <button type="button" onClick={() => handleExport("bs")} disabled={isExporting}>
+                  {t("illustrator.exportBs")}
+                </button>
+              </div>
+            )}
+            <button
+              type="button"
+              className="primary illustrator-export-trigger"
+              onClick={() => setIsExportMenuOpen((old) => !old)}
+              disabled={isExporting}
+            >
+              {isExporting ? t("illustrator.exporting") : t("illustrator.exportBadge")}
+            </button>
           </div>
         </div>
-        <div className="side-switch">
-          <button
-            className={selectedSide === "front" ? "active" : ""}
-            onClick={() => setSelectedSide("front")}
-          >
-            {t("illustrator.frontSide")}
-          </button>
-          <button
-            className={selectedSide === "back" ? "active" : ""}
-            onClick={() => setSelectedSide("back")}
-          >
-            {t("illustrator.backSide")}
-          </button>
-        </div>
-        <label className="background-color-control">
-          <span>{t("illustrator.cardBackground")}</span>
-          <div className="background-color-inputs">
-            <input
-              type="color"
-              value={safeCardBackgroundColor}
-              onChange={(event) => setCardBackgroundColor(event.target.value)}
-              aria-label={t("illustrator.ariaCardBgColor")}
-            />
-            <input
-              type="text"
-              value={cardBackgroundColor}
-              onChange={(event) => setCardBackgroundColor(event.target.value)}
-              placeholder="#1b1b1b"
-            />
-          </div>
-          <SetAsDefaultButton
-            onClick={() => {
-              persistIllustratorPartial({ cardBackgroundColor });
-              flashDefaultsSaved();
-            }}
-            label={t("illustrator.setBackgroundDefault")}
-          />
-        </label>
-        <div className="illustrator-topbar-actions">
+
+        <div className="illustrator-toolbar-row illustrator-toolbar-row--secondary">
+          <label className="illustrator-card-bg-field">
+            <span className="illustrator-card-bg-label">{t("illustrator.cardBackground")}</span>
+            <div className="illustrator-card-bg-controls">
+              <div className="background-color-inputs">
+                <input
+                  type="color"
+                  value={safeCardBackgroundColor}
+                  onChange={(event) => setCardBackgroundColor(event.target.value)}
+                  aria-label={t("illustrator.ariaCardBgColor")}
+                />
+                <input
+                  type="text"
+                  value={cardBackgroundColor}
+                  onChange={(event) => setCardBackgroundColor(event.target.value)}
+                  placeholder="#1b1b1b"
+                />
+              </div>
+              <SetAsDefaultButton
+                onClick={() => {
+                  persistIllustratorPartial({ cardBackgroundColor });
+                  flashDefaultsSaved();
+                }}
+                label={t("illustrator.setBackgroundDefault")}
+              />
+            </div>
+          </label>
           <button type="button" className="btn-reset-factory" onClick={applyFactoryReset}>
-            {t("illustrator.resetFactory")}
+            {t("illustrator.resetFactoryShort")}
           </button>
         </div>
-      </div>
-      {defaultsHint && <p className="defaults-hint">{defaultsHint}</p>}
+
+        {(defaultsHint || exportNotice) && (
+          <div className="illustrator-toolbar-messages">
+            {defaultsHint ? <p className="defaults-hint">{defaultsHint}</p> : null}
+            {exportNotice ? <p className="export-notice">{exportNotice}</p> : null}
+          </div>
+        )}
+      </header>
 
       {people.length > 1 && (
         <nav className="badge-illustrator-person-tabs" aria-label={t("illustrator.peopleTabsLabel")}>
@@ -2764,66 +2834,6 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
 
                   <div className="slider-with-default">
                     <label className="range-row">
-                      <span>{t("illustrator.top")}</span>
-                      <ResponsiveRangeInput
-                        value={qrTopPct}
-                        onPreviewChange={onPreviewQrTopPct}
-                        onValueChange={setQrTopPct}
-                        min={0}
-                        max={40}
-                        step={0.5}
-                        renderOutput={formatRangeOutputPct}
-                      />
-                    </label>
-                    <SetAsDefaultButton
-                      onClick={() => {
-                        persistIllustratorPartial({ qrTopPct });
-                        flashDefaultsSaved();
-                      }}
-                    />
-                  </div>
-                  <div className="slider-with-default">
-                    <label className="range-row">
-                      <span>{t("illustrator.right")}</span>
-                      <ResponsiveRangeInput
-                        value={qrRightPct}
-                        onPreviewChange={onPreviewQrRightPct}
-                        onValueChange={setQrRightPct}
-                        min={0}
-                        max={40}
-                        step={0.5}
-                        renderOutput={formatRangeOutputPct}
-                      />
-                    </label>
-                    <SetAsDefaultButton
-                      onClick={() => {
-                        persistIllustratorPartial({ qrRightPct });
-                        flashDefaultsSaved();
-                      }}
-                    />
-                  </div>
-                  <div className="slider-with-default">
-                    <label className="range-row">
-                      <span>{t("illustrator.width")}</span>
-                      <ResponsiveRangeInput
-                        value={qrWidthPct}
-                        onPreviewChange={onPreviewQrWidthPct}
-                        onValueChange={setQrWidthPct}
-                        min={5}
-                        max={45}
-                        step={0.5}
-                        renderOutput={formatRangeOutputPct}
-                      />
-                    </label>
-                    <SetAsDefaultButton
-                      onClick={() => {
-                        persistIllustratorPartial({ qrWidthPct });
-                        flashDefaultsSaved();
-                      }}
-                    />
-                  </div>
-                  <div className="slider-with-default">
-                    <label className="range-row">
                       <span>{t("illustrator.axisX")}</span>
                       <ResponsiveRangeInput
                         value={qrOffsetX}
@@ -2908,66 +2918,6 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
               {showNfcMark && (
                 <div className="settings-section">
                   <h4>{t("illustrator.nfcSectionTitle")}</h4>
-                  <div className="slider-with-default">
-                    <label className="range-row">
-                      <span>{t("illustrator.bottom")}</span>
-                      <ResponsiveRangeInput
-                        value={nfcBottomPct}
-                        onPreviewChange={onPreviewNfcBottomPct}
-                        onValueChange={setNfcBottomPct}
-                        min={0}
-                        max={40}
-                        step={0.5}
-                        renderOutput={formatRangeOutputPct}
-                      />
-                    </label>
-                    <SetAsDefaultButton
-                      onClick={() => {
-                        persistIllustratorPartial({ nfcBottomPct });
-                        flashDefaultsSaved();
-                      }}
-                    />
-                  </div>
-                  <div className="slider-with-default">
-                    <label className="range-row">
-                      <span>{t("illustrator.right")}</span>
-                      <ResponsiveRangeInput
-                        value={nfcRightPct}
-                        onPreviewChange={onPreviewNfcRightPct}
-                        onValueChange={setNfcRightPct}
-                        min={0}
-                        max={40}
-                        step={0.5}
-                        renderOutput={formatRangeOutputPct}
-                      />
-                    </label>
-                    <SetAsDefaultButton
-                      onClick={() => {
-                        persistIllustratorPartial({ nfcRightPct });
-                        flashDefaultsSaved();
-                      }}
-                    />
-                  </div>
-                  <div className="slider-with-default">
-                    <label className="range-row">
-                      <span>{t("illustrator.width")}</span>
-                      <ResponsiveRangeInput
-                        value={nfcWidthPct}
-                        onPreviewChange={onPreviewNfcWidthPct}
-                        onValueChange={setNfcWidthPct}
-                        min={5}
-                        max={40}
-                        step={0.5}
-                        renderOutput={formatRangeOutputPct}
-                      />
-                    </label>
-                    <SetAsDefaultButton
-                      onClick={() => {
-                        persistIllustratorPartial({ nfcWidthPct });
-                        flashDefaultsSaved();
-                      }}
-                    />
-                  </div>
                   <div className="slider-with-default">
                     <label className="range-row">
                       <span>{t("illustrator.axisX")}</span>
@@ -3423,8 +3373,10 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
 
         <section className="badge-preview-panel">
           <div className="badge-preview-header">
-            <h3>{t("illustrator.livePreview")}</h3>
-            <p className="badge-preview-subtitle">{t("illustrator.previewSubtitle")}</p>
+            <h3 className="badge-preview-heading">
+              <span>{t("illustrator.livePreview")}</span>
+              <span className="badge-preview-heading-meta">{t("illustrator.previewSubtitle")}</span>
+            </h3>
           </div>
           <div className="badge-preview-canvas-wrap">
             <div
@@ -3447,42 +3399,6 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
         </div>
       </div>
 
-      <div className="floating-export-menu" ref={exportMenuRef}>
-        {isExportMenuOpen && (
-          <div className="floating-export-options">
-            <button type="button" onClick={() => handleExport("png")} disabled={isExporting}>
-              {t("illustrator.exportPng")}
-            </button>
-            <button type="button" onClick={() => handleExport("jpg")} disabled={isExporting}>
-              {t("illustrator.exportJpg")}
-            </button>
-            <button type="button" onClick={() => handleExport("svg")} disabled={isExporting}>
-              {t("illustrator.exportSvg")}
-            </button>
-            <button type="button" onClick={() => handleExport("pdf")} disabled={isExporting}>
-              {t("illustrator.exportPdf")}
-            </button>
-            {canUseCanvaExport && (
-              <button type="button" onClick={() => handleExport("canva")} disabled={isExporting}>
-                {t("illustrator.exportCanva")}
-              </button>
-            )}
-            <button type="button" onClick={() => handleExport("bs")} disabled={isExporting}>
-              {t("illustrator.exportBs")}
-            </button>
-          </div>
-        )}
-        <button
-          type="button"
-          className="primary floating-export-btn"
-          onClick={() => setIsExportMenuOpen((old) => !old)}
-          disabled={isExporting}
-        >
-          {isExporting ? t("illustrator.exporting") : t("illustrator.exportBadge")}
-        </button>
-      </div>
-
-      {exportNotice && <p className="export-notice">{exportNotice}</p>}
     </div>
   );
 }

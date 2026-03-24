@@ -120,6 +120,34 @@ export function CanvaSettingsModal({ isOpen, onClose }: CanvaSettingsModalProps)
     }
   }
 
+  async function handleCheckUpdates() {
+    setMessage("");
+    if (!api?.updaterCheckNow) {
+      setMessage(t("settings.updatesUnavailable"));
+      return;
+    }
+    setBusy(true);
+    try {
+      const status = await api.updaterCheckNow();
+      if (status.error) {
+        setMessage(status.error);
+      } else if (status.updateAvailable) {
+        setMessage(
+          t("settings.updateFound", {
+            current: status.currentVersion,
+            latest: status.latestVersion ?? "?",
+          })
+        );
+      } else {
+        setMessage(t("settings.upToDate", { version: status.currentVersion }));
+      }
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : t("settings.updateCheckFailed"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="settings-modal-backdrop" onClick={onClose} role="presentation">
       <section className="settings-modal-window" onClick={(e) => e.stopPropagation()}>
@@ -147,6 +175,14 @@ export function CanvaSettingsModal({ isOpen, onClose }: CanvaSettingsModalProps)
                 <option value="en">{t("settings.languageEn")}</option>
               </select>
             </label>
+          </div>
+
+          <div className="settings-section">
+            <h3>{t("settings.updatesSection")}</h3>
+            <p className="hint">{t("settings.updatesIntro")}</p>
+            <button type="button" className="primary" onClick={() => void handleCheckUpdates()} disabled={busy}>
+              {busy ? t("settings.checkingUpdates") : t("settings.checkUpdates")}
+            </button>
           </div>
 
           <div className="settings-section settings-section--intro">
