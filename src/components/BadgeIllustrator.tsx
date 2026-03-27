@@ -86,7 +86,11 @@ function computeRoleTextFontSizePx(h: number, roleLabel: string, roleSizeAdjust:
   if (canvaSize != null) {
     basePx = h * CANVA_BASE_SCALE * (canvaSize / CANVA_REF);
   } else {
-    basePx = Math.max(6, Math.min(h / (roleLabel.length * 0.82), 55));
+    // Custom label: use AUTRE's canonical size as baseline so the font scales
+    // proportionally with the container (same as the built-in labels). The
+    // previous formula capped at 55 px absolute, which looked correct in the
+    // small preview but produced a tiny result in the full-size export surface.
+    basePx = h * CANVA_BASE_SCALE * (CANVA_REF_SIZES["AUTRE"] / CANVA_REF);
   }
   return basePx * (roleSizeAdjust / 100);
 }
@@ -670,23 +674,8 @@ function buildEventManagerQrPayload(person: PersonRecord): string {
     return "";
   }
 
-  if (person.category === "volunteer") {
-    return JSON.stringify({
-      type: "volunteer",
-      version: 1,
-      id: person.eventManagerId?.trim() ?? "",
-      sheetsId: String(person.rowNumber),
-      name: person.displayName,
-      abbr: person.abbreviation?.trim() ?? "",
-    });
-  }
-
-  return JSON.stringify({
-    type: "guest",
-    version: 1,
-    name: person.displayName,
-    abbr: person.abbreviation?.trim() ?? "",
-  });
+  // Encode the plain NanoID, matching EventManagerApp's format for volunteers and guests.
+  return person.eventManagerId?.trim() ?? "";
 }
 
 function defaultCategoryLabel(person: PersonRecord): string {

@@ -96,13 +96,14 @@ function parseGuestList(rows) {
         isVolunteerBenefit ? "volunteer_guest" : "permanent_guest",
         name,
         {
+          eventManagerId: clean(row[9]),
           email: clean(row[1]),
           phone: clean(row[2]),
           invitations: Number.parseInt(clean(row[3]), 10) || 0,
           venue: clean(row[4]),
           notes: clean(row[5]),
           nfcCardUid: clean(row[8]),
-          sheetColumns: rowToNonEmptyColumnMap(row, 9)
+          sheetColumns: rowToNonEmptyColumnMap(row, 10)
         }
       )
     );
@@ -172,7 +173,7 @@ async function loadPeopleFromSheets(payload) {
   const sheets = await createSheetsClient(serviceAccountKeyPath, serviceAccountCredentials);
   const [volunteerRows, guestRows, volunteerGuestRows, tempGuestRows] = await Promise.all([
     readRange(sheets, spreadsheetId, `${sheetNames.volunteers}!A2:K`),
-    readRange(sheets, spreadsheetId, `${sheetNames.guestList}!A2:I`),
+    readRange(sheets, spreadsheetId, `${sheetNames.guestList}!A2:J`),
     readRange(sheets, spreadsheetId, `${sheetNames.volunteerGuestList}!A2:H`),
     readRange(sheets, spreadsheetId, `${sheetNames.tempGuestList}!A2:F`)
   ]);

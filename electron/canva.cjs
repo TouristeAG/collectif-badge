@@ -273,7 +273,7 @@ function startLoginFlow(shell) {
           return;
         }
         res.end(
-          `<!DOCTYPE html><html><body style="font-family:sans-serif;padding:1.5rem"><p><strong>Connected.</strong> You can close this tab and return to COLLECTIF BADGÉ.</p></body></html>`
+          `<!DOCTYPE html><html><body style="font-family:sans-serif;padding:1.5rem"><p><strong>Connected.</strong> You can close this tab and return to Collectif Badgé.</p></body></html>`
         );
         clearTimeout(timer);
         server.close(() => {

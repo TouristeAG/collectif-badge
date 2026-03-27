@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "COLLECTIF BADGÉ",
+    "title": "Collectif Badgé",
     "brandLogoAlt": "Collectif Nocturne logo"
   },
   "common": {
@@ -36,9 +36,9 @@
     "networkShareFixStep2": "Ad-hoc sign the installed app and re-register it in the macOS Application Firewall.",
     "networkShareFixStep3": "Restart the app, enable Local network sharing again, then try the first Network URL shown.",
     "networkShareFixCmdRun": "Command (Terminal) — one-time fix (requires admin password):",
-    "networkShareFixCmdRunValue": "sudo zsh \"/Applications/COLLECTIF BADGE.app/Contents/Resources/scripts/sign-and-allow.sh\"",
+    "networkShareFixCmdRunValue": "sudo zsh \"/Applications/Collectif Badgé.app/Contents/Resources/scripts/sign-and-allow.sh\"",
     "networkShareFixCmdVerify": "Command (optional) — verify the app now has a signature:",
-    "networkShareFixCmdVerifyValue": "codesign -dv --verbose=4 \"/Applications/COLLECTIF BADGE.app\"",
+    "networkShareFixCmdVerifyValue": "codesign -dv --verbose=4 \"/Applications/Collectif Badgé.app\"",
     "networkShareFixOutro": "For public GitHub releases: use Developer ID signing + Apple notarization in CI. Ad-hoc signing is a local fallback only.",
     "updatesSection": "Updates",
     "updatesIntro": "Manually check whether a newer app version is available.",

@@ -407,6 +407,11 @@ select {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+option {
+  background: #0c1018;
+  color: #e8edf4;
+}
+
 input:focus,
 select:focus {
   outline: none;

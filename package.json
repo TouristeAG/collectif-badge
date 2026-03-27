@@ -53,7 +53,7 @@
   },
   "build": {
     "appId": "ch.collectif.badgeapp",
-    "productName": "COLLECTIF BADGE",
+    "productName": "Collectif Badgé",
     "files": [
       "dist/**/*",
       "electron/**/*",

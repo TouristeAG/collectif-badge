@@ -58,7 +58,7 @@ function createWindow() {
     height: 860,
     minWidth: 980,
     minHeight: 700,
-    title: "COLLECTIF BADGÉ",
+    title: "Collectif Badgé",
     backgroundColor: "#0f172a",
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
