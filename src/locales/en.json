@@ -5,7 +5,9 @@
   },
   "common": {
     "close": "Close",
-    "browse": "Browse"
+    "browse": "Browse",
+    "apply": "Apply",
+    "cancel": "Cancel"
   },
   "settings": {
     "title": "Settings",
@@ -115,6 +117,8 @@
     "filterPermanentGuests": "Permanent guests",
     "filterVolunteerGuests": "Volunteer guests",
     "filterTempGuests": "Temporary guests",
+    "hideTemporaryGuests": "Hide temporary guests",
+    "hideShort": "hide",
     "listMultiHint": "Use the checkboxes to open several people at once in the badge illustrator. If none are checked, the selected row is used.",
     "includeInIllustrator": "Include {{name}} in illustrator",
     "emptyList": "No people found with this filter.",
@@ -225,6 +229,9 @@
     "backSide": "Back of badge",
     "frontSideShort": "Front",
     "backSideShort": "Back",
+    "badgeTheme": "Badge theme",
+    "badgeThemeSwitchToLight": "Switch badge to light mode",
+    "badgeThemeSwitchToDark": "Switch badge to dark mode",
     "cardBackground": "Card background",
     "ariaCardBgColor": "Select badge card background colour",
     "setBackgroundDefault": "Set background as default",
@@ -276,6 +283,8 @@
     "secondaryColour": "Secondary colour",
     "setSecondaryDefault": "Set secondary colour as default",
     "profilePhoto": "Profile photo",
+    "personalizePhoto": "Personalize image",
+    "personalizePhotoHint": "Open the advanced editor to tune positioning, lighting and effects.",
     "changePhoto": "Change photo",
     "browsePhoto": "Browse for photo",
     "removePhoto": "Remove",
@@ -285,10 +294,28 @@
     "frameRounded": "Rounded square",
     "setFrameDefault": "Set frame shape as default",
     "photoPositioning": "Photo positioning",
+    "photoTabPosition": "Position",
+    "photoTabLighting": "Lighting",
+    "photoTabEffects": "Effects",
+    "photoBrightness": "Brightness",
+    "photoHighlights": "Highlights",
+    "photoShadows": "Shadows",
+    "photoWhites": "Whites",
+    "photoBlacks": "Blacks",
+    "photoContrast": "Contrast",
+    "photoSaturation": "Saturation",
+    "photoTemperature": "Temperature",
+    "photoTint": "Tint",
+    "photoVignette": "Vignette",
+    "photoClarity": "Clarity",
+    "photoGain": "Gain",
+    "setPhotoPositionDefaults": "Set position defaults",
+    "setPhotoLightingDefaults": "Set lighting defaults",
+    "setPhotoEffectsDefaults": "Set effects defaults",
     "rotationShort": "Rot",
     "backQrSection": "QR code",
     "showBackQr": "Show QR code",
-    "backQrHint": "Encodes EventManagerApp JSON from sheet data only. Volunteers use id + sheetsId; guests use name + abbr. Temporary guests do not get a QR code.",
+    "backQrHint": "Encodes the EventManager ID from the sheet (ID column). If the ID is empty, no QR code is shown.",
     "livePreview": "Live preview",
     "previewSubtitle": "ID-1 · 85.6 × 54 mm",
     "exportPng": "Export .png (front + back)",
@@ -349,5 +376,9 @@
     "exportSurfaceUnavailable": "Export surface is unavailable.",
     "blobToBase64": "Could not convert blob to base64.",
     "blobUnexpected": "Unexpected blob conversion output."
+  },
+  "theme": {
+    "switchToDark": "Switch to dark mode",
+    "switchToLight": "Switch to light mode"
   }
 }

@@ -21,7 +21,7 @@ import sqlWasm from "sql.js/dist/sql-wasm.wasm?url";
 import coverTemplateImage from "../assets/badge-cover-template.png";
 import collectifnocturneLogo from "../assets/logo/collectifnocturne.png";
 import legrooveLogo from "../assets/logo/legroove-logo.png";
-import logoTerreau from "../assets/logo/logo_terreau.png";
+import logoTerreau from "../../LOGO/LOGO LIEUX/logo_terreau.png";
 import { BADGY_EMPTY_SQLITE_B64 } from "../assets/badgy-empty-sqlite";
 import { CANVA_IMAGE_FIELDS, CANVA_TEXT_FIELDS } from "../canvaAutofillFields";
 import type { PersonRecord } from "../types";
@@ -59,13 +59,30 @@ const PERSON_TYPE_META: Array<{
   value: BadgePersonType;
   displayLabel: string;
   defaultAccent: string;
+  lightAccent: string;
 }> = [
-  { value: "benevole", displayLabel: "BENEVOLE", defaultAccent: "#ffd699" },
-  { value: "salarie", displayLabel: "SALARIE·E·X", defaultAccent: "#e1a8f0" },
-  { value: "invite", displayLabel: "INVITE·E·X", defaultAccent: "#99daff" },
-  { value: "externe", displayLabel: "EXTERNE", defaultAccent: "#ff9999" },
-  { value: "autre", displayLabel: "AUTRE", defaultAccent: "#ff99d8" },
+  { value: "benevole",  displayLabel: "BENEVOLE",     defaultAccent: "#ffd699", lightAccent: "#b45309" },
+  { value: "salarie",   displayLabel: "SALARIE·E·X",  defaultAccent: "#e1a8f0", lightAccent: "#7c3aed" },
+  { value: "invite",    displayLabel: "INVITE·E·X",   defaultAccent: "#99daff", lightAccent: "#0284c7" },
+  { value: "externe",   displayLabel: "EXTERNE",      defaultAccent: "#ff9999", lightAccent: "#dc2626" },
+  { value: "autre",     displayLabel: "AUTRE",        defaultAccent: "#ff99d8", lightAccent: "#db2777" },
 ];
+
+const BADGE_DARK_DEFAULTS  = { bg: "#1b1b1b", secondary: "#ffffff" } as const;
+const BADGE_LIGHT_DEFAULTS = { bg: "#ffffff", secondary: "#1b1b1b" } as const;
+
+function defaultPersonTypeForCategory(person: PersonRecord): BadgePersonType {
+  switch (person.category) {
+    case "permanent_guest":
+      return "salarie";
+    case "temporary_guest":
+      return "externe";
+    case "volunteer":
+    case "volunteer_guest":
+    default:
+      return "benevole";
+  }
+}
 
 const CANVA_REF_SIZES: Record<string, number> = {
   BENEVOLE: 23.9,
@@ -243,6 +260,53 @@ function escapeVCardValue(value: string): string {
 
 function isValidHexColor(value: string): boolean {
   return /^#([0-9a-fA-F]{6})$/.test(value.trim());
+}
+
+type PhotoEditorTab = "position" | "lighting" | "effects";
+
+type PhotoAdjustments = {
+  frameShape: "circle" | "rounded";
+  zoom: number;
+  offsetX: number;
+  offsetY: number;
+  rotation: number;
+  brightness: number;
+  highlights: number;
+  shadows: number;
+  whites: number;
+  blacks: number;
+  contrast: number;
+  saturation: number;
+  temperature: number;
+  tint: number;
+  vignette: number;
+  clarity: number;
+  gain: number;
+  grayscale: boolean;
+  invert: boolean;
+};
+
+function buildPhotoCssFilter(p: PhotoAdjustments): string {
+  const brightness =
+    1 +
+    p.brightness / 100 +
+    p.highlights / 240 +
+    p.shadows / 300 +
+    p.gain / 220;
+  const contrast = 1 + p.contrast / 100 + p.whites / 260 + p.blacks / 260 + p.clarity / 180;
+  const saturation = 1 + p.saturation / 100;
+  const sepia = Math.max(0, p.temperature / 100) * 0.35;
+  const hueRotate = p.tint * 0.7;
+  const parts = [
+    `brightness(${Math.max(0.05, brightness).toFixed(3)})`,
+    `contrast(${Math.max(0.05, contrast).toFixed(3)})`,
+    `saturate(${Math.max(0, saturation).toFixed(3)})`,
+    `sepia(${sepia.toFixed(3)})`,
+    `hue-rotate(${hueRotate.toFixed(2)}deg)`,
+  ];
+  if (p.grayscale) parts.push("grayscale(1)");
+  if (p.invert) parts.push("invert(1)");
+  return parts.join(" ");
 }
 
 // ── Badgy Studio (.bs) export helpers ─────────────────────────────────────────
@@ -669,13 +733,11 @@ function buildBsEncodingXml(): string {
 }
 
 function buildEventManagerQrPayload(person: PersonRecord): string {
-  if (person.category === "temporary_guest") {
-    // Temporary guests do not have QR actions in EventManagerApp.
-    return "";
-  }
-
   // Encode the plain NanoID, matching EventManagerApp's format for volunteers and guests.
-  return person.eventManagerId?.trim() ?? "";
+  // For temporary guests, the ID comes from column G in the temp sheet.
+  const directId = person.eventManagerId?.trim();
+  if (directId) return directId;
+  return person.sheetColumns?.G?.trim() ?? "";
 }
 
 function defaultCategoryLabel(person: PersonRecord): string {
@@ -1026,6 +1088,7 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
   const personSnapshotsRef = useRef<Map<string, PersonEditableSnapshot>>(new Map());
 
   const [selectedSide, setSelectedSide] = useState<"front" | "back">("front");
+  const [badgeLightMode, setBadgeLightMode] = useState(false);
   const [cardBackgroundColor, setCardBackgroundColor] = useState(() => readIllustratorDefaultsCached().cardBackgroundColor);
 
   // Front side state
@@ -1058,9 +1121,15 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
   const [nfcZoom, setNfcZoom] = useState(() => readIllustratorDefaultsCached().nfcZoom);
 
   // Back side state
-  const [personType, setPersonType] = useState<BadgePersonType>(() => readIllustratorDefaultsCached().personType);
+  const [personType, setPersonType] = useState<BadgePersonType>(() =>
+    defaultPersonTypeForCategory(people[0]!)
+  );
   const [customRoleLabel, setCustomRoleLabel] = useState(() => readIllustratorDefaultsCached().customRoleLabel);
-  const [accentColor, setAccentColor] = useState(() => readIllustratorDefaultsCached().accentColor);
+  const [accentColor, setAccentColor] = useState(
+    () =>
+      PERSON_TYPE_META.find((o) => o.value === defaultPersonTypeForCategory(people[0]!))
+        ?.defaultAccent ?? readIllustratorDefaultsCached().accentColor
+  );
   const [secondaryColor, setSecondaryColor] = useState(() => readIllustratorDefaultsCached().secondaryColor);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
   const [photoFrameShape, setPhotoFrameShape] = useState<"circle" | "rounded">(
@@ -1070,8 +1139,23 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
   const [photoOffsetX, setPhotoOffsetX] = useState(() => readIllustratorDefaultsCached().photoOffsetX);
   const [photoOffsetY, setPhotoOffsetY] = useState(() => readIllustratorDefaultsCached().photoOffsetY);
   const [photoRotation, setPhotoRotation] = useState(() => readIllustratorDefaultsCached().photoRotation);
+  const [photoBrightness, setPhotoBrightness] = useState(() => readIllustratorDefaultsCached().photoBrightness);
+  const [photoHighlights, setPhotoHighlights] = useState(() => readIllustratorDefaultsCached().photoHighlights);
+  const [photoShadows, setPhotoShadows] = useState(() => readIllustratorDefaultsCached().photoShadows);
+  const [photoWhites, setPhotoWhites] = useState(() => readIllustratorDefaultsCached().photoWhites);
+  const [photoBlacks, setPhotoBlacks] = useState(() => readIllustratorDefaultsCached().photoBlacks);
+  const [photoContrast, setPhotoContrast] = useState(() => readIllustratorDefaultsCached().photoContrast);
+  const [photoSaturation, setPhotoSaturation] = useState(() => readIllustratorDefaultsCached().photoSaturation);
+  const [photoTemperature, setPhotoTemperature] = useState(() => readIllustratorDefaultsCached().photoTemperature);
+  const [photoTint, setPhotoTint] = useState(() => readIllustratorDefaultsCached().photoTint);
+  const [photoVignette, setPhotoVignette] = useState(() => readIllustratorDefaultsCached().photoVignette);
+  const [photoClarity, setPhotoClarity] = useState(() => readIllustratorDefaultsCached().photoClarity);
+  const [photoGain, setPhotoGain] = useState(() => readIllustratorDefaultsCached().photoGain);
   const [photoGrayscale, setPhotoGrayscale] = useState(() => readIllustratorDefaultsCached().photoGrayscale);
   const [photoInvert, setPhotoInvert] = useState(() => readIllustratorDefaultsCached().photoInvert);
+  const [isPhotoEditorOpen, setIsPhotoEditorOpen] = useState(false);
+  const [photoEditorTab, setPhotoEditorTab] = useState<PhotoEditorTab>("position");
+  const [photoEditorDraft, setPhotoEditorDraft] = useState<PhotoAdjustments | null>(null);
   const [backFirstName, setBackFirstName] = useState(() => splitName(people[0]!.displayName).firstName);
   const [backLastName, setBackLastName] = useState(
     () => people[0]!.abbreviation?.trim() || splitName(people[0]!.displayName).lastName
@@ -1108,6 +1192,7 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
   const cachedPreviewQrEl = useRef<HTMLElement | null>(null);
   const cachedPreviewNfcEl = useRef<HTMLElement | null>(null);
   const cachedPreviewBackPhotoEl = useRef<HTMLElement | null>(null);
+  const cachedPreviewBackPhotoVignetteEl = useRef<HTMLElement | null>(null);
   const previewRoleOffsetXRef = useRef(0);
   const exportRoleOffsetXRef = useRef(0);
   const roleEdgeAdjustCqwByTypeRef = useRef<Record<BadgePersonType, number>>(FACTORY_ROLE_EDGE_CQW);
@@ -1131,6 +1216,18 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
     offsetX: photoOffsetX,
     offsetY: photoOffsetY,
     rotation: photoRotation,
+    brightness: photoBrightness,
+    highlights: photoHighlights,
+    shadows: photoShadows,
+    whites: photoWhites,
+    blacks: photoBlacks,
+    contrast: photoContrast,
+    saturation: photoSaturation,
+    temperature: photoTemperature,
+    tint: photoTint,
+    vignette: photoVignette,
+    clarity: photoClarity,
+    gain: photoGain,
     grayscale: photoGrayscale,
     invert: photoInvert,
   });
@@ -1141,6 +1238,9 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
   );
 
   const loadPersonDataIntoState = useCallback((p: PersonRecord) => {
+    const defaultType = defaultPersonTypeForCategory(p);
+    setPersonType(defaultType);
+    setAccentColor(PERSON_TYPE_META.find((o) => o.value === defaultType)?.defaultAccent ?? "#ffd699");
     const existing = personSnapshotsRef.current.get(p.id);
     if (existing) {
       setVCardSettings(structuredClone(existing.vCardSettings));
@@ -1278,6 +1378,18 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
     offsetX: photoOffsetX,
     offsetY: photoOffsetY,
     rotation: photoRotation,
+    brightness: photoBrightness,
+    highlights: photoHighlights,
+    shadows: photoShadows,
+    whites: photoWhites,
+    blacks: photoBlacks,
+    contrast: photoContrast,
+    saturation: photoSaturation,
+    temperature: photoTemperature,
+    tint: photoTint,
+    vignette: photoVignette,
+    clarity: photoClarity,
+    gain: photoGain,
     grayscale: photoGrayscale,
     invert: photoInvert,
   };
@@ -1478,15 +1590,24 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
       cachedPreviewBackPhotoEl.current = el;
     }
     if (!el) return;
-    const { zoom, offsetX, offsetY, rotation, grayscale, invert } = livePhotoRef.current;
-    const scale = Math.max(1, zoom / 100);
-    const posX = Math.max(0, Math.min(100, 50 + offsetX / 4));
-    const posY = Math.max(0, Math.min(100, 50 + offsetY / 4));
-    el.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
+    let vignetteEl = cachedPreviewBackPhotoVignetteEl.current;
+    if (!vignetteEl || !root.contains(vignetteEl)) {
+      vignetteEl = root.querySelector<HTMLElement>(".back-photo-vignette");
+      cachedPreviewBackPhotoVignetteEl.current = vignetteEl;
+    }
+    const p = livePhotoRef.current;
+    const scale = Math.max(1, p.zoom / 100);
+    const posX = Math.max(0, Math.min(100, 50 + p.offsetX / 4));
+    const posY = Math.max(0, Math.min(100, 50 + p.offsetY / 4));
+    el.style.transform = `scale(${scale}) rotate(${p.rotation}deg)`;
     el.style.objectPosition = `${posX}% ${posY}%`;
-    el.style.filter = grayscale
-      ? (invert ? "grayscale(100%) invert(100%)" : "grayscale(100%)")
-      : "none";
+    el.style.filter = buildPhotoCssFilter({
+      frameShape: "circle",
+      ...p,
+    });
+    if (vignetteEl) {
+      vignetteEl.style.opacity = `${Math.max(0, Math.min(1, p.vignette / 100))}`;
+    }
   }, []);
 
   // Stable onPreviewChange callbacks – one per slider, all zero-dep (use refs only).
@@ -1509,13 +1630,37 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
   const onPreviewPhotoOffsetX = useCallback((v: number) => { livePhotoRef.current.offsetX = v; applyPreviewPhotoStyle(); }, [applyPreviewPhotoStyle]);
   const onPreviewPhotoOffsetY = useCallback((v: number) => { livePhotoRef.current.offsetY = v; applyPreviewPhotoStyle(); }, [applyPreviewPhotoStyle]);
   const onPreviewPhotoRotation = useCallback((v: number) => { livePhotoRef.current.rotation = v; applyPreviewPhotoStyle(); }, [applyPreviewPhotoStyle]);
+  const onPreviewPhotoBrightness = useCallback((v: number) => { livePhotoRef.current.brightness = v; applyPreviewPhotoStyle(); }, [applyPreviewPhotoStyle]);
+  const onPreviewPhotoHighlights = useCallback((v: number) => { livePhotoRef.current.highlights = v; applyPreviewPhotoStyle(); }, [applyPreviewPhotoStyle]);
+  const onPreviewPhotoShadows = useCallback((v: number) => { livePhotoRef.current.shadows = v; applyPreviewPhotoStyle(); }, [applyPreviewPhotoStyle]);
+  const onPreviewPhotoWhites = useCallback((v: number) => { livePhotoRef.current.whites = v; applyPreviewPhotoStyle(); }, [applyPreviewPhotoStyle]);
+  const onPreviewPhotoBlacks = useCallback((v: number) => { livePhotoRef.current.blacks = v; applyPreviewPhotoStyle(); }, [applyPreviewPhotoStyle]);
+  const onPreviewPhotoContrast = useCallback((v: number) => { livePhotoRef.current.contrast = v; applyPreviewPhotoStyle(); }, [applyPreviewPhotoStyle]);
+  const onPreviewPhotoSaturation = useCallback((v: number) => { livePhotoRef.current.saturation = v; applyPreviewPhotoStyle(); }, [applyPreviewPhotoStyle]);
+  const onPreviewPhotoTemperature = useCallback((v: number) => { livePhotoRef.current.temperature = v; applyPreviewPhotoStyle(); }, [applyPreviewPhotoStyle]);
+  const onPreviewPhotoTint = useCallback((v: number) => { livePhotoRef.current.tint = v; applyPreviewPhotoStyle(); }, [applyPreviewPhotoStyle]);
+  const onPreviewPhotoVignette = useCallback((v: number) => { livePhotoRef.current.vignette = v; applyPreviewPhotoStyle(); }, [applyPreviewPhotoStyle]);
+  const onPreviewPhotoClarity = useCallback((v: number) => { livePhotoRef.current.clarity = v; applyPreviewPhotoStyle(); }, [applyPreviewPhotoStyle]);
+  const onPreviewPhotoGain = useCallback((v: number) => { livePhotoRef.current.gain = v; applyPreviewPhotoStyle(); }, [applyPreviewPhotoStyle]);
   // ─────────────────────────────────────────────────────────────────────────
 
   const handlePersonTypeChange = useCallback((newType: BadgePersonType) => {
     setPersonType(newType);
     const option = PERSON_TYPE_META.find((o) => o.value === newType);
-    if (option) setAccentColor(option.defaultAccent);
-  }, []);
+    if (option) setAccentColor(badgeLightMode ? option.lightAccent : option.defaultAccent);
+  }, [badgeLightMode]);
+
+  const toggleBadgeMode = useCallback(() => {
+    setBadgeLightMode((prev) => {
+      const nextLight = !prev;
+      const palette = nextLight ? BADGE_LIGHT_DEFAULTS : BADGE_DARK_DEFAULTS;
+      setCardBackgroundColor(palette.bg);
+      setSecondaryColor(palette.secondary);
+      const meta = PERSON_TYPE_META.find((o) => o.value === personType);
+      if (meta) setAccentColor(nextLight ? meta.lightAccent : meta.defaultAccent);
+      return nextLight;
+    });
+  }, [personType]);
 
   const flashDefaultsSaved = useCallback(
     (message?: string) => {
@@ -1549,15 +1694,28 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
     setNfcOffsetY(f.nfcOffsetY);
     setNfcOffsetZ(f.nfcOffsetZ);
     setNfcZoom(f.nfcZoom);
-    setPersonType(f.personType);
+    const defaultType = defaultPersonTypeForCategory(activePerson);
+    setPersonType(defaultType);
     setCustomRoleLabel(f.customRoleLabel);
-    setAccentColor(PERSON_TYPE_META.find((o) => o.value === f.personType)?.defaultAccent ?? f.accentColor);
+    setAccentColor(PERSON_TYPE_META.find((o) => o.value === defaultType)?.defaultAccent ?? f.accentColor);
     setSecondaryColor(f.secondaryColor);
     setPhotoFrameShape(f.photoFrameShape);
     setPhotoZoom(f.photoZoom);
     setPhotoOffsetX(f.photoOffsetX);
     setPhotoOffsetY(f.photoOffsetY);
     setPhotoRotation(f.photoRotation);
+    setPhotoBrightness(f.photoBrightness);
+    setPhotoHighlights(f.photoHighlights);
+    setPhotoShadows(f.photoShadows);
+    setPhotoWhites(f.photoWhites);
+    setPhotoBlacks(f.photoBlacks);
+    setPhotoContrast(f.photoContrast);
+    setPhotoSaturation(f.photoSaturation);
+    setPhotoTemperature(f.photoTemperature);
+    setPhotoTint(f.photoTint);
+    setPhotoVignette(f.photoVignette);
+    setPhotoClarity(f.photoClarity);
+    setPhotoGain(f.photoGain);
     setPhotoGrayscale(f.photoGrayscale);
     setPhotoInvert(f.photoInvert);
     setShowBackQr(f.showBackQr);
@@ -1593,13 +1751,120 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
     if (photoInputRef.current) photoInputRef.current.value = "";
   }, []);
 
-  const photoScale = Math.max(1, photoZoom / 100);
-  const photoPositionX = Math.max(0, Math.min(100, 50 + photoOffsetX / 4));
-  const photoPositionY = Math.max(0, Math.min(100, 50 + photoOffsetY / 4));
-  const photoTransform = `scale(${photoScale}) rotate(${photoRotation}deg)`;
-  const photoFilter = photoGrayscale
-    ? (photoInvert ? "grayscale(100%) invert(100%)" : "grayscale(100%)")
-    : "none";
+  const openPhotoEditor = useCallback(() => {
+    setPhotoEditorDraft({
+      frameShape: photoFrameShape,
+      zoom: photoZoom,
+      offsetX: photoOffsetX,
+      offsetY: photoOffsetY,
+      rotation: photoRotation,
+      brightness: photoBrightness,
+      highlights: photoHighlights,
+      shadows: photoShadows,
+      whites: photoWhites,
+      blacks: photoBlacks,
+      contrast: photoContrast,
+      saturation: photoSaturation,
+      temperature: photoTemperature,
+      tint: photoTint,
+      vignette: photoVignette,
+      clarity: photoClarity,
+      gain: photoGain,
+      grayscale: photoGrayscale,
+      invert: photoInvert,
+    });
+    setPhotoEditorTab("position");
+    setIsPhotoEditorOpen(true);
+  }, [
+    photoFrameShape,
+    photoZoom,
+    photoOffsetX,
+    photoOffsetY,
+    photoRotation,
+    photoBrightness,
+    photoHighlights,
+    photoShadows,
+    photoWhites,
+    photoBlacks,
+    photoContrast,
+    photoSaturation,
+    photoTemperature,
+    photoTint,
+    photoVignette,
+    photoClarity,
+    photoGain,
+    photoGrayscale,
+    photoInvert,
+  ]);
+
+  const cancelPhotoEditor = useCallback(() => {
+    setIsPhotoEditorOpen(false);
+    setPhotoEditorDraft(null);
+  }, []);
+
+  const applyPhotoEditor = useCallback(() => {
+    if (!photoEditorDraft) return;
+    setPhotoFrameShape(photoEditorDraft.frameShape);
+    setPhotoZoom(photoEditorDraft.zoom);
+    setPhotoOffsetX(photoEditorDraft.offsetX);
+    setPhotoOffsetY(photoEditorDraft.offsetY);
+    setPhotoRotation(photoEditorDraft.rotation);
+    setPhotoBrightness(photoEditorDraft.brightness);
+    setPhotoHighlights(photoEditorDraft.highlights);
+    setPhotoShadows(photoEditorDraft.shadows);
+    setPhotoWhites(photoEditorDraft.whites);
+    setPhotoBlacks(photoEditorDraft.blacks);
+    setPhotoContrast(photoEditorDraft.contrast);
+    setPhotoSaturation(photoEditorDraft.saturation);
+    setPhotoTemperature(photoEditorDraft.temperature);
+    setPhotoTint(photoEditorDraft.tint);
+    setPhotoVignette(photoEditorDraft.vignette);
+    setPhotoClarity(photoEditorDraft.clarity);
+    setPhotoGain(photoEditorDraft.gain);
+    setPhotoGrayscale(photoEditorDraft.grayscale);
+    setPhotoInvert(photoEditorDraft.invert);
+    setIsPhotoEditorOpen(false);
+    setPhotoEditorDraft(null);
+  }, [photoEditorDraft]);
+
+  const updatePhotoDraft = useCallback((patch: Partial<PhotoAdjustments>) => {
+    setPhotoEditorDraft((prev) => (prev ? { ...prev, ...patch } : prev));
+  }, []);
+
+  const photoSettings: PhotoAdjustments = {
+    frameShape: photoFrameShape,
+    zoom: photoZoom,
+    offsetX: photoOffsetX,
+    offsetY: photoOffsetY,
+    rotation: photoRotation,
+    brightness: photoBrightness,
+    highlights: photoHighlights,
+    shadows: photoShadows,
+    whites: photoWhites,
+    blacks: photoBlacks,
+    contrast: photoContrast,
+    saturation: photoSaturation,
+    temperature: photoTemperature,
+    tint: photoTint,
+    vignette: photoVignette,
+    clarity: photoClarity,
+    gain: photoGain,
+    grayscale: photoGrayscale,
+    invert: photoInvert,
+  };
+  const photoScale = Math.max(1, photoSettings.zoom / 100);
+  const photoPositionX = Math.max(0, Math.min(100, 50 + photoSettings.offsetX / 4));
+  const photoPositionY = Math.max(0, Math.min(100, 50 + photoSettings.offsetY / 4));
+  const photoTransform = `scale(${photoScale}) rotate(${photoSettings.rotation}deg)`;
+  const photoFilter = buildPhotoCssFilter(photoSettings);
+  const photoVignetteOpacity = Math.max(0, Math.min(1, photoSettings.vignette / 100));
+  const photoEditorPreviewSettings = photoEditorDraft ?? photoSettings;
+  const photoEditorPreviewScale = Math.max(1, photoEditorPreviewSettings.zoom / 100);
+  const photoEditorPreviewTransform = `scale(${photoEditorPreviewScale}) rotate(${photoEditorPreviewSettings.rotation}deg)`;
+  const photoEditorPreviewPosX = Math.max(0, Math.min(100, 50 + photoEditorPreviewSettings.offsetX / 4));
+  const photoEditorPreviewPosY = Math.max(0, Math.min(100, 50 + photoEditorPreviewSettings.offsetY / 4));
+  const photoEditorPreviewFilter = buildPhotoCssFilter(photoEditorPreviewSettings);
+  const photoEditorPreviewVignette = Math.max(0, Math.min(1, photoEditorPreviewSettings.vignette / 100));
   const exportBaseName = useMemo(
     () =>
       sanitizeFileName(
@@ -2318,7 +2583,7 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
         <img
           src={coverImageSrc}
           alt="Badge cover template"
-          className="badge-cover"
+          className={`badge-cover${badgeLightMode ? " badge-cover--light" : ""}`}
           data-canva-field={CANVA_IMAGE_FIELDS.LOGO}
           style={{ transform: logoTransform }}
           onError={onCoverImageError}
@@ -2361,6 +2626,7 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
       </>
     ),
     [
+      badgeLightMode,
       coverImageSrc,
       logoTransform,
       nfcBlockTransform,
@@ -2455,6 +2721,7 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
                 <span>Photo</span>
               </div>
             )}
+            {profilePhotoUrl && <div className="back-photo-vignette" style={{ opacity: photoVignetteOpacity }} />}
           </div>
         </div>
 
@@ -2482,6 +2749,7 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
     photoPositionY,
     photoFilter,
     photoTransform,
+    photoVignetteOpacity,
     previewRoleOffsetX,
     previewRoleTextFontSize,
     profilePhotoUrl,
@@ -2568,6 +2836,7 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
                 <span>Photo</span>
               </div>
             )}
+            {profilePhotoUrl && <div className="back-photo-vignette" style={{ opacity: photoVignetteOpacity }} />}
           </div>
         </div>
 
@@ -2597,6 +2866,7 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
     photoPositionY,
     photoFilter,
     photoTransform,
+    photoVignetteOpacity,
     profilePhotoUrl,
     roleEdgeAdjustCqw,
     roleLabel,
@@ -2671,32 +2941,111 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
         </div>
 
         <div className="illustrator-toolbar-row illustrator-toolbar-row--secondary">
-          <label className="illustrator-card-bg-field">
-            <span className="illustrator-card-bg-label">{t("illustrator.cardBackground")}</span>
-            <div className="illustrator-card-bg-controls">
-              <div className="background-color-inputs">
-                <input
-                  type="color"
-                  value={safeCardBackgroundColor}
-                  onChange={(event) => setCardBackgroundColor(event.target.value)}
-                  aria-label={t("illustrator.ariaCardBgColor")}
-                />
-                <input
-                  type="text"
-                  value={cardBackgroundColor}
-                  onChange={(event) => setCardBackgroundColor(event.target.value)}
-                  placeholder="#1b1b1b"
+          <div className="badge-mode-toggle-wrap">
+            <span className="illustrator-card-bg-label">{t("illustrator.badgeTheme")}</span>
+            <button
+              type="button"
+              className={`badge-mode-toggle ${badgeLightMode ? "is-light" : "is-dark"}`}
+              onClick={toggleBadgeMode}
+              title={badgeLightMode ? t("illustrator.badgeThemeSwitchToDark") : t("illustrator.badgeThemeSwitchToLight")}
+              aria-label={badgeLightMode ? t("illustrator.badgeThemeSwitchToDark") : t("illustrator.badgeThemeSwitchToLight")}
+              aria-pressed={badgeLightMode}
+            >
+              <span className="badge-mode-toggle-thumb" />
+              <span className="badge-mode-toggle-icon badge-mode-toggle-icon--sun">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <circle cx="12" cy="12" r="5" />
+                  <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                  <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+              </span>
+              <span className="badge-mode-toggle-icon badge-mode-toggle-icon--moon">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+              </span>
+            </button>
+          </div>
+          <div className="illustrator-top-color-grid">
+            <label className="illustrator-card-bg-field">
+              <span className="illustrator-card-bg-label">{t("illustrator.cardBackground")}</span>
+              <div className="illustrator-card-bg-controls">
+                <div className="background-color-inputs">
+                  <input
+                    type="color"
+                    value={safeCardBackgroundColor}
+                    onChange={(event) => setCardBackgroundColor(event.target.value)}
+                    aria-label={t("illustrator.ariaCardBgColor")}
+                  />
+                  <input
+                    type="text"
+                    value={cardBackgroundColor}
+                    onChange={(event) => setCardBackgroundColor(event.target.value)}
+                    placeholder="#1b1b1b"
+                  />
+                </div>
+                <SetAsDefaultButton
+                  onClick={() => {
+                    persistIllustratorPartial({ cardBackgroundColor });
+                    flashDefaultsSaved();
+                  }}
+                  label={t("illustrator.setBackgroundDefault")}
                 />
               </div>
-              <SetAsDefaultButton
-                onClick={() => {
-                  persistIllustratorPartial({ cardBackgroundColor });
-                  flashDefaultsSaved();
-                }}
-                label={t("illustrator.setBackgroundDefault")}
-              />
-            </div>
-          </label>
+            </label>
+            <label className="illustrator-card-bg-field">
+              <span className="illustrator-card-bg-label">{t("illustrator.accentColour")}</span>
+              <div className="illustrator-card-bg-controls">
+                <div className="background-color-inputs">
+                  <input
+                    type="color"
+                    value={safeAccentColor}
+                    onChange={(event) => setAccentColor(event.target.value)}
+                  />
+                  <input
+                    type="text"
+                    value={accentColor}
+                    onChange={(event) => setAccentColor(event.target.value)}
+                    placeholder="#ffd699"
+                  />
+                </div>
+                <SetAsDefaultButton
+                  label={t("illustrator.setAccentDefault")}
+                  onClick={() => {
+                    persistIllustratorPartial({ accentColor: safeAccentColor });
+                    flashDefaultsSaved();
+                  }}
+                />
+              </div>
+            </label>
+            <label className="illustrator-card-bg-field">
+              <span className="illustrator-card-bg-label">{t("illustrator.secondaryColour")}</span>
+              <div className="illustrator-card-bg-controls">
+                <div className="background-color-inputs">
+                  <input
+                    type="color"
+                    value={safeSecondaryColor}
+                    onChange={(event) => setSecondaryColor(event.target.value)}
+                  />
+                  <input
+                    type="text"
+                    value={secondaryColor}
+                    onChange={(event) => setSecondaryColor(event.target.value)}
+                    placeholder="#ffffff"
+                  />
+                </div>
+                <SetAsDefaultButton
+                  label={t("illustrator.setSecondaryDefault")}
+                  onClick={() => {
+                    persistIllustratorPartial({ secondaryColor: safeSecondaryColor });
+                    flashDefaultsSaved();
+                  }}
+                />
+              </div>
+            </label>
+          </div>
           <button type="button" className="btn-reset-factory" onClick={applyFactoryReset}>
             {t("illustrator.resetFactoryShort")}
           </button>
@@ -3070,6 +3419,31 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
                 <h3>{t("illustrator.backSettings")}</h3>
                 <p className="hint">{t("illustrator.backHint")}</p>
 
+                <h4>{t("illustrator.profilePhoto")}</h4>
+                <input
+                  type="file"
+                  ref={photoInputRef}
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  style={{ display: "none" }}
+                />
+                <div className="photo-upload-row">
+                  <button type="button" onClick={() => photoInputRef.current?.click()}>
+                    {profilePhotoUrl ? t("illustrator.changePhoto") : t("illustrator.browsePhoto")}
+                  </button>
+                  {profilePhotoUrl && (
+                    <>
+                      <button type="button" onClick={openPhotoEditor}>
+                        {t("illustrator.personalizePhoto")}
+                      </button>
+                      <button type="button" onClick={removePhoto}>
+                        {t("illustrator.removePhoto")}
+                      </button>
+                    </>
+                  )}
+                </div>
+                {profilePhotoUrl && <p className="hint">{t("illustrator.personalizePhotoHint")}</p>}
+
                 <label>
                   {t("illustrator.personType")}
                   <select
@@ -3168,29 +3542,6 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
                   {t("illustrator.roleEdgeHint")}
                 </p>
 
-                <label className="background-color-control" style={{ marginTop: "0.6rem" }}>
-                  <span>{t("illustrator.accentColour")}</span>
-                  <div className="background-color-inputs">
-                    <input
-                      type="color"
-                      value={safeAccentColor}
-                      onChange={(e) => setAccentColor(e.target.value)}
-                    />
-                    <input
-                      type="text"
-                      value={accentColor}
-                      onChange={(e) => setAccentColor(e.target.value)}
-                      placeholder="#ffd699"
-                    />
-                  </div>
-                </label>
-                <SetAsDefaultButton
-                  label={t("illustrator.setAccentDefault")}
-                  onClick={() => {
-                    persistIllustratorPartial({ accentColor: safeAccentColor });
-                    flashDefaultsSaved();
-                  }}
-                />
               </div>
 
               {/* Name */}
@@ -3205,205 +3556,6 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
                   {t("illustrator.lastNameField")}
                   <input value={backLastName} onChange={(e) => setBackLastName(e.target.value)} />
                 </label>
-              </div>
-
-              {/* Logos */}
-              <div className="settings-section">
-                <h4>{t("illustrator.secondarySection")}</h4>
-                <p className="hint">{t("illustrator.secondaryHint")}</p>
-                <label className="background-color-control" style={{ marginTop: "0.3rem" }}>
-                  <span>{t("illustrator.secondaryColour")}</span>
-                  <div className="background-color-inputs">
-                    <input
-                      type="color"
-                      value={safeSecondaryColor}
-                      onChange={(e) => setSecondaryColor(e.target.value)}
-                    />
-                    <input
-                      type="text"
-                      value={secondaryColor}
-                      onChange={(e) => setSecondaryColor(e.target.value)}
-                      placeholder="#ffffff"
-                    />
-                  </div>
-                </label>
-                <SetAsDefaultButton
-                  label={t("illustrator.setSecondaryDefault")}
-                  onClick={() => {
-                    persistIllustratorPartial({ secondaryColor: safeSecondaryColor });
-                    flashDefaultsSaved();
-                  }}
-                />
-              </div>
-
-              {/* Profile photo */}
-              <div className="settings-section">
-                <h4>{t("illustrator.profilePhoto")}</h4>
-                <input
-                  type="file"
-                  ref={photoInputRef}
-                  accept="image/*"
-                  onChange={handlePhotoUpload}
-                  style={{ display: "none" }}
-                />
-                <div className="photo-upload-row">
-                  <button type="button" onClick={() => photoInputRef.current?.click()}>
-                    {profilePhotoUrl ? t("illustrator.changePhoto") : t("illustrator.browsePhoto")}
-                  </button>
-                  {profilePhotoUrl && (
-                    <button type="button" onClick={removePhoto}>
-                      {t("illustrator.removePhoto")}
-                    </button>
-                  )}
-                </div>
-
-                <div className="photo-frame-shape-row">
-                  <label className="radio-label">
-                    <input
-                      type="radio"
-                      name="frameShape"
-                      value="circle"
-                      checked={photoFrameShape === "circle"}
-                      onChange={() => setPhotoFrameShape("circle")}
-                    />
-                    {t("illustrator.frameCircle")}
-                  </label>
-                  <label className="radio-label">
-                    <input
-                      type="radio"
-                      name="frameShape"
-                      value="rounded"
-                      checked={photoFrameShape === "rounded"}
-                      onChange={() => setPhotoFrameShape("rounded")}
-                    />
-                    {t("illustrator.frameRounded")}
-                  </label>
-                </div>
-                <div className="switch-with-default">
-                  <ToggleSwitch
-                    checked={photoGrayscale}
-                    onChange={(checked) => {
-                      setPhotoGrayscale(checked);
-                      if (!checked) setPhotoInvert(false);
-                    }}
-                    label={t("illustrator.photoGrayscale")}
-                  />
-                  <SetAsDefaultButton
-                    onClick={() => {
-                      persistIllustratorPartial({
-                        photoGrayscale,
-                        photoInvert: photoGrayscale ? photoInvert : false,
-                      });
-                      flashDefaultsSaved();
-                    }}
-                  />
-                </div>
-                {photoGrayscale && (
-                  <div className="switch-with-default">
-                    <ToggleSwitch
-                      checked={photoInvert}
-                      onChange={setPhotoInvert}
-                      label={t("illustrator.photoInvert")}
-                    />
-                    <SetAsDefaultButton
-                      onClick={() => {
-                        persistIllustratorPartial({ photoInvert });
-                        flashDefaultsSaved();
-                      }}
-                    />
-                  </div>
-                )}
-                <SetAsDefaultButton
-                  label={t("illustrator.setFrameDefault")}
-                  onClick={() => {
-                    persistIllustratorPartial({ photoFrameShape });
-                    flashDefaultsSaved();
-                  }}
-                />
-
-                <div className="logo-positioning-controls">
-                  <h4>{t("illustrator.photoPositioning")}</h4>
-                  <div className="slider-with-default">
-                    <label className="range-row">
-                      <span>{t("illustrator.zoom")}</span>
-                      <ResponsiveRangeInput
-                        value={photoZoom}
-                        onPreviewChange={onPreviewPhotoZoom}
-                        onValueChange={setPhotoZoom}
-                        min={100}
-                        max={300}
-                        step={1}
-                        renderOutput={formatRangeOutputPct}
-                      />
-                    </label>
-                    <SetAsDefaultButton
-                      onClick={() => {
-                        persistIllustratorPartial({ photoZoom });
-                        flashDefaultsSaved();
-                      }}
-                    />
-                  </div>
-                  <div className="slider-with-default">
-                    <label className="range-row">
-                      <span>{t("illustrator.axisX")}</span>
-                      <ResponsiveRangeInput
-                        value={photoOffsetX}
-                        onPreviewChange={onPreviewPhotoOffsetX}
-                        onValueChange={setPhotoOffsetX}
-                        min={-200}
-                        max={200}
-                        step={1}
-                        renderOutput={formatRangeOutputPx}
-                      />
-                    </label>
-                    <SetAsDefaultButton
-                      onClick={() => {
-                        persistIllustratorPartial({ photoOffsetX });
-                        flashDefaultsSaved();
-                      }}
-                    />
-                  </div>
-                  <div className="slider-with-default">
-                    <label className="range-row">
-                      <span>{t("illustrator.axisY")}</span>
-                      <ResponsiveRangeInput
-                        value={photoOffsetY}
-                        onPreviewChange={onPreviewPhotoOffsetY}
-                        onValueChange={setPhotoOffsetY}
-                        min={-200}
-                        max={200}
-                        step={1}
-                        renderOutput={formatRangeOutputPx}
-                      />
-                    </label>
-                    <SetAsDefaultButton
-                      onClick={() => {
-                        persistIllustratorPartial({ photoOffsetY });
-                        flashDefaultsSaved();
-                      }}
-                    />
-                  </div>
-                  <div className="slider-with-default">
-                    <label className="range-row">
-                      <span>{t("illustrator.rotationShort")}</span>
-                      <ResponsiveRangeInput
-                        value={photoRotation}
-                        onPreviewChange={onPreviewPhotoRotation}
-                        onValueChange={setPhotoRotation}
-                        min={-180}
-                        max={180}
-                        step={1}
-                        renderOutput={formatRangeOutputDegSym}
-                      />
-                    </label>
-                    <SetAsDefaultButton
-                      onClick={() => {
-                        persistIllustratorPartial({ photoRotation });
-                        flashDefaultsSaved();
-                      }}
-                    />
-                  </div>
-                </div>
               </div>
 
               {/* QR code */}
@@ -3446,6 +3598,155 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
           </div>
         </section>
       </div>
+
+      {isPhotoEditorOpen && photoEditorDraft && (
+        <div className="photo-editor-backdrop" onClick={cancelPhotoEditor}>
+          <section className="photo-editor-window" onClick={(event) => event.stopPropagation()}>
+            <header className="photo-editor-header">
+              <div>
+                <h3>{t("illustrator.personalizePhoto")}</h3>
+                <p>{t("illustrator.personalizePhotoHint")}</p>
+              </div>
+            </header>
+            <div className="photo-editor-body">
+              <aside className="photo-editor-sidebar">
+                <button type="button" className={photoEditorTab === "position" ? "is-active" : ""} onClick={() => setPhotoEditorTab("position")}>
+                  {t("illustrator.photoTabPosition")}
+                </button>
+                <button type="button" className={photoEditorTab === "lighting" ? "is-active" : ""} onClick={() => setPhotoEditorTab("lighting")}>
+                  {t("illustrator.photoTabLighting")}
+                </button>
+                <button type="button" className={photoEditorTab === "effects" ? "is-active" : ""} onClick={() => setPhotoEditorTab("effects")}>
+                  {t("illustrator.photoTabEffects")}
+                </button>
+              </aside>
+              <div className="photo-editor-controls">
+                {photoEditorTab === "position" && (
+                  <>
+                    <section className="photo-editor-group">
+                      <div className="photo-frame-shape-row">
+                        <label className="radio-label">
+                          <input type="radio" name="photoEditorShape" checked={photoEditorDraft.frameShape === "circle"} onChange={() => updatePhotoDraft({ frameShape: "circle" })} />
+                          {t("illustrator.frameCircle")}
+                        </label>
+                        <label className="radio-label">
+                          <input type="radio" name="photoEditorShape" checked={photoEditorDraft.frameShape === "rounded"} onChange={() => updatePhotoDraft({ frameShape: "rounded" })} />
+                          {t("illustrator.frameRounded")}
+                        </label>
+                      </div>
+                    </section>
+                    <section className="photo-editor-group">
+                      <label className="range-row"><span>{t("illustrator.zoom")}</span><ResponsiveRangeInput value={photoEditorDraft.zoom} onPreviewChange={(v) => { onPreviewPhotoZoom(v); updatePhotoDraft({ zoom: v }); }} onValueChange={(v) => updatePhotoDraft({ zoom: v })} min={100} max={300} step={1} renderOutput={formatRangeOutputPct} /></label>
+                      <label className="range-row"><span>{t("illustrator.axisX")}</span><ResponsiveRangeInput value={photoEditorDraft.offsetX} onPreviewChange={(v) => { onPreviewPhotoOffsetX(v); updatePhotoDraft({ offsetX: v }); }} onValueChange={(v) => updatePhotoDraft({ offsetX: v })} min={-200} max={200} step={1} renderOutput={formatRangeOutputPx} /></label>
+                      <label className="range-row"><span>{t("illustrator.axisY")}</span><ResponsiveRangeInput value={photoEditorDraft.offsetY} onPreviewChange={(v) => { onPreviewPhotoOffsetY(v); updatePhotoDraft({ offsetY: v }); }} onValueChange={(v) => updatePhotoDraft({ offsetY: v })} min={-200} max={200} step={1} renderOutput={formatRangeOutputPx} /></label>
+                      <label className="range-row"><span>{t("illustrator.axisZ")}</span><ResponsiveRangeInput value={photoEditorDraft.rotation} onPreviewChange={(v) => { onPreviewPhotoRotation(v); updatePhotoDraft({ rotation: v }); }} onValueChange={(v) => updatePhotoDraft({ rotation: v })} min={-180} max={180} step={1} renderOutput={formatRangeOutputDegSym} /></label>
+                    </section>
+                    <SetAsDefaultButton
+                      label={t("illustrator.setPhotoPositionDefaults")}
+                      onClick={() => {
+                        persistIllustratorPartial({
+                          photoFrameShape: photoEditorDraft.frameShape,
+                          photoZoom: photoEditorDraft.zoom,
+                          photoOffsetX: photoEditorDraft.offsetX,
+                          photoOffsetY: photoEditorDraft.offsetY,
+                          photoRotation: photoEditorDraft.rotation,
+                        });
+                        flashDefaultsSaved();
+                      }}
+                    />
+                  </>
+                )}
+                {photoEditorTab === "lighting" && (
+                  <>
+                    <section className="photo-editor-group">
+                      <label className="range-row"><span>{t("illustrator.photoBrightness")}</span><ResponsiveRangeInput value={photoEditorDraft.brightness} onPreviewChange={(v) => { onPreviewPhotoBrightness(v); updatePhotoDraft({ brightness: v }); }} onValueChange={(v) => updatePhotoDraft({ brightness: v })} min={-100} max={100} step={1} renderOutput={formatRangeOutputPct} /></label>
+                      <label className="range-row"><span>{t("illustrator.photoContrast")}</span><ResponsiveRangeInput value={photoEditorDraft.contrast} onPreviewChange={(v) => { onPreviewPhotoContrast(v); updatePhotoDraft({ contrast: v }); }} onValueChange={(v) => updatePhotoDraft({ contrast: v })} min={-100} max={100} step={1} renderOutput={formatRangeOutputPct} /></label>
+                      <label className="range-row"><span>{t("illustrator.photoSaturation")}</span><ResponsiveRangeInput value={photoEditorDraft.saturation} onPreviewChange={(v) => { onPreviewPhotoSaturation(v); updatePhotoDraft({ saturation: v }); }} onValueChange={(v) => updatePhotoDraft({ saturation: v })} min={-100} max={100} step={1} renderOutput={formatRangeOutputPct} /></label>
+                    </section>
+                    <section className="photo-editor-group">
+                      <label className="range-row"><span>{t("illustrator.photoHighlights")}</span><ResponsiveRangeInput value={photoEditorDraft.highlights} onPreviewChange={(v) => { onPreviewPhotoHighlights(v); updatePhotoDraft({ highlights: v }); }} onValueChange={(v) => updatePhotoDraft({ highlights: v })} min={-100} max={100} step={1} renderOutput={formatRangeOutputPct} /></label>
+                      <label className="range-row"><span>{t("illustrator.photoShadows")}</span><ResponsiveRangeInput value={photoEditorDraft.shadows} onPreviewChange={(v) => { onPreviewPhotoShadows(v); updatePhotoDraft({ shadows: v }); }} onValueChange={(v) => updatePhotoDraft({ shadows: v })} min={-100} max={100} step={1} renderOutput={formatRangeOutputPct} /></label>
+                      <label className="range-row"><span>{t("illustrator.photoWhites")}</span><ResponsiveRangeInput value={photoEditorDraft.whites} onPreviewChange={(v) => { onPreviewPhotoWhites(v); updatePhotoDraft({ whites: v }); }} onValueChange={(v) => updatePhotoDraft({ whites: v })} min={-100} max={100} step={1} renderOutput={formatRangeOutputPct} /></label>
+                      <label className="range-row"><span>{t("illustrator.photoBlacks")}</span><ResponsiveRangeInput value={photoEditorDraft.blacks} onPreviewChange={(v) => { onPreviewPhotoBlacks(v); updatePhotoDraft({ blacks: v }); }} onValueChange={(v) => updatePhotoDraft({ blacks: v })} min={-100} max={100} step={1} renderOutput={formatRangeOutputPct} /></label>
+                      <label className="range-row"><span>{t("illustrator.photoTemperature")}</span><ResponsiveRangeInput value={photoEditorDraft.temperature} onPreviewChange={(v) => { onPreviewPhotoTemperature(v); updatePhotoDraft({ temperature: v }); }} onValueChange={(v) => updatePhotoDraft({ temperature: v })} min={-100} max={100} step={1} renderOutput={formatRangeOutputPct} /></label>
+                      <label className="range-row"><span>{t("illustrator.photoTint")}</span><ResponsiveRangeInput value={photoEditorDraft.tint} onPreviewChange={(v) => { onPreviewPhotoTint(v); updatePhotoDraft({ tint: v }); }} onValueChange={(v) => updatePhotoDraft({ tint: v })} min={-100} max={100} step={1} renderOutput={formatRangeOutputPct} /></label>
+                    </section>
+                    <SetAsDefaultButton
+                      label={t("illustrator.setPhotoLightingDefaults")}
+                      onClick={() => {
+                        persistIllustratorPartial({
+                          photoBrightness: photoEditorDraft.brightness,
+                          photoHighlights: photoEditorDraft.highlights,
+                          photoShadows: photoEditorDraft.shadows,
+                          photoWhites: photoEditorDraft.whites,
+                          photoBlacks: photoEditorDraft.blacks,
+                          photoContrast: photoEditorDraft.contrast,
+                          photoSaturation: photoEditorDraft.saturation,
+                          photoTemperature: photoEditorDraft.temperature,
+                          photoTint: photoEditorDraft.tint,
+                        });
+                        flashDefaultsSaved();
+                      }}
+                    />
+                  </>
+                )}
+                {photoEditorTab === "effects" && (
+                  <>
+                    <section className="photo-editor-group">
+                      <label className="range-row"><span>{t("illustrator.photoVignette")}</span><ResponsiveRangeInput value={photoEditorDraft.vignette} onPreviewChange={(v) => { onPreviewPhotoVignette(v); updatePhotoDraft({ vignette: v }); }} onValueChange={(v) => updatePhotoDraft({ vignette: v })} min={0} max={100} step={1} renderOutput={formatRangeOutputPct} /></label>
+                      <label className="range-row"><span>{t("illustrator.photoClarity")}</span><ResponsiveRangeInput value={photoEditorDraft.clarity} onPreviewChange={(v) => { onPreviewPhotoClarity(v); updatePhotoDraft({ clarity: v }); }} onValueChange={(v) => updatePhotoDraft({ clarity: v })} min={-100} max={100} step={1} renderOutput={formatRangeOutputPct} /></label>
+                      <label className="range-row"><span>{t("illustrator.photoGain")}</span><ResponsiveRangeInput value={photoEditorDraft.gain} onPreviewChange={(v) => { onPreviewPhotoGain(v); updatePhotoDraft({ gain: v }); }} onValueChange={(v) => updatePhotoDraft({ gain: v })} min={-100} max={100} step={1} renderOutput={formatRangeOutputPct} /></label>
+                    </section>
+                    <section className="photo-editor-group">
+                      <ToggleSwitch checked={photoEditorDraft.grayscale} onChange={(checked) => updatePhotoDraft({ grayscale: checked, invert: checked ? photoEditorDraft.invert : false })} label={t("illustrator.photoGrayscale")} />
+                      {photoEditorDraft.grayscale && (
+                        <ToggleSwitch checked={photoEditorDraft.invert} onChange={(checked) => updatePhotoDraft({ invert: checked })} label={t("illustrator.photoInvert")} />
+                      )}
+                    </section>
+                    <SetAsDefaultButton
+                      label={t("illustrator.setPhotoEffectsDefaults")}
+                      onClick={() => {
+                        persistIllustratorPartial({
+                          photoVignette: photoEditorDraft.vignette,
+                          photoClarity: photoEditorDraft.clarity,
+                          photoGain: photoEditorDraft.gain,
+                          photoGrayscale: photoEditorDraft.grayscale,
+                          photoInvert: photoEditorDraft.grayscale ? photoEditorDraft.invert : false,
+                        });
+                        flashDefaultsSaved();
+                      }}
+                    />
+                  </>
+                )}
+              </div>
+              <div className="photo-editor-preview">
+                <div className="back-photo-frame" style={{ borderRadius: photoEditorPreviewSettings.frameShape === "circle" ? "50%" : "12%" }}>
+                  {profilePhotoUrl ? (
+                    <img
+                      src={profilePhotoUrl}
+                      alt="Profile preview"
+                      className="back-photo-img"
+                      draggable={false}
+                      style={{
+                        transform: photoEditorPreviewTransform,
+                        objectPosition: `${photoEditorPreviewPosX}% ${photoEditorPreviewPosY}%`,
+                        filter: photoEditorPreviewFilter,
+                      }}
+                    />
+                  ) : (
+                    <div className="back-photo-placeholder"><span>Photo</span></div>
+                  )}
+                  {profilePhotoUrl && <div className="back-photo-vignette" style={{ opacity: photoEditorPreviewVignette }} />}
+                </div>
+              </div>
+            </div>
+            <footer className="photo-editor-actions">
+              <button type="button" onClick={cancelPhotoEditor}>{t("common.cancel")}</button>
+              <button type="button" className="primary" onClick={applyPhotoEditor}>{t("common.apply")}</button>
+            </footer>
+          </section>
+        </div>
+      )}
 
       <div className="badge-export-surfaces" aria-hidden="true">
         <div ref={exportFrontRef} className="badge-card-preview badge-card-preview--export" style={{ backgroundColor: safeCardBackgroundColor }}>

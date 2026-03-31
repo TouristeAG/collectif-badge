@@ -26,6 +26,8 @@ export function CanvaSettingsModal({ isOpen, onClose }: CanvaSettingsModalProps)
   const [brandTemplateId, setBrandTemplateId] = useState("");
   const [status, setStatus] = useState<CanvaStatus | null>(null);
   const [message, setMessage] = useState("");
+  const [updateMessage, setUpdateMessage] = useState("");
+  const [updateMessageTone, setUpdateMessageTone] = useState<"neutral" | "success" | "error">("neutral");
   const [busy, setBusy] = useState(false);
   const [language, setLanguage] = useState<"fr" | "en">(() =>
     (localStorage.getItem("app.language") as "fr" | "en" | null) === "en" ? "en" : "fr"
@@ -51,6 +53,8 @@ export function CanvaSettingsModal({ isOpen, onClose }: CanvaSettingsModalProps)
       setLanguage(i18n.language.startsWith("en") ? "en" : "fr");
       void refresh();
       setMessage("");
+      setUpdateMessage("");
+      setUpdateMessageTone("neutral");
     }
   }, [isOpen, refresh]);
 
@@ -121,28 +125,34 @@ export function CanvaSettingsModal({ isOpen, onClose }: CanvaSettingsModalProps)
   }
 
   async function handleCheckUpdates() {
-    setMessage("");
+    setUpdateMessage("");
+    setUpdateMessageTone("neutral");
     if (!api?.updaterCheckNow) {
-      setMessage(t("settings.updatesUnavailable"));
+      setUpdateMessage(t("settings.updatesUnavailable"));
+      setUpdateMessageTone("error");
       return;
     }
     setBusy(true);
     try {
       const status = await api.updaterCheckNow();
       if (status.error) {
-        setMessage(status.error);
+        setUpdateMessage(status.error);
+        setUpdateMessageTone("error");
       } else if (status.updateAvailable) {
-        setMessage(
+        setUpdateMessage(
           t("settings.updateFound", {
             current: status.currentVersion,
             latest: status.latestVersion ?? "?",
           })
         );
+        setUpdateMessageTone("success");
       } else {
-        setMessage(t("settings.upToDate", { version: status.currentVersion }));
+        setUpdateMessage(t("settings.upToDate", { version: status.currentVersion }));
+        setUpdateMessageTone("neutral");
       }
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : t("settings.updateCheckFailed"));
+      setUpdateMessage(e instanceof Error ? e.message : t("settings.updateCheckFailed"));
+      setUpdateMessageTone("error");
     } finally {
       setBusy(false);
     }
@@ -183,6 +193,11 @@ export function CanvaSettingsModal({ isOpen, onClose }: CanvaSettingsModalProps)
             <button type="button" className="primary" onClick={() => void handleCheckUpdates()} disabled={busy}>
               {busy ? t("settings.checkingUpdates") : t("settings.checkUpdates")}
             </button>
+            {updateMessage ? (
+              <p className={`settings-update-feedback settings-update-feedback--${updateMessageTone}`}>
+                {updateMessage}
+              </p>
+            ) : null}
           </div>
 
           <div className="settings-section settings-section--intro">

@@ -5,7 +5,9 @@
   },
   "common": {
     "close": "Fermer",
-    "browse": "Parcourir"
+    "browse": "Parcourir",
+    "apply": "Appliquer",
+    "cancel": "Annuler"
   },
   "settings": {
     "title": "Paramètres",
@@ -115,6 +117,8 @@
     "filterPermanentGuests": "Invités permanents",
     "filterVolunteerGuests": "Invités bénévoles",
     "filterTempGuests": "Invités temporaires",
+    "hideTemporaryGuests": "Masquer les invités temporaires",
+    "hideShort": "cacher",
     "listMultiHint": "Cochez plusieurs personnes pour les ouvrir ensemble dans l’illustrateur de badge. Si aucune case n’est cochée, la ligne sélectionnée est utilisée.",
     "includeInIllustrator": "Inclure {{name}} dans l’illustrateur",
     "emptyList": "Aucune personne ne correspond à ce filtre.",
@@ -225,6 +229,9 @@
     "backSide": "Verso du badge",
     "frontSideShort": "Recto",
     "backSideShort": "Verso",
+    "badgeTheme": "Thème du badge",
+    "badgeThemeSwitchToLight": "Passer le badge en mode clair",
+    "badgeThemeSwitchToDark": "Passer le badge en mode sombre",
     "cardBackground": "Fond de la carte",
     "ariaCardBgColor": "Choisir la couleur de fond du badge",
     "setBackgroundDefault": "Définir ce fond par défaut",
@@ -276,6 +283,8 @@
     "secondaryColour": "Couleur secondaire",
     "setSecondaryDefault": "Définir la couleur secondaire par défaut",
     "profilePhoto": "Photo de profil",
+    "personalizePhoto": "Personnaliser l’image",
+    "personalizePhotoHint": "Ouvrir l’éditeur avancé pour régler la position, la lumière et les effets.",
     "changePhoto": "Changer la photo",
     "browsePhoto": "Choisir une photo",
     "removePhoto": "Retirer",
@@ -285,10 +294,28 @@
     "frameRounded": "Carré aux coins arrondis",
     "setFrameDefault": "Définir la forme du cadre par défaut",
     "photoPositioning": "Position de la photo",
+    "photoTabPosition": "Position",
+    "photoTabLighting": "Lumière",
+    "photoTabEffects": "Effets",
+    "photoBrightness": "Luminosité",
+    "photoHighlights": "Hautes lumières",
+    "photoShadows": "Ombres",
+    "photoWhites": "Blancs",
+    "photoBlacks": "Noirs",
+    "photoContrast": "Contraste",
+    "photoSaturation": "Saturation",
+    "photoTemperature": "Température",
+    "photoTint": "Teinte",
+    "photoVignette": "Vignette",
+    "photoClarity": "Clarté",
+    "photoGain": "Gain",
+    "setPhotoPositionDefaults": "Définir la position par défaut",
+    "setPhotoLightingDefaults": "Définir la lumière par défaut",
+    "setPhotoEffectsDefaults": "Définir les effets par défaut",
     "rotationShort": "Rot.",
     "backQrSection": "QR code",
     "showBackQr": "Afficher le QR code",
-    "backQrHint": "Encode du JSON EventManagerApp à partir des données de la feuille uniquement. Les bénévoles utilisent id + sheetsId ; les invités nom + abréviation. Les invités temporaires n’ont pas de QR code.",
+    "backQrHint": "Encode l’identifiant EventManager depuis la feuille (colonne ID). Si l’ID est vide, aucun QR code n’est affiché.",
     "livePreview": "Aperçu en direct",
     "previewSubtitle": "ID-1 · 85,6 × 54 mm",
     "exportPng": "Exporter .png (recto + verso)",
@@ -349,5 +376,9 @@
     "exportSurfaceUnavailable": "Surface d’export indisponible.",
     "blobToBase64": "Impossible de convertir le blob en base64.",
     "blobUnexpected": "Résultat inattendu lors de la conversion du blob."
+  },
+  "theme": {
+    "switchToDark": "Passer en mode sombre",
+    "switchToLight": "Passer en mode clair"
   }
 }

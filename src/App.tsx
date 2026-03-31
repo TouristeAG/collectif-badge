@@ -7,6 +7,77 @@ import { GoogleSheetsHelpModal } from "./components/GoogleSheetsHelp";
 import type { PeopleResponse, PersonCategory, PersonRecord, SheetNames } from "./types";
 import collectifnocturneLogo from "./assets/logo/collectifnocturne.png";
 
+function useDarkMode(): [boolean, () => void] {
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem("theme");
+      if (stored === "dark") return true;
+      if (stored === "light") return false;
+    } catch { /* noop */ }
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isDark) {
+      root.setAttribute("data-theme", "dark");
+      try { localStorage.setItem("theme", "dark"); } catch { /* noop */ }
+    } else {
+      root.removeAttribute("data-theme");
+      try { localStorage.setItem("theme", "light"); } catch { /* noop */ }
+    }
+  }, [isDark]);
+
+  const toggle = useCallback(() => setIsDark((prev) => !prev), []);
+  return [isDark, toggle];
+}
+
+function MoonIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  );
+}
+
+function SunIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="12" r="5" />
+      <line x1="12" y1="1" x2="12" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="23" />
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+      <line x1="1" y1="12" x2="3" y2="12" />
+      <line x1="21" y1="12" x2="23" y2="12" />
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+    </svg>
+  );
+}
+
+function DarkModeToggle({ isDark, onToggle }: { isDark: boolean; onToggle: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <button
+      type="button"
+      className={`theme-toggle ${isDark ? "is-dark" : "is-light"}`}
+      onClick={onToggle}
+      title={isDark ? t("theme.switchToLight") : t("theme.switchToDark")}
+      aria-label={isDark ? t("theme.switchToLight") : t("theme.switchToDark")}
+      aria-pressed={isDark}
+    >
+      <span className="theme-toggle-thumb" />
+      <span className="theme-toggle-icon theme-toggle-icon--sun">
+        <SunIcon />
+      </span>
+      <span className="theme-toggle-icon theme-toggle-icon--moon">
+        <MoonIcon />
+      </span>
+    </button>
+  );
+}
+
 const DEFAULT_SHEET_NAMES: SheetNames = {
   guestList: "Guest List",
   volunteerGuestList: "Volunteer Guest List",
@@ -26,9 +97,17 @@ type PersonListRowProps = {
 
 function normalizePersonRecord(person: PersonRecord, index: number): PersonRecord {
   const fallbackId = person.id || `row-${person.source || "sheet"}-${person.rowNumber || index + 1}`;
+  const normalizedSheetColumns =
+    person.sheetColumns && typeof person.sheetColumns === "object" ? person.sheetColumns : undefined;
+  const normalizedEventManagerIdRaw =
+    typeof person.eventManagerId === "string" && person.eventManagerId.trim()
+      ? person.eventManagerId
+      : normalizedSheetColumns?.G;
   return {
     ...person,
     id: String(fallbackId),
+    eventManagerId: typeof normalizedEventManagerIdRaw === "string" ? normalizedEventManagerIdRaw : "",
+    sheetColumns: normalizedSheetColumns,
     displayName: String(person.displayName ?? "").trim() || `Person ${index + 1}`,
     abbreviation: typeof person.abbreviation === "string" ? person.abbreviation : "",
     email: typeof person.email === "string" ? person.email : "",
@@ -79,6 +158,7 @@ const PersonListRow = memo(function PersonListRow({
 
 function App() {
   const { t } = useTranslation();
+  const [isDark, toggleDarkMode] = useDarkMode();
   const isDesktopApp = Boolean(window.electronAPI);
   const [updateStatus, setUpdateStatus] = useState<{
     checkedAt: number | null;
@@ -152,6 +232,7 @@ function App() {
   const [checkedForIllustrator, setCheckedForIllustrator] = useState<Set<string>>(() => new Set());
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<PersonCategory | "all">("all");
+  const [hideTemporaryGuests, setHideTemporaryGuests] = useState(true);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [networkShareRunning, setNetworkShareRunning] = useState(false);
@@ -192,6 +273,9 @@ function App() {
   const filteredPeople = useMemo(() => {
     const q = query.trim().toLowerCase();
     return people.filter((person) => {
+      if (hideTemporaryGuests && person.category === "temporary_guest") {
+        return false;
+      }
       if (categoryFilter !== "all" && person.category !== categoryFilter) {
         return false;
       }
@@ -212,7 +296,7 @@ function App() {
 
       return searchable.includes(q);
     });
-  }, [people, query, categoryFilter]);
+  }, [people, query, categoryFilter, hideTemporaryGuests]);
 
   const counts = useMemo(() => {
     const byCategory = {
@@ -222,7 +306,9 @@ function App() {
       temporary_guest: 0
     };
     people.forEach((person) => {
-      byCategory[person.category] += 1;
+      if (person.category in byCategory) {
+        byCategory[person.category as keyof typeof byCategory] += 1;
+      }
     });
     return { total: people.length, ...byCategory };
   }, [people]);
@@ -490,6 +576,7 @@ function App() {
             </div>
           </div>
           <div className="topbar-actions">
+            <DarkModeToggle isDark={isDark} onToggle={toggleDarkMode} />
             <CanvaSettingsButton onClick={() => setIsCanvaSettingsOpen(true)} />
             <button className="primary topbar-refresh" onClick={refreshFromSheets} disabled={isLoading}>
               {isLoading ? t("app.refreshing") : t("app.refreshSheets")}
@@ -654,7 +741,16 @@ function App() {
           <strong>{counts.volunteer_guest}</strong>
           <span>{t("app.statsVolunteerGuests")}</span>
         </article>
-        <article>
+        <article className="stats-temp-guests">
+          <label className="stats-hide-toggle">
+            <input
+              type="checkbox"
+              checked={hideTemporaryGuests}
+              onChange={(event) => setHideTemporaryGuests(event.target.checked)}
+            />
+            <span className="stats-hide-toggle-switch" aria-hidden="true" />
+            <span>{t("app.hideShort")}</span>
+          </label>
           <strong>{counts.temporary_guest}</strong>
           <span>{t("app.statsTempGuests")}</span>
         </article>

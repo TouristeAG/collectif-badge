@@ -89,11 +89,13 @@ function parseGuestList(rows) {
     if (!name) return;
 
     const isVolunteerBenefit = yesNoToBoolean(row[6]);
+    // "Invited volunteers" are duplicates of base volunteer profiles, so we exclude them.
+    if (isVolunteerBenefit) return;
     people.push(
       makeRecord(
         "guest_list",
         rowNumber,
-        isVolunteerBenefit ? "volunteer_guest" : "permanent_guest",
+        "permanent_guest",
         name,
         {
           eventManagerId: clean(row[9]),
@@ -111,26 +113,6 @@ function parseGuestList(rows) {
   return people;
 }
 
-function parseVolunteerGuestList(rows) {
-  const people = [];
-  rows.forEach((row, index) => {
-    const rowNumber = index + 2;
-    const name = clean(row[0]);
-    if (!name) return;
-
-    people.push(
-      makeRecord("volunteer_guest_list", rowNumber, "volunteer_guest", name, {
-        abbreviation: clean(row[1]),
-        invitations: Number.parseInt(clean(row[2]), 10) || 0,
-        venue: clean(row[3]),
-        notes: clean(row[4]),
-        nfcCardUid: clean(row[7])
-      })
-    );
-  });
-  return people;
-}
-
 function parseTempGuestList(rows) {
   const people = [];
   rows.forEach((row, index) => {
@@ -140,11 +122,35 @@ function parseTempGuestList(rows) {
 
     people.push(
       makeRecord("temp_guest_list", rowNumber, "temporary_guest", guestName, {
+        eventManagerId: clean(row[6]),
         eventDate: clean(row[1]),
         artistName: clean(row[2]),
         artistContactPhone: clean(row[3]),
         notes: clean(row[5]),
-        sheetColumns: rowToNonEmptyColumnMap(row, 6)
+        sheetColumns: rowToNonEmptyColumnMap(row, 7)
+      })
+    );
+  });
+  return people;
+}
+
+function parseVolunteerGuestList(rows) {
+  const people = [];
+  rows.forEach((row, index) => {
+    const rowNumber = index + 2;
+    const name = clean(row[0]);
+    if (!name) return;
+
+    people.push(
+      makeRecord("volunteer_guest_list", rowNumber, "volunteer_guest", name, {
+        eventManagerId: clean(row[7]),
+        email: clean(row[1]),
+        phone: clean(row[2]),
+        invitations: Number.parseInt(clean(row[3]), 10) || 0,
+        venue: clean(row[4]),
+        notes: clean(row[5]),
+        nfcCardUid: clean(row[6]),
+        sheetColumns: rowToNonEmptyColumnMap(row, 8)
       })
     );
   });
@@ -175,7 +181,7 @@ async function loadPeopleFromSheets(payload) {
     readRange(sheets, spreadsheetId, `${sheetNames.volunteers}!A2:K`),
     readRange(sheets, spreadsheetId, `${sheetNames.guestList}!A2:J`),
     readRange(sheets, spreadsheetId, `${sheetNames.volunteerGuestList}!A2:H`),
-    readRange(sheets, spreadsheetId, `${sheetNames.tempGuestList}!A2:F`)
+    readRange(sheets, spreadsheetId, `${sheetNames.tempGuestList}!A2:G`)
   ]);
 
   const volunteers = parseVolunteers(volunteerRows);

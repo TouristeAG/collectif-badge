@@ -3,41 +3,83 @@
   font-size: 16px;
   line-height: 1.45;
   font-weight: 400;
-  color: #e8edf4;
+  color: #1e2832;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
   /* Surfaces */
-  --color-bg-deep: #0a0d12;
-  --color-bg-page: #0f1318;
-  --color-bg-raised: #121820;
-  --color-bg-card: #141b26;
-  --color-bg-inset: #080b10;
-  --color-border: rgba(148, 163, 184, 0.14);
-  --color-border-strong: rgba(148, 163, 184, 0.22);
-  --color-border-glow: rgba(59, 130, 246, 0.35);
+  --color-bg-deep: #f0f2f5;
+  --color-bg-page: #f5f7fa;
+  --color-bg-raised: #ffffff;
+  --color-bg-card: #ffffff;
+  --color-bg-inset: #e4e8ee;
+  --color-border: rgba(0, 0, 0, 0.09);
+  --color-border-strong: rgba(0, 0, 0, 0.14);
+  --color-border-glow: rgba(100, 116, 139, 0.3);
 
   /* Text */
-  --color-text: #e8edf4;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
+  --color-text: #1e2832;
+  --color-text-secondary: #4b5768;
+  --color-text-muted: #9ca3af;
 
   /* Accent */
-  --color-accent: #3b82f6;
-  --color-accent-bright: #60a5fa;
-  --color-accent-dim: rgba(59, 130, 246, 0.12);
-  --color-accent-mid: rgba(59, 130, 246, 0.22);
-  --gradient-accent: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
-  --gradient-surface: linear-gradient(165deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.65) 100%);
+  --color-accent: #475569;
+  --color-accent-bright: #334155;
+  --color-accent-dim: rgba(71, 85, 105, 0.1);
+  --color-accent-mid: rgba(71, 85, 105, 0.18);
+  --gradient-accent: linear-gradient(135deg, #475569 0%, #334155 50%, #1e293b 100%);
+  --gradient-surface: linear-gradient(165deg, rgba(255, 255, 255, 0.8) 0%, rgba(241, 245, 249, 0.9) 100%);
 
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.07);
+  --shadow-float: 0 16px 48px rgba(0, 0, 0, 0.12);
+}
+
+/* ─── Dark theme ─── */
+[data-theme="dark"] {
+  color: #e2e8f0;
+
+  /* Surfaces */
+  --color-bg-deep: #0d1117;
+  --color-bg-page: #111827;
+  --color-bg-raised: #1e2433;
+  --color-bg-card: #1e2433;
+  --color-bg-inset: #161c28;
+  --color-border: rgba(255, 255, 255, 0.07);
+  --color-border-strong: rgba(255, 255, 255, 0.11);
+  --color-border-glow: rgba(148, 163, 184, 0.22);
+
+  /* Text */
+  --color-text: #e2e8f0;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+
+  /* Accent */
+  --color-accent: #94a3b8;
+  --color-accent-bright: #cbd5e1;
+  --color-accent-dim: rgba(148, 163, 184, 0.1);
+  --color-accent-mid: rgba(148, 163, 184, 0.18);
+  --gradient-accent: linear-gradient(135deg, #64748b 0%, #475569 50%, #334155 100%);
+  --gradient-surface: linear-gradient(165deg, rgba(30, 36, 51, 0.85) 0%, rgba(17, 24, 39, 0.92) 100%);
+
   --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.35);
-  --shadow-float: 0 16px 48px rgba(0, 0, 0, 0.45);
+  --shadow-float: 0 16px 48px rgba(0, 0, 0, 0.6);
+
+  color-scheme: dark;
+}
+
+[data-theme="dark"] body {
+  background-color: var(--color-bg-deep);
+  background-image:
+    radial-gradient(ellipse 140% 90% at 50% -25%, rgba(71, 85, 105, 0.07), transparent 58%),
+    radial-gradient(ellipse 70% 55% at 100% 0%, rgba(51, 65, 85, 0.05), transparent 50%),
+    radial-gradient(ellipse 55% 45% at 0% 100%, rgba(30, 41, 59, 0.06), transparent 42%),
+    linear-gradient(180deg, #0d1117 0%, #111827 38%, #0f1520 100%);
 }
 
 *,
@@ -57,10 +99,10 @@ body,
 body {
   background-color: var(--color-bg-deep);
   background-image:
-    radial-gradient(ellipse 140% 90% at 50% -25%, rgba(59, 130, 246, 0.14), transparent 58%),
-    radial-gradient(ellipse 70% 55% at 100% 0%, rgba(139, 92, 246, 0.07), transparent 50%),
-    radial-gradient(ellipse 55% 45% at 0% 100%, rgba(34, 197, 94, 0.05), transparent 42%),
-    linear-gradient(180deg, var(--color-bg-deep) 0%, var(--color-bg-page) 38%, #0c1018 100%);
+    radial-gradient(ellipse 140% 90% at 50% -25%, rgba(148, 163, 184, 0.1), transparent 58%),
+    radial-gradient(ellipse 70% 55% at 100% 0%, rgba(148, 163, 184, 0.06), transparent 50%),
+    radial-gradient(ellipse 55% 45% at 0% 100%, rgba(148, 163, 184, 0.05), transparent 42%),
+    linear-gradient(180deg, var(--color-bg-deep) 0%, var(--color-bg-page) 38%, #eaecf0 100%);
   background-attachment: fixed;
 }
 
