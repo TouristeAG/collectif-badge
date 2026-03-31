@@ -7,6 +7,10 @@ const https = require("https");
 const { loadPeopleFromSheets } = require("./sheets.cjs");
 const canva = require("./canva.cjs");
 
+// Disable Chromium's Rust-based PNG decoder which crashes on Intel x86_64 Macs
+// (Chromium 130+ regression; affects Electron 35+).
+app.commandLine.appendSwitch("disable-features", "UseRustPng");
+
 const isDev = !app.isPackaged;
 const SERVICE_ACCOUNT_FILE_NAME = "google-service-account.json";
 const NETWORK_SHARE_PORT = 4173;
