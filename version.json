@@ -1,7 +1,7 @@
 {
-  "version": "0.0.1",
+  "version": "0.0.2",
   "mandatory": true,
-  "minRequiredVersion": "0.0.1",
+  "minRequiredVersion": "0.0.2",
   "releaseUrl": "https://github.com/TouristeAG/collectif-badge/releases/latest",
   "notes": "New QR generation method."
 }
