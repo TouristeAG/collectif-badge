@@ -44,6 +44,8 @@ export const ILLUSTRATOR_FACTORY_DEFAULTS = {
   photoOffsetX: 0,
   photoOffsetY: 0,
   photoRotation: 0,
+  photoGrayscale: false,
+  photoInvert: false,
   showBackQr: true,
   roleSizeAdjust: 100,
   roleEdgeAdjustCqwByType: { ...FACTORY_ROLE_EDGE_CQW },

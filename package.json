@@ -13,7 +13,7 @@
     "start": "electron .",
     "build:web": "tsc -b && vite build",
     "build": "npm run build:web && electron-builder",
-    "postbuild": "zsh scripts/adhoc-sign-builds.sh",
+    "postbuild": "node scripts/postbuild.cjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

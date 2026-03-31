@@ -1070,6 +1070,8 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
   const [photoOffsetX, setPhotoOffsetX] = useState(() => readIllustratorDefaultsCached().photoOffsetX);
   const [photoOffsetY, setPhotoOffsetY] = useState(() => readIllustratorDefaultsCached().photoOffsetY);
   const [photoRotation, setPhotoRotation] = useState(() => readIllustratorDefaultsCached().photoRotation);
+  const [photoGrayscale, setPhotoGrayscale] = useState(() => readIllustratorDefaultsCached().photoGrayscale);
+  const [photoInvert, setPhotoInvert] = useState(() => readIllustratorDefaultsCached().photoInvert);
   const [backFirstName, setBackFirstName] = useState(() => splitName(people[0]!.displayName).firstName);
   const [backLastName, setBackLastName] = useState(
     () => people[0]!.abbreviation?.trim() || splitName(people[0]!.displayName).lastName
@@ -1124,7 +1126,14 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
   const liveLogoRef = useRef({ zoom: logoZoom, x: logoOffsetX, y: logoOffsetY, z: logoOffsetZ });
   const liveQrRef = useRef({ topPct: qrTopPct, rightPct: qrRightPct, widthPct: qrWidthPct, offsetX: qrOffsetX, offsetY: qrOffsetY, offsetZ: qrOffsetZ, zoom: qrZoom });
   const liveNfcRef = useRef({ bottomPct: nfcBottomPct, rightPct: nfcRightPct, widthPct: nfcWidthPct, offsetX: nfcOffsetX, offsetY: nfcOffsetY, offsetZ: nfcOffsetZ, zoom: nfcZoom });
-  const livePhotoRef = useRef({ zoom: photoZoom, offsetX: photoOffsetX, offsetY: photoOffsetY, rotation: photoRotation });
+  const livePhotoRef = useRef({
+    zoom: photoZoom,
+    offsetX: photoOffsetX,
+    offsetY: photoOffsetY,
+    rotation: photoRotation,
+    grayscale: photoGrayscale,
+    invert: photoInvert,
+  });
 
   const activePerson = useMemo(
     () => people.find((p) => p.id === activePersonId) ?? people[0],
@@ -1264,7 +1273,14 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
   liveLogoRef.current = { zoom: logoZoom, x: logoOffsetX, y: logoOffsetY, z: logoOffsetZ };
   liveQrRef.current = { topPct: qrTopPct, rightPct: qrRightPct, widthPct: qrWidthPct, offsetX: qrOffsetX, offsetY: qrOffsetY, offsetZ: qrOffsetZ, zoom: qrZoom };
   liveNfcRef.current = { bottomPct: nfcBottomPct, rightPct: nfcRightPct, widthPct: nfcWidthPct, offsetX: nfcOffsetX, offsetY: nfcOffsetY, offsetZ: nfcOffsetZ, zoom: nfcZoom };
-  livePhotoRef.current = { zoom: photoZoom, offsetX: photoOffsetX, offsetY: photoOffsetY, rotation: photoRotation };
+  livePhotoRef.current = {
+    zoom: photoZoom,
+    offsetX: photoOffsetX,
+    offsetY: photoOffsetY,
+    rotation: photoRotation,
+    grayscale: photoGrayscale,
+    invert: photoInvert,
+  };
 
   // Front QR code (vCard): debounce while typing; immediate when enabling QR or changing card background.
   useEffect(() => {
@@ -1462,12 +1478,15 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
       cachedPreviewBackPhotoEl.current = el;
     }
     if (!el) return;
-    const { zoom, offsetX, offsetY, rotation } = livePhotoRef.current;
+    const { zoom, offsetX, offsetY, rotation, grayscale, invert } = livePhotoRef.current;
     const scale = Math.max(1, zoom / 100);
     const posX = Math.max(0, Math.min(100, 50 + offsetX / 4));
     const posY = Math.max(0, Math.min(100, 50 + offsetY / 4));
     el.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
     el.style.objectPosition = `${posX}% ${posY}%`;
+    el.style.filter = grayscale
+      ? (invert ? "grayscale(100%) invert(100%)" : "grayscale(100%)")
+      : "none";
   }, []);
 
   // Stable onPreviewChange callbacks – one per slider, all zero-dep (use refs only).
@@ -1539,6 +1558,8 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
     setPhotoOffsetX(f.photoOffsetX);
     setPhotoOffsetY(f.photoOffsetY);
     setPhotoRotation(f.photoRotation);
+    setPhotoGrayscale(f.photoGrayscale);
+    setPhotoInvert(f.photoInvert);
     setShowBackQr(f.showBackQr);
     setRoleSizeAdjust(f.roleSizeAdjust);
     setRoleEdgeAdjustCqwByType({ ...FACTORY_ROLE_EDGE_CQW });
@@ -1576,6 +1597,9 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
   const photoPositionX = Math.max(0, Math.min(100, 50 + photoOffsetX / 4));
   const photoPositionY = Math.max(0, Math.min(100, 50 + photoOffsetY / 4));
   const photoTransform = `scale(${photoScale}) rotate(${photoRotation}deg)`;
+  const photoFilter = photoGrayscale
+    ? (photoInvert ? "grayscale(100%) invert(100%)" : "grayscale(100%)")
+    : "none";
   const exportBaseName = useMemo(
     () =>
       sanitizeFileName(
@@ -2423,6 +2447,7 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
                 style={{
                   transform: photoTransform,
                   objectPosition: `${photoPositionX}% ${photoPositionY}%`,
+                  filter: photoFilter,
                 }}
               />
             ) : (
@@ -2455,6 +2480,7 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
     photoFrameShape,
     photoPositionX,
     photoPositionY,
+    photoFilter,
     photoTransform,
     previewRoleOffsetX,
     previewRoleTextFontSize,
@@ -2534,6 +2560,7 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
                 style={{
                   transform: photoTransform,
                   objectPosition: `${photoPositionX}% ${photoPositionY}%`,
+                  filter: photoFilter,
                 }}
               />
             ) : (
@@ -2568,6 +2595,7 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
     photoFrameShape,
     photoPositionX,
     photoPositionY,
+    photoFilter,
     photoTransform,
     profilePhotoUrl,
     roleEdgeAdjustCqw,
@@ -3251,6 +3279,40 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
                     {t("illustrator.frameRounded")}
                   </label>
                 </div>
+                <div className="switch-with-default">
+                  <ToggleSwitch
+                    checked={photoGrayscale}
+                    onChange={(checked) => {
+                      setPhotoGrayscale(checked);
+                      if (!checked) setPhotoInvert(false);
+                    }}
+                    label={t("illustrator.photoGrayscale")}
+                  />
+                  <SetAsDefaultButton
+                    onClick={() => {
+                      persistIllustratorPartial({
+                        photoGrayscale,
+                        photoInvert: photoGrayscale ? photoInvert : false,
+                      });
+                      flashDefaultsSaved();
+                    }}
+                  />
+                </div>
+                {photoGrayscale && (
+                  <div className="switch-with-default">
+                    <ToggleSwitch
+                      checked={photoInvert}
+                      onChange={setPhotoInvert}
+                      label={t("illustrator.photoInvert")}
+                    />
+                    <SetAsDefaultButton
+                      onClick={() => {
+                        persistIllustratorPartial({ photoInvert });
+                        flashDefaultsSaved();
+                      }}
+                    />
+                  </div>
+                )}
                 <SetAsDefaultButton
                   label={t("illustrator.setFrameDefault")}
                   onClick={() => {

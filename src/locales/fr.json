@@ -279,6 +279,8 @@
     "changePhoto": "Changer la photo",
     "browsePhoto": "Choisir une photo",
     "removePhoto": "Retirer",
+    "photoGrayscale": "Photo en noir et blanc",
+    "photoInvert": "Inverser les couleurs",
     "frameCircle": "Cercle",
     "frameRounded": "Carré aux coins arrondis",
     "setFrameDefault": "Définir la forme du cadre par défaut",

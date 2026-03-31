@@ -279,6 +279,8 @@
     "changePhoto": "Change photo",
     "browsePhoto": "Browse for photo",
     "removePhoto": "Remove",
+    "photoGrayscale": "Black and white photo",
+    "photoInvert": "Invert colours",
     "frameCircle": "Circle",
     "frameRounded": "Rounded square",
     "setFrameDefault": "Set frame shape as default",
