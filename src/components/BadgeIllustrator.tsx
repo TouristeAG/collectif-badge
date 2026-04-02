@@ -3110,12 +3110,27 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
               </h3>
             </div>
             <div className="badge-preview-canvas-wrap">
-              <div
-                className="badge-card-preview badge-card-preview--isolate"
-                ref={previewCardRef}
-                style={{ backgroundColor: safeCardBackgroundColor }}
-              >
-                {selectedSide === "front" ? frontBadgeMarkup : previewBackBadgeMarkup}
+              <div className="badge-preview-flip-root">
+                <div className="badge-preview-flip-scene" ref={previewCardRef}>
+                  <div className={`badge-preview-flip-inner ${selectedSide === "back" ? "is-back" : ""}`}>
+                    <div className="badge-preview-flip-face badge-preview-flip-face--front">
+                      <div
+                        className="badge-card-preview badge-card-preview--isolate"
+                        style={{ backgroundColor: safeCardBackgroundColor }}
+                      >
+                        {frontBadgeMarkup}
+                      </div>
+                    </div>
+                    <div className="badge-preview-flip-face badge-preview-flip-face--back">
+                      <div
+                        className="badge-card-preview badge-card-preview--isolate"
+                        style={{ backgroundColor: safeCardBackgroundColor }}
+                      >
+                        {previewBackBadgeMarkup}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </section>

@@ -1539,6 +1539,7 @@ button:disabled {
   flex: 0 0 auto;
   width: 100%;
   min-width: 0;
+  overflow: visible;
 }
 
 /* Preview area is a size container so the badge scales with the box (not only vh) at odd aspect ratios */
@@ -1549,16 +1550,17 @@ button:disabled {
   container-name: badge-preview-canvas;
   /* Room for slight translateX on the card + shadow */
   padding-inline: 0.25rem 1.15rem;
+  overflow: visible;
 }
 
 /*
  * Fill the canvas up to caps: 960px wide, height cap min(46vh, 440px) (same as before).
  * cqw/cqh = space inside .badge-preview-canvas-wrap so the card grows with the panel.
  */
+/* Avoid `width: 100%` inside min() here: with a fit-content flip chain it goes cyclic and collapses to 0. */
 .badge-illustrator-preview-top .badge-card-preview {
   width: min(
     960px,
-    100%,
     100cqw,
     100cqh * (85.6 / 54),
     calc(min(46vh, 440px) * 85.6 / 54)
@@ -1566,7 +1568,68 @@ button:disabled {
   max-width: 100%;
   margin-left: unset;
   margin-right: unset;
+}
+
+/* Recto/Verso: 3D flip in live preview (offset lives on scene so it doesn’t fight rotateY) */
+.badge-preview-flip-root {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Definite width (not fit-content) so descendant % and cq units resolve; 3D isn’t clipped as easily */
+.badge-preview-flip-scene {
+  perspective: 1400px;
   transform: translateX(clamp(0.2rem, 1.1cqw, 0.95rem));
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+.badge-preview-flip-inner {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform: rotateY(0deg);
+}
+
+.badge-preview-flip-inner.is-back {
+  transform: rotateY(180deg);
+}
+
+.badge-preview-flip-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.badge-preview-flip-face--front {
+  transform: translateZ(1px);
+}
+
+.badge-preview-flip-face--back {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotateY(180deg) translateZ(1px);
+}
+
+/* paint containment + 3D flip can hide the card in some engines */
+.badge-preview-flip-face .badge-card-preview--isolate {
+  contain: layout style;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-preview-flip-inner {
+    transition-duration: 0.01ms;
+  }
 }
 
 .badge-illustrator-body {
@@ -2620,7 +2683,6 @@ body.electron-app .illustrator-modal-backdrop {
   .badge-illustrator-preview-top .badge-card-preview {
     width: min(
       960px,
-      100%,
       100cqw,
       100cqh * (85.6 / 54),
       calc(min(32vh, 260px) * 85.6 / 54)
@@ -2724,7 +2786,6 @@ body.electron-app .illustrator-modal-backdrop {
   .badge-illustrator-preview-top .badge-card-preview {
     width: min(
       960px,
-      100%,
       100cqw,
       100cqh * (85.6 / 54),
       calc(min(26vh, 220px) * 85.6 / 54)
@@ -3335,7 +3396,6 @@ body.electron-app .settings-modal-backdrop {
   .illustrator-modal-window .badge-illustrator-preview-top .badge-card-preview {
     width: min(
       960px,
-      100%,
       100cqw,
       100cqh * (85.6 / 54),
       calc(min(30vh, 260px) * 85.6 / 54)
