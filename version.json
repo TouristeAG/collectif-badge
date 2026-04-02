@@ -1,7 +1,7 @@
 {
-  "version": "0.0.3",
-  "mandatory": false,
-  "minRequiredVersion": "0.0.3",
+  "version": "0.0.4",
+  "mandatory": true,
+  "minRequiredVersion": "0.0.4",
   "releaseUrl": "https://github.com/TouristeAG/collectif-badge/releases/latest",
-  "notes": "Bug fixes."
+  "notes": "Bug fixes, and new UI layouts."
 }
