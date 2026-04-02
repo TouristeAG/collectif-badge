@@ -1541,25 +1541,59 @@ button:disabled {
   min-width: 0;
 }
 
-/* Larger live preview band above settings */
+/* Preview area is a size container so the badge scales with the box (not only vh) at odd aspect ratios */
 .badge-illustrator-preview-top .badge-preview-canvas-wrap {
   justify-content: center;
   max-height: none;
+  container-type: size;
+  container-name: badge-preview-canvas;
+  /* Room for slight translateX on the card + shadow */
+  padding-inline: 0.25rem 1.15rem;
 }
 
+/*
+ * Fill the canvas up to caps: 960px wide, height cap min(46vh, 440px) (same as before).
+ * cqw/cqh = space inside .badge-preview-canvas-wrap so the card grows with the panel.
+ */
 .badge-illustrator-preview-top .badge-card-preview {
-  width: min(100%, 960px, calc(min(46vh, 440px) * 85.6 / 54));
+  width: min(
+    960px,
+    100%,
+    100cqw,
+    100cqh * (85.6 / 54),
+    calc(min(46vh, 440px) * 85.6 / 54)
+  );
+  max-width: 100%;
+  margin-left: unset;
+  margin-right: unset;
+  transform: translateX(clamp(0.2rem, 1.1cqw, 0.95rem));
 }
 
-.badge-illustrator-work {
+.badge-illustrator-body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(232px, 300px);
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "preview preview"
+    "settings colors";
   gap: 1rem;
   min-height: 0;
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   align-items: start;
+}
+
+.badge-illustrator-body .badge-illustrator-preview-top {
+  grid-area: preview;
+}
+
+.badge-illustrator-body > .badge-settings {
+  grid-area: settings;
+}
+
+.badge-illustrator-body > .illustrator-color-rail {
+  grid-area: colors;
 }
 
 .illustrator-color-rail {
@@ -1660,7 +1694,7 @@ button:disabled {
 .badge-illustrator-preview-top .badge-preview-panel {
   flex-direction: row;
   flex-wrap: nowrap;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 1rem 1.35rem;
 }
 
@@ -1681,8 +1715,9 @@ button:disabled {
 
 .badge-illustrator-preview-top .badge-preview-canvas-wrap {
   flex: 1 1 auto;
-  justify-content: flex-end;
-  align-items: flex-start;
+  align-self: stretch;
+  justify-content: center;
+  align-items: center;
   min-width: 0;
 }
 
@@ -2462,6 +2497,111 @@ body.electron-app .illustrator-modal-backdrop {
   min-width: 0;
 }
 
+/* Wide illustrator: settings column left of preview; color rail full width below */
+@container illustrator-modal (min-width: 961px) {
+  .badge-illustrator-body {
+    grid-template-columns: minmax(260px, min(32cqi, 420px)) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "settings preview"
+      "colors colors";
+    align-items: stretch;
+  }
+
+  .badge-illustrator-body .badge-illustrator-preview-top {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .badge-illustrator-preview-top .badge-preview-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .badge-illustrator-preview-top .badge-preview-canvas-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    align-self: stretch;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .badge-illustrator-body > .illustrator-color-rail {
+    position: relative;
+    top: auto;
+    max-height: none;
+    min-height: 0;
+    align-self: stretch;
+    overflow: visible;
+    flex-shrink: 0;
+  }
+
+  /* Bottom bar: theme, three colors, reset — one horizontal strip, no inner scroll */
+  .illustrator-color-rail {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.55rem 1rem;
+    overflow: visible;
+    max-height: none;
+    flex-shrink: 0;
+  }
+
+  .illustrator-color-rail > .badge-mode-toggle-wrap {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4rem 0.55rem;
+    flex: 0 0 auto;
+    align-self: center;
+  }
+
+  .illustrator-color-rail > .illustrator-top-color-grid {
+    flex: 1 1 16rem;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.55rem 0.85rem;
+    align-items: center;
+    width: auto;
+  }
+
+  .illustrator-color-rail > .btn-reset-factory {
+    margin-top: 0;
+    margin-inline-start: auto;
+    flex: 0 0 auto;
+    align-self: center;
+    width: auto;
+    white-space: nowrap;
+  }
+
+  .illustrator-color-rail .illustrator-card-bg-field {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem 0.5rem;
+    width: auto;
+    min-width: 0;
+  }
+
+  .illustrator-color-rail .illustrator-card-bg-controls {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem 0.4rem;
+  }
+
+  .illustrator-color-rail .illustrator-card-bg-label {
+    white-space: nowrap;
+  }
+
+  .illustrator-color-rail .illustrator-card-bg-controls .btn-set-default--subtle {
+    flex: 0 0 auto;
+  }
+}
+
 /* Narrow illustrator modal — preview band + stacked work row tweaks */
 @container illustrator-modal (max-width: 960px) {
   .badge-illustrator {
@@ -2472,15 +2612,18 @@ body.electron-app .illustrator-modal-backdrop {
   }
 
   .badge-illustrator-preview-top .badge-preview-canvas-wrap {
+    min-height: min(34vh, 300px);
     max-height: min(42vh, 380px);
     max-height: min(42cqb, 400px);
   }
 
   .badge-illustrator-preview-top .badge-card-preview {
-    width: min(100%, calc(min(28vh, 240px) * 85.6 / 54));
     width: min(
+      960px,
       100%,
-      calc(min(32cqb, 260px, 100cqi - 1.5rem) * 85.6 / 54)
+      100cqw,
+      100cqh * (85.6 / 54),
+      calc(min(32vh, 260px) * 85.6 / 54)
     );
     max-width: 100%;
     flex-shrink: 1;
@@ -2527,8 +2670,12 @@ body.electron-app .illustrator-modal-backdrop {
 }
 
 @container illustrator-modal (max-width: 720px) {
-  .badge-illustrator-work {
+  .badge-illustrator-body {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "preview"
+      "settings"
+      "colors";
   }
 
   .illustrator-color-rail {
@@ -2569,15 +2716,18 @@ body.electron-app .illustrator-modal-backdrop {
   }
 
   .badge-illustrator-preview-top .badge-preview-canvas-wrap {
+    min-height: min(30vh, 260px);
     max-height: min(36vh, 320px);
     max-height: min(38cqb, 340px);
   }
 
   .badge-illustrator-preview-top .badge-card-preview {
-    width: min(100%, calc(min(24vh, 210px) * 85.6 / 54));
     width: min(
+      960px,
       100%,
-      calc(min(28cqb, 230px, 100cqi - 1rem) * 85.6 / 54)
+      100cqw,
+      100cqh * (85.6 / 54),
+      calc(min(26vh, 220px) * 85.6 / 54)
     );
   }
 
@@ -2830,56 +2980,175 @@ body.electron-app .settings-modal-backdrop {
   .workspace {
     grid-template-columns: 1fr;
   }
+}
 
-  .badge-illustrator {
-    gap: 0.75rem;
-    min-height: 0;
-  }
+/* Illustrator toolbar (Recto/Verso, chips): use modal container width (≈96vw), not viewport 1100px —
+   keeps toolbar in sync with badge-illustrator-body layout (@container illustrator-modal max 960px). */
+@supports not (container-type: size) {
+  @media (max-width: 1000px) {
+    .illustrator-modal-window .illustrator-toolbar-row--primary {
+      flex-direction: column;
+      align-items: stretch;
+    }
 
-  .side-switch {
-    width: 100%;
-    max-width: 100%;
-  }
+    .illustrator-modal-window .illustrator-toolbar-lead {
+      flex-direction: column;
+      align-items: stretch;
+    }
 
-  .side-switch button {
-    min-width: 0;
-    flex: 1 1 50%;
-  }
+    .illustrator-modal-window .side-switch {
+      width: 100%;
+      max-width: 100%;
+    }
 
-  .illustrator-toolbar-row--primary {
-    flex-direction: column;
-    align-items: stretch;
-  }
+    .illustrator-modal-window .side-switch button {
+      min-width: 0;
+      flex: 1 1 50%;
+    }
 
-  .illustrator-toolbar-lead {
-    flex-direction: column;
-    align-items: stretch;
-  }
+    .illustrator-modal-window .illustrator-context-chips {
+      flex: 1 1 auto;
+      width: 100%;
+    }
 
-  .illustrator-context-chips {
-    width: 100%;
-  }
+    .illustrator-modal-window .person-meta-chips {
+      width: 100%;
+    }
 
-  .person-meta-chips {
-    width: 100%;
-  }
+    .illustrator-modal-window .range-row {
+      grid-template-columns: minmax(0, 3rem) minmax(0, 1fr) minmax(0, 3.5rem);
+      gap: 0.45rem;
+    }
 
-  .range-row {
-    grid-template-columns: minmax(0, 3rem) minmax(0, 1fr) minmax(0, 3.5rem);
-    gap: 0.45rem;
+    .illustrator-modal-window .range-row output {
+      font-size: 0.72rem;
+      padding: 0.18rem 0.28rem;
+    }
+
+    .illustrator-modal-window .badge-illustrator {
+      gap: 0.75rem;
+      min-height: 0;
+    }
   }
 }
 
 /* Illustrator modal: viewport fallback if container queries are unsupported */
+@media (min-width: 1100px) {
+  .illustrator-modal-window .badge-illustrator-body {
+    grid-template-columns: minmax(260px, 420px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "settings preview"
+      "colors colors";
+    align-items: stretch;
+  }
+
+  .illustrator-modal-window .badge-illustrator-body .badge-illustrator-preview-top {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .illustrator-modal-window .badge-illustrator-preview-top .badge-preview-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .illustrator-modal-window .badge-illustrator-preview-top .badge-preview-canvas-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    align-self: stretch;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .illustrator-modal-window .badge-illustrator-body > .illustrator-color-rail {
+    position: relative;
+    top: auto;
+    max-height: none;
+    min-height: 0;
+    align-self: stretch;
+    overflow: visible;
+    flex-shrink: 0;
+  }
+
+  .illustrator-modal-window .illustrator-color-rail {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.55rem 1rem;
+    overflow: visible;
+    max-height: none;
+    flex-shrink: 0;
+  }
+
+  .illustrator-modal-window .illustrator-color-rail > .badge-mode-toggle-wrap {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4rem 0.55rem;
+    flex: 0 0 auto;
+    align-self: center;
+  }
+
+  .illustrator-modal-window .illustrator-color-rail > .illustrator-top-color-grid {
+    flex: 1 1 16rem;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.55rem 0.85rem;
+    align-items: center;
+    width: auto;
+  }
+
+  .illustrator-modal-window .illustrator-color-rail > .btn-reset-factory {
+    margin-top: 0;
+    margin-inline-start: auto;
+    flex: 0 0 auto;
+    align-self: center;
+    width: auto;
+    white-space: nowrap;
+  }
+
+  .illustrator-modal-window .illustrator-color-rail .illustrator-card-bg-field {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem 0.5rem;
+    width: auto;
+    min-width: 0;
+  }
+
+  .illustrator-modal-window .illustrator-color-rail .illustrator-card-bg-controls {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem 0.4rem;
+  }
+
+  .illustrator-modal-window .illustrator-color-rail .illustrator-card-bg-label {
+    white-space: nowrap;
+  }
+
+  .illustrator-modal-window .illustrator-color-rail .illustrator-card-bg-controls .btn-set-default--subtle {
+    flex: 0 0 auto;
+  }
+}
+
 @media (max-width: 1100px) and (min-width: 600px) {
-  .illustrator-modal-window .badge-illustrator-work {
+  .illustrator-modal-window .badge-illustrator-body {
     grid-template-columns: minmax(0, 1fr) minmax(220px, min(36vw, 300px));
   }
 }
 
 @media (max-width: 599px) {
-  .illustrator-modal-window .badge-illustrator-work {
+  .illustrator-modal-window .badge-illustrator-body {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "preview"
+      "settings"
+      "colors";
   }
 
   .illustrator-modal-window .illustrator-color-rail {
@@ -2954,8 +3223,12 @@ body.electron-app .settings-modal-backdrop {
     padding: 0.75rem 0.85rem 0.85rem 1rem;
   }
 
-  .illustrator-modal-window .badge-illustrator-work {
+  .illustrator-modal-window .badge-illustrator-body {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "preview"
+      "settings"
+      "colors";
   }
 
   .illustrator-modal-window .illustrator-color-rail {
@@ -3061,7 +3334,10 @@ body.electron-app .settings-modal-backdrop {
 
   .illustrator-modal-window .badge-illustrator-preview-top .badge-card-preview {
     width: min(
+      960px,
       100%,
+      100cqw,
+      100cqh * (85.6 / 54),
       calc(min(30vh, 260px) * 85.6 / 54)
     );
   }

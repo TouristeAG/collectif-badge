@@ -1,7 +1,7 @@
 {
   "name": "collectif-badge-",
   "private": true,
-  "version": "0.0.3",
+  "version": "0.0.4",
   "engines": {
     "node": ">=22.0.0"
   },
@@ -16,6 +16,7 @@
     "start": "env -u ELECTRON_RUN_AS_NODE electron .",
     "build:web": "tsc -b && vite build",
     "build": "npm run sync:version && npm run build:web && electron-builder --publish never",
+    "postbuild": "node scripts/postbuild.cjs",
     "sync:version": "node scripts/check-version-sync.cjs",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -66,6 +67,12 @@
       "buildResources": "build",
       "output": "release"
     },
+    "extraResources": [
+      {
+        "from": "scripts/sign-and-allow.sh",
+        "to": "scripts/sign-and-allow.sh"
+      }
+    ],
     "mac": {
       "target": [
         {

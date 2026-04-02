@@ -1,15 +1,15 @@
 #!/bin/zsh
-# Ad-hoc signs the installed COLLECTIF BADGE app and adds it to the macOS
+# Ad-hoc signs the installed Collectif Badge app and adds it to the macOS
 # Application Firewall so that "Partage réseau local" can accept LAN connections.
 #
 # Usage:
-#   sudo zsh "/Applications/COLLECTIF BADGE.app/Contents/Resources/scripts/sign-and-allow.sh"
+#   sudo zsh "/Applications/Collectif Badge.app/Contents/Resources/scripts/sign-and-allow.sh"
 #
 # Run this once after (re-)installing the app from the DMG.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 APP_FROM_BUNDLE="${SCRIPT_DIR%/Contents/Resources/scripts}"
-APP_DEFAULT="/Applications/COLLECTIF BADGE.app"
+APP_DEFAULT="/Applications/Collectif Badge.app"
 APP="$APP_DEFAULT"
 
 if [[ "$SCRIPT_DIR" == *"/Contents/Resources/scripts" ]] && [ -d "$APP_FROM_BUNDLE" ]; then
@@ -20,7 +20,7 @@ FIREWALL="/usr/libexec/ApplicationFirewall/socketfilterfw"
 
 if [ ! -d "$APP" ]; then
   echo "Error: '$APP' not found."
-  echo "Make sure COLLECTIF BADGE.app is installed in /Applications."
+  echo "Make sure Collectif Badge.app is installed in /Applications."
   exit 1
 fi
 
@@ -55,6 +55,6 @@ echo ""
 echo "If the app still does not open from Finder (bounces in dock and disappears):"
 echo "  1. Open System Settings → Privacy & Security"
 echo "  2. Scroll down to the Security section"
-echo "  3. Click 'Open Anyway' next to 'Collectif Badgé was blocked'"
+echo "  3. Click 'Open Anyway' next to 'Collectif Badge was blocked'"
 echo "  4. Enter your password, then click 'Open'"
 echo "This is a one-time step required by macOS 15 (Sequoia) for non-App-Store apps."

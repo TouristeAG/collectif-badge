@@ -3100,6 +3100,7 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
       )}
 
       <div className="badge-illustrator-main">
+        <div className="badge-illustrator-body">
         <div className="badge-illustrator-preview-top">
           <section className="badge-preview-panel">
             <div className="badge-preview-header">
@@ -3119,7 +3120,6 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
             </div>
           </section>
         </div>
-        <div className="badge-illustrator-work">
         <section className="badge-settings">
           {selectedSide === "front" ? (
             <>
@@ -3629,7 +3629,7 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
           )}
         </section>
         <aside className="illustrator-color-rail">{colorRailEl}</aside>
-      </div>
+        </div>
       </div>
 
       {isPhotoEditorOpen && photoEditorDraft && (

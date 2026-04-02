@@ -87,7 +87,7 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 1280,
     height: 860,
-    minWidth: 980,
+    minWidth: 640,
     minHeight: 700,
     title: "Collectif Badgé",
     backgroundColor: "#0f172a",
