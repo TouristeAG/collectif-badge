@@ -1,6 +1,7 @@
 const path = require("path");
 const electron = require("electron");
 const { app, BrowserWindow, dialog, ipcMain, shell } = electron;
+require(path.join(__dirname, "electron", "chromium-flags.cjs")).mainProcessApply(app);
 const fs = require("fs/promises");
 const os = require("os");
 const fssync = require("fs");
@@ -94,43 +95,12 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
-      nodeIntegration: false,
-      // Electron 28+ defaults to sandbox: true; combined with file:// + Vite bundles this often
-      // kills the renderer immediately, then window-all-closed quits the app on macOS.
-      sandbox: false
+      nodeIntegration: false
     }
   });
 
-  win.webContents.on("did-fail-load", (_event, code, desc, url, isMainFrame) => {
-    if (!isMainFrame) return;
-    logMainCrash(
-      "did-fail-load",
-      new Error(`code=${code} ${desc} url=${url}`)
-    );
-  });
-
-  win.webContents.on("render-process-gone", (_event, details) => {
-    logMainCrash(
-      "render-process-gone",
-      new Error(`reason=${details.reason} exitCode=${details.exitCode}`)
-    );
-  });
-
   if (isDev) {
-    // In dev mode, try the Vite dev server first.
-    // If it's not reachable, fall back to the pre-built dist/ so that
-    // `npm run start` works even without an active Vite server.
-    http.get("http://localhost:5173", (res) => {
-      res.resume();
-      win.loadURL("http://localhost:5173");
-    }).on("error", () => {
-      const distIndex = path.join(__dirname, "..", "dist", "index.html");
-      if (fssync.existsSync(distIndex)) {
-        win.loadFile(distIndex);
-      } else {
-        win.loadURL("http://localhost:5173");
-      }
-    });
+    win.loadURL("http://localhost:5173");
   } else {
     win.loadFile(path.join(__dirname, "..", "dist", "index.html"));
   }
@@ -588,11 +558,7 @@ app.whenReady().then(() => {
 });
 
 app.on("window-all-closed", () => {
-  // Default Electron macOS behaviour: stay alive so Dock / Cmd+N can reopen a window.
-  // Quitting here made a renderer crash look like an “instant quit” from Finder.
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
+  app.quit();
 });
 
 app.on("before-quit", () => {

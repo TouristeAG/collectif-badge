@@ -29,6 +29,15 @@ codesign --deep --force -s - "$APP"
 echo "    Done."
 
 echo ""
+echo "==> Removing quarantine flag (if present) …"
+xattr -rd com.apple.quarantine "$APP" 2>/dev/null || true
+echo "    Done."
+
+echo ""
+echo "==> Registering with Gatekeeper (allows Finder launch on macOS 15+) …"
+spctl --add "$APP" 2>/dev/null && echo "    Registered." || echo "    Note: spctl --add failed (requires sudo on macOS 15). See below."
+
+echo ""
 echo "==> Adding to Application Firewall …"
 "$FIREWALL" --add "$APP"
 "$FIREWALL" --unblockapp "$APP"
@@ -41,4 +50,11 @@ launchctl start com.apple.alf.agent 2>/dev/null || true
 echo "    Done."
 
 echo ""
-echo "All set. Launch COLLECTIF BADGE and try 'Partage réseau local' again."
+echo "All set."
+echo ""
+echo "If the app still does not open from Finder (bounces in dock and disappears):"
+echo "  1. Open System Settings → Privacy & Security"
+echo "  2. Scroll down to the Security section"
+echo "  3. Click 'Open Anyway' next to 'Collectif Badgé was blocked'"
+echo "  4. Enter your password, then click 'Open'"
+echo "This is a one-time step required by macOS 15 (Sequoia) for non-App-Store apps."

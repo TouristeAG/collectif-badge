@@ -1104,19 +1104,13 @@ button:disabled {
   flex: 1 1 12rem;
 }
 
-.illustrator-toolbar-row--secondary {
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem 1rem;
-  padding-top: 0.15rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.08);
-}
-
 .illustrator-top-color-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(220px, 1fr));
-  gap: 0.65rem;
-  flex: 1 1 auto;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 13.75rem), auto));
+  gap: 0.55rem 0.85rem;
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
   min-width: 0;
 }
 
@@ -1126,7 +1120,9 @@ button:disabled {
   align-items: flex-start;
   gap: 0.4rem;
   min-width: 0;
-  flex: 1 1 auto;
+  width: fit-content;
+  max-width: 100%;
+  flex: 0 1 auto;
   margin: 0;
   color: #475569;
 }
@@ -1137,7 +1133,8 @@ button:disabled {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: #64748b;
-  width: 100%;
+  width: auto;
+  max-width: 100%;
 }
 
 .illustrator-card-bg-controls {
@@ -1146,13 +1143,15 @@ button:disabled {
   align-items: flex-start;
   gap: 0.4rem;
   min-width: 0;
-  flex: 1 1 min(280px, 100%);
+  width: auto;
+  max-width: 100%;
+  flex: 0 1 auto;
 }
 
 .illustrator-card-bg-controls .background-color-inputs {
   flex: 0 0 auto;
-  width: 100%;
-  max-width: min(300px, 100%);
+  width: auto;
+  max-width: 100%;
 }
 
 .illustrator-card-bg-controls .btn-set-default--subtle {
@@ -1161,11 +1160,6 @@ button:disabled {
   white-space: normal;
   line-height: 1.3;
   text-align: left;
-}
-
-.illustrator-toolbar-row--secondary .btn-reset-factory {
-  flex: 0 0 auto;
-  align-self: center;
 }
 
 .illustrator-toolbar-messages {
@@ -1328,17 +1322,42 @@ button:disabled {
   margin-top: -0.1rem;
 }
 
-.switch-with-default {
+/* Badge illustrator: QR / NFC / back QR — label | fixed-width switch | default */
+.illustrator-switch-stack {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem 0.75rem;
-  margin-bottom: 0.45rem;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.35rem;
 }
 
-.switch-with-default .btn-set-default--subtle {
-  flex-shrink: 0;
+.illustrator-switch-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 3.25rem auto;
+  align-items: center;
+  column-gap: 0.75rem;
+  row-gap: 0.2rem;
+  min-height: 2.25rem;
+}
+
+.illustrator-switch-row__label {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--color-text);
+  line-height: 1.35;
+  min-width: 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.illustrator-switch-row .ios-toggle {
+  justify-self: end;
+}
+
+.illustrator-switch-row .btn-set-default--subtle {
+  justify-self: end;
+  margin: 0;
 }
 
 .btn-set-default {
@@ -1399,8 +1418,9 @@ button:disabled {
 
 .background-color-inputs {
   display: grid;
-  grid-template-columns: 44px 1fr;
+  grid-template-columns: 44px minmax(6.5rem, 9.75rem);
   gap: 0.45rem;
+  justify-items: start;
 }
 
 .background-color-inputs input[type="color"] {
@@ -1419,6 +1439,8 @@ button:disabled {
 }
 
 .background-color-inputs input[type="text"] {
+  width: 100%;
+  min-width: 0;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
     monospace;
   text-transform: lowercase;
@@ -1446,10 +1468,15 @@ button:disabled {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
+/* Name chip (illustrator toolbar only): high-contrast, slightly larger */
 .meta-chip--name {
-  border-color: rgba(100, 116, 139, 0.35);
-  background: linear-gradient(180deg, rgba(71, 85, 105, 0.15), rgba(241, 245, 249, 0.9));
-  color: #1e293b;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  border-color: rgba(15, 23, 42, 0.14);
+  background: #ffffff;
+  color: #020617;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .side-switch {
@@ -1483,17 +1510,97 @@ button:disabled {
 
 .side-switch button.active {
   background: var(--gradient-accent);
-  color: #eff6ff;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+  font-weight: 700;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 0 1px rgba(51, 65, 85, 0.35);
 }
 
-.badge-illustrator-body {
-  display: grid;
-  grid-template-columns: minmax(320px, 0.92fr) minmax(280px, 1.08fr);
-  gap: 1.2rem;
+.side-switch button:focus-visible {
+  outline: 2px solid var(--color-accent-mid);
+  outline-offset: 2px;
+}
+
+.side-switch button.active:focus-visible {
+  outline-color: #93c5fd;
+}
+
+.badge-illustrator-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
   min-height: 0;
-  flex: 1;
+  min-width: 0;
+  gap: 1rem;
+}
+
+.badge-illustrator-preview-top {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Larger live preview band above settings */
+.badge-illustrator-preview-top .badge-preview-canvas-wrap {
+  justify-content: center;
+  max-height: none;
+}
+
+.badge-illustrator-preview-top .badge-card-preview {
+  width: min(100%, 960px, calc(min(46vh, 440px) * 85.6 / 54));
+}
+
+.badge-illustrator-work {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(232px, 300px);
+  gap: 1rem;
+  min-height: 0;
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
+  align-items: start;
+}
+
+.illustrator-color-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(175deg, rgba(255, 255, 255, 0.97) 0%, rgba(248, 250, 252, 0.99) 100%);
+  min-width: 0;
+  max-height: min(70vh, 880px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  align-self: stretch;
+  position: sticky;
+  top: 0;
+  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.illustrator-color-rail .illustrator-top-color-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  width: 100%;
+  justify-self: stretch;
+}
+
+.illustrator-color-rail .illustrator-card-bg-field {
+  width: 100%;
+  max-width: none;
+}
+
+.illustrator-color-rail .background-color-inputs {
+  grid-template-columns: 44px minmax(6.5rem, 1fr);
+}
+
+.illustrator-color-rail .btn-reset-factory {
+  margin-top: 0.25rem;
+  align-self: stretch;
+  text-align: center;
 }
 
 .hint {
@@ -1547,6 +1654,36 @@ button:disabled {
   flex-direction: column;
   gap: 0.85rem;
   align-items: stretch;
+}
+
+/* Illustrator: title + ID meta share one row with the badge (saves vertical space) */
+.badge-illustrator-preview-top .badge-preview-panel {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 1rem 1.35rem;
+}
+
+.badge-illustrator-preview-top .badge-preview-header {
+  flex: 0 1 13.5rem;
+  min-width: min(11rem, 35%);
+  max-width: 16rem;
+  padding-bottom: 0;
+  border-bottom: none;
+  align-self: flex-start;
+}
+
+.badge-illustrator-preview-top .badge-preview-heading {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem 0;
+}
+
+.badge-illustrator-preview-top .badge-preview-canvas-wrap {
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  align-items: flex-start;
+  min-width: 0;
 }
 
 .badge-preview-header {
@@ -1748,9 +1885,11 @@ button:disabled {
 
 .ios-toggle {
   position: relative;
+  display: inline-block;
   width: 46px;
   height: 28px;
   flex: 0 0 auto;
+  cursor: pointer;
 }
 
 .ios-toggle input {
@@ -2297,6 +2436,9 @@ body.electron-app .illustrator-modal-backdrop {
 }
 
 .illustrator-modal-window {
+  /* Size queries: inline + block so cqi/cqb (and scrolling) track the modal, not the monitor */
+  container-name: illustrator-modal;
+  container-type: size;
   width: min(96vw, 1700px);
   max-width: 100%;
   min-width: 0;
@@ -2318,6 +2460,136 @@ body.electron-app .illustrator-modal-backdrop {
   flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
+}
+
+/* Narrow illustrator modal — preview band + stacked work row tweaks */
+@container illustrator-modal (max-width: 960px) {
+  .badge-illustrator {
+    gap: 0.75rem;
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
+    min-height: 0;
+  }
+
+  .badge-illustrator-preview-top .badge-preview-canvas-wrap {
+    max-height: min(42vh, 380px);
+    max-height: min(42cqb, 400px);
+  }
+
+  .badge-illustrator-preview-top .badge-card-preview {
+    width: min(100%, calc(min(28vh, 240px) * 85.6 / 54));
+    width: min(
+      100%,
+      calc(min(32cqb, 260px, 100cqi - 1.5rem) * 85.6 / 54)
+    );
+    max-width: 100%;
+    flex-shrink: 1;
+  }
+
+  .illustrator-toolbar-row--primary {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .illustrator-toolbar-lead {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .side-switch {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .side-switch button {
+    min-width: 0;
+    flex: 1 1 50%;
+  }
+
+  .illustrator-context-chips {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .person-meta-chips {
+    width: 100%;
+  }
+
+  .range-row {
+    grid-template-columns: minmax(0, 3rem) minmax(0, 1fr) minmax(0, 3.5rem);
+    gap: 0.45rem;
+  }
+
+  .range-row output {
+    font-size: 0.72rem;
+    padding: 0.18rem 0.28rem;
+  }
+}
+
+@container illustrator-modal (max-width: 720px) {
+  .badge-illustrator-work {
+    grid-template-columns: 1fr;
+  }
+
+  .illustrator-color-rail {
+    position: relative;
+    top: auto;
+    max-height: none;
+    order: 1;
+  }
+
+  .badge-settings {
+    order: 0;
+  }
+}
+
+@container illustrator-modal (max-width: 500px) {
+  .badge-illustrator-preview-top .badge-preview-panel {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .badge-illustrator-preview-top .badge-preview-header {
+    flex: none;
+    min-width: 0;
+    max-width: none;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+  }
+
+  .badge-illustrator-preview-top .badge-preview-canvas-wrap {
+    justify-content: center;
+  }
+}
+
+@container illustrator-modal (max-width: 640px) {
+  .illustrator-toolbar {
+    padding: 0.75rem 0.85rem 0.85rem 1rem;
+  }
+
+  .badge-illustrator-preview-top .badge-preview-canvas-wrap {
+    max-height: min(36vh, 320px);
+    max-height: min(38cqb, 340px);
+  }
+
+  .badge-illustrator-preview-top .badge-card-preview {
+    width: min(100%, calc(min(24vh, 210px) * 85.6 / 54));
+    width: min(
+      100%,
+      calc(min(28cqb, 230px, 100cqi - 1rem) * 85.6 / 54)
+    );
+  }
+
+  .range-row {
+    grid-template-columns: minmax(0, 2.75rem) minmax(0, 1fr) minmax(0, 3.25rem);
+    gap: 0.4rem;
+  }
+
+  .range-row output {
+    font-size: 0.68rem;
+    padding: 0.12rem 0.22rem;
+  }
 }
 
 .settings-modal-backdrop {
@@ -2469,13 +2741,44 @@ body.electron-app .settings-modal-backdrop {
 
 .illustrator-modal-header {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
   padding: 1.1rem 1.25rem;
   border-bottom: 1px solid rgba(148, 163, 184, 0.1);
   background: linear-gradient(180deg, rgba(248, 250, 252, 0.97), rgba(241, 245, 249, 0.95));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.illustrator-modal-header > div:first-child {
+  min-width: 0;
+  flex: 1 1 min(100%, 12rem);
+}
+
+.illustrator-modal-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.illustrator-modal-export-slot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.illustrator-modal-header .illustrator-export-anchor {
+  position: relative;
+}
+
+.illustrator-export-trigger--header {
+  padding: 0.48rem 1rem;
+  font-size: 0.88rem;
+  white-space: nowrap;
 }
 
 .illustrator-modal-header h2 {
@@ -2486,6 +2789,7 @@ body.electron-app .settings-modal-backdrop {
   letter-spacing: -0.02em;
   color: #1e293b;
   line-height: 1.15;
+  overflow-wrap: anywhere;
 }
 
 .illustrator-modal-header p {
@@ -2529,40 +2833,17 @@ body.electron-app .settings-modal-backdrop {
 
   .badge-illustrator {
     gap: 0.75rem;
+    min-height: 0;
   }
 
-  .badge-illustrator-body {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
-    overflow-y: auto;
-    overflow-x: hidden;
-    align-items: stretch;
-    align-content: start;
-  }
-
-  .badge-settings {
-    max-height: min(52vh, 720px);
-    flex: 0 1 auto;
-  }
-
-  .badge-preview-panel {
-    flex: 0 1 auto;
-    /* Move preview above settings in the stacked single-column grid so the
-       card is immediately visible without scrolling */
-    order: -1;
-  }
-
-  /* Shorter vertical space: cap preview height a bit more so ratio stays visible above the fold */
-  .badge-card-preview {
-    width: min(
-      100%,
-      960px,
-      calc(min(42vh, 520px) * 85.6 / 54)
-    );
+  .side-switch {
+    width: 100%;
+    max-width: 100%;
   }
 
   .side-switch button {
-    min-width: min(5.25rem, 28vw);
+    min-width: 0;
+    flex: 1 1 50%;
   }
 
   .illustrator-toolbar-row--primary {
@@ -2575,25 +2856,40 @@ body.electron-app .settings-modal-backdrop {
     align-items: stretch;
   }
 
-  .illustrator-export-anchor {
-    align-items: stretch;
+  .illustrator-context-chips {
     width: 100%;
   }
 
-  .illustrator-export-trigger {
+  .person-meta-chips {
     width: 100%;
-    text-align: center;
   }
 
-  .illustrator-export-dropdown {
-    left: 0;
-    right: 0;
-    width: 100%;
-    max-width: none;
+  .range-row {
+    grid-template-columns: minmax(0, 3rem) minmax(0, 1fr) minmax(0, 3.5rem);
+    gap: 0.45rem;
+  }
+}
+
+/* Illustrator modal: viewport fallback if container queries are unsupported */
+@media (max-width: 1100px) and (min-width: 600px) {
+  .illustrator-modal-window .badge-illustrator-work {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, min(36vw, 300px));
+  }
+}
+
+@media (max-width: 599px) {
+  .illustrator-modal-window .badge-illustrator-work {
+    grid-template-columns: 1fr;
   }
 
-  .illustrator-top-color-grid {
-    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  .illustrator-modal-window .illustrator-color-rail {
+    order: 1;
+    position: relative;
+    max-height: none;
+  }
+
+  .illustrator-modal-window .badge-settings {
+    order: 0;
   }
 }
 
@@ -2658,32 +2954,13 @@ body.electron-app .settings-modal-backdrop {
     padding: 0.75rem 0.85rem 0.85rem 1rem;
   }
 
-  .illustrator-toolbar-row--secondary {
-    flex-direction: column;
-    align-items: stretch;
+  .illustrator-modal-window .badge-illustrator-work {
+    grid-template-columns: 1fr;
   }
 
-  .illustrator-card-bg-field {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .illustrator-card-bg-controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .illustrator-card-bg-controls .background-color-inputs {
-    max-width: none;
-  }
-
-  .illustrator-toolbar-row--secondary .btn-reset-factory {
-    width: 100%;
-    align-self: stretch;
-  }
-
-  .background-color-control {
-    width: 100%;
+  .illustrator-modal-window .illustrator-color-rail {
+    position: relative;
+    max-height: none;
   }
 
   .illustrator-modal-backdrop {
@@ -2782,22 +3059,11 @@ body.electron-app .settings-modal-backdrop {
     gap: 0.5rem 0.75rem;
   }
 
-  .illustrator-toolbar-row--secondary {
-    padding-top: 0.1rem;
-    gap: 0.5rem;
-  }
-
-  /* Cap preview card height so settings controls are still reachable below */
-  .badge-card-preview {
+  .illustrator-modal-window .badge-illustrator-preview-top .badge-card-preview {
     width: min(
       100%,
-      calc(min(28vh, 240px) * 85.6 / 54)
+      calc(min(30vh, 260px) * 85.6 / 54)
     );
-  }
-
-  /* Settings panel scrollable below the preview – tight but usable */
-  .badge-settings {
-    max-height: min(38vh, 300px);
   }
 }
 
@@ -2806,53 +3072,53 @@ body.electron-app .settings-modal-backdrop {
    ═══════════════════════════════════════════════════════════════ */
 
 [data-theme="dark"] .app-hero-surface {
-  background: linear-gradient(155deg, rgba(30, 36, 51, 0.88) 0%, rgba(22, 28, 40, 0.94) 45%, rgba(17, 24, 39, 0.96) 100%);
+  background: var(--color-bg-card);
   border-color: rgba(255, 255, 255, 0.07);
 }
 
 [data-theme="dark"] .topbar h1 {
-  color: #e2e8f0;
+  color: var(--color-text);
 }
 
 [data-theme="dark"] .network-share-card {
-  background: linear-gradient(168deg, rgba(30, 36, 51, 0.97), rgba(22, 28, 40, 0.99));
+  background: var(--color-bg-card);
   border-color: rgba(255, 255, 255, 0.07);
 }
 
 [data-theme="dark"] .network-share-head h3 {
-  color: #e2e8f0;
+  color: var(--color-text);
 }
 
 [data-theme="dark"] .network-share-link {
-  color: #94a3b8;
+  color: var(--color-text-secondary);
 }
 
 [data-theme="dark"] .network-share-toggle {
-  background: rgba(148, 163, 184, 0.15);
+  background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.11);
-  color: #e2e8f0;
+  color: var(--color-text);
 }
 
 [data-theme="dark"] .network-share-toggle.is-on {
-  background: linear-gradient(135deg, rgba(40, 50, 68, 0.98), rgba(30, 40, 58, 0.98));
-  border-color: rgba(148, 163, 184, 0.4);
-  color: #e2e8f0;
+  background: var(--color-bg-highlight);
+  border-color: rgba(255, 255, 255, 0.13);
+  color: var(--color-text);
 }
 
 [data-theme="dark"] .network-share-toggle.is-on .network-share-toggle-dot {
-  background: #94a3b8;
+  background: var(--color-text-secondary);
 }
 
 [data-theme="dark"] .setup-card {
-  background: linear-gradient(175deg, rgba(30, 36, 51, 0.97) 0%, rgba(22, 28, 40, 0.98) 100%);
+  background: var(--color-bg-card);
 }
 
 [data-theme="dark"] .update-blocking-modal {
-  background: linear-gradient(180deg, #1a2235, #141c2e);
+  background: var(--color-bg-card);
 }
 
 [data-theme="dark"] .setup-card-header h2 {
-  color: #e2e8f0;
+  color: var(--color-text);
 }
 
 [data-theme="dark"] .setup-card-header {
@@ -2860,120 +3126,120 @@ body.electron-app .settings-modal-backdrop {
 }
 
 [data-theme="dark"] label {
-  color: #94a3b8;
+  color: var(--color-text-secondary);
 }
 
 [data-theme="dark"] .form-grid > label {
-  color: #64748b;
+  color: var(--color-text-muted);
 }
 
 [data-theme="dark"] input,
 [data-theme="dark"] select {
-  background: linear-gradient(180deg, rgba(22, 28, 40, 0.99), rgba(17, 24, 39, 0.99));
-  border-color: rgba(148, 163, 184, 0.3);
-  color: #e2e8f0;
+  background: var(--color-bg-inset);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: var(--color-text);
 }
 
 [data-theme="dark"] option {
-  background: #1e2433;
-  color: #e2e8f0;
+  background: var(--color-bg-card);
+  color: var(--color-text);
 }
 
 [data-theme="dark"] input::placeholder {
-  color: #4b5768;
+  color: var(--color-text-placeholder);
 }
 
 [data-theme="dark"] button:hover:not(:disabled):not(.primary):not(.icon-button) {
-  background: rgba(148, 163, 184, 0.12);
-  border-color: rgba(148, 163, 184, 0.22);
-  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--color-text);
 }
 
 [data-theme="dark"] .icon-button:hover {
-  background: rgba(148, 163, 184, 0.12);
-  border-color: rgba(148, 163, 184, 0.22);
-  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--color-text);
 }
 
 [data-theme="dark"] .stats article {
-  background: linear-gradient(168deg, rgba(30, 36, 51, 0.97), rgba(22, 28, 40, 0.99));
+  background: var(--color-bg-card);
   border-color: rgba(255, 255, 255, 0.06);
 }
 
 [data-theme="dark"] .stats strong {
-  color: #e2e8f0;
+  color: var(--color-text);
 }
 
 [data-theme="dark"] .list-panel,
 [data-theme="dark"] .detail-panel {
-  background: linear-gradient(175deg, rgba(30, 36, 51, 0.97) 0%, rgba(22, 28, 40, 0.99) 100%);
+  background: var(--color-bg-card);
   border-color: rgba(255, 255, 255, 0.07);
 }
 
 [data-theme="dark"] .list-toolbar {
-  background: linear-gradient(180deg, rgba(22, 28, 40, 0.8), rgba(17, 24, 39, 0.5));
+  background: rgba(var(--color-bg-deep-rgb), 0.9);
   border-bottom-color: rgba(255, 255, 255, 0.06);
 }
 
 [data-theme="dark"] .list-toolbar input,
 [data-theme="dark"] .list-toolbar select {
-  background: linear-gradient(180deg, rgba(22, 28, 40, 0.98), rgba(17, 24, 39, 0.99));
-  border-color: rgba(148, 163, 184, 0.3);
+  background: var(--color-bg-inset);
+  border-color: rgba(255, 255, 255, 0.10);
 }
 
 [data-theme="dark"] .list-toolbar input::placeholder {
-  color: #4b5768;
+  color: var(--color-text-placeholder);
 }
 
 [data-theme="dark"] .list {
-  scrollbar-color: rgba(148, 163, 184, 0.35) rgba(22, 28, 40, 0.5);
+  scrollbar-color: rgba(255, 255, 255, 0.12) rgba(var(--color-bg-deep-rgb), 0.55);
 }
 
 [data-theme="dark"] .list::-webkit-scrollbar-track,
 [data-theme="dark"] .settings-modal-body::-webkit-scrollbar-track {
-  background: rgba(22, 28, 40, 0.5);
+  background: rgba(var(--color-bg-deep-rgb), 0.55);
 }
 
 [data-theme="dark"] .list::-webkit-scrollbar-thumb,
 [data-theme="dark"] .settings-modal-body::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(148, 163, 184, 0.35), rgba(100, 116, 139, 0.28));
+  background: rgba(255, 255, 255, 0.12);
 }
 
 [data-theme="dark"] .person-row {
-  background: rgba(22, 28, 40, 0.7);
-  border-color: rgba(148, 163, 184, 0.14);
+  background: var(--color-bg-card);
+  border-color: rgba(255, 255, 255, 0.05);
 }
 
 [data-theme="dark"] .person-row:hover {
-  background: rgba(148, 163, 184, 0.08);
-  border-color: rgba(148, 163, 184, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 [data-theme="dark"] .person-row.selected {
-  background: linear-gradient(95deg, rgba(71, 85, 105, 0.35), rgba(51, 65, 85, 0.22));
-  border-color: rgba(148, 163, 184, 0.4);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.13);
 }
 
 [data-theme="dark"] .person-select-cell input {
-  background: rgba(22, 28, 40, 0.98);
-  border-color: rgba(148, 163, 184, 0.45);
+  background: var(--color-bg-inset);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 [data-theme="dark"] .detail-header {
-  background: linear-gradient(180deg, rgba(22, 28, 40, 0.7), transparent);
+  background: linear-gradient(180deg, rgba(var(--color-bg-deep-rgb), 0.92), transparent);
   border-bottom-color: rgba(255, 255, 255, 0.06);
 }
 
 [data-theme="dark"] .detail-header h2 {
-  color: #e2e8f0;
+  color: var(--color-text);
 }
 
 [data-theme="dark"] .detail-panel dt {
-  color: #64748b;
+  color: var(--color-text-muted);
 }
 
 [data-theme="dark"] .detail-panel dd {
-  color: #cbd5e1;
+  color: var(--color-text-soft);
 }
 
 [data-theme="dark"] .detail-spreadsheet-columns {
@@ -2981,7 +3247,7 @@ body.electron-app .settings-modal-backdrop {
 }
 
 [data-theme="dark"] .detail-spreadsheet-columns dd {
-  color: #cbd5e1;
+  color: var(--color-text-soft);
 }
 
 [data-theme="dark"] .detail-tabs {
@@ -2990,72 +3256,73 @@ body.electron-app .settings-modal-backdrop {
 
 [data-theme="dark"] .detail-tabs button {
   border-right-color: rgba(255, 255, 255, 0.08);
-  color: #94a3b8;
+  color: var(--color-text-secondary);
 }
 
 [data-theme="dark"] .badge-illustrator h3 {
-  color: #e2e8f0;
+  color: var(--color-text);
 }
 
 [data-theme="dark"] .illustrator-toolbar {
-  background: linear-gradient(155deg, rgba(30, 36, 51, 0.95) 0%, rgba(22, 28, 40, 0.98) 100%);
+  background: var(--color-bg-card);
   border-color: rgba(255, 255, 255, 0.07);
 }
 
-[data-theme="dark"] .illustrator-toolbar-row--secondary {
-  border-top-color: rgba(255, 255, 255, 0.05);
+[data-theme="dark"] .illustrator-color-rail {
+  background: var(--color-bg-card);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 [data-theme="dark"] .illustrator-export-dropdown {
-  background: linear-gradient(175deg, rgba(30, 36, 51, 0.99), rgba(22, 28, 40, 0.99));
+  background: var(--color-bg-card);
   border-color: rgba(255, 255, 255, 0.09);
 }
 
 [data-theme="dark"] .badge-illustrator-person-tabs {
-  background: linear-gradient(180deg, rgba(22, 28, 40, 0.92), rgba(17, 24, 39, 0.75));
+  background: rgba(var(--color-bg-deep-rgb), 0.96);
   border-color: rgba(255, 255, 255, 0.06);
 }
 
 [data-theme="dark"] .badge-illustrator-person-tab {
-  background: rgba(17, 24, 39, 0.8);
-  border-color: rgba(148, 163, 184, 0.2);
-  color: #94a3b8;
+  background: var(--color-bg-inset);
+  border-color: rgba(255, 255, 255, 0.07);
+  color: var(--color-text-secondary);
 }
 
 [data-theme="dark"] .badge-illustrator-person-tab:hover {
-  color: #e2e8f0;
-  border-color: rgba(148, 163, 184, 0.35);
+  color: var(--color-text);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 [data-theme="dark"] .badge-settings,
 [data-theme="dark"] .badge-preview-panel {
-  background: linear-gradient(175deg, rgba(30, 36, 51, 0.97) 0%, rgba(22, 28, 40, 0.99) 100%);
+  background: var(--color-bg-card);
   border-color: rgba(255, 255, 255, 0.07);
 }
 
 [data-theme="dark"] .badge-settings {
-  scrollbar-color: rgba(148, 163, 184, 0.28) rgba(22, 28, 40, 0.5);
+  scrollbar-color: rgba(255, 255, 255, 0.1) rgba(var(--color-bg-deep-rgb), 0.55);
 }
 
 [data-theme="dark"] .badge-settings::-webkit-scrollbar-track {
-  background: rgba(22, 28, 40, 0.5);
+  background: rgba(var(--color-bg-deep-rgb), 0.55);
 }
 
 [data-theme="dark"] .badge-settings::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(148, 163, 184, 0.38), rgba(100, 116, 139, 0.28));
+  background: rgba(255, 255, 255, 0.12);
 }
 
 [data-theme="dark"] .settings-section {
-  background: linear-gradient(165deg, rgba(22, 28, 40, 0.8), rgba(17, 24, 39, 0.9));
+  background: var(--color-bg-subtle);
   border-color: rgba(255, 255, 255, 0.06);
 }
 
 [data-theme="dark"] .settings-section > h3 {
-  color: #e2e8f0;
+  color: var(--color-text);
 }
 
 [data-theme="dark"] .settings-section > h4 {
-  color: #64748b;
+  color: var(--color-text-muted);
 }
 
 [data-theme="dark"] .badge-preview-header {
@@ -3063,51 +3330,71 @@ body.electron-app .settings-modal-backdrop {
 }
 
 [data-theme="dark"] .badge-preview-heading {
-  color: #e2e8f0;
+  color: var(--color-text);
 }
 
 [data-theme="dark"] .illustrator-card-bg-field {
-  color: #94a3b8;
+  color: var(--color-text-secondary);
 }
 
 [data-theme="dark"] .illustrator-card-bg-label {
-  color: #64748b;
+  color: var(--color-text-muted);
 }
 
 [data-theme="dark"] .background-color-inputs input[type="color"] {
-  background: linear-gradient(180deg, rgba(22, 28, 40, 0.97), rgba(17, 24, 39, 0.99));
-  border-color: rgba(148, 163, 184, 0.3);
+  background: var(--color-bg-inset);
+  border-color: rgba(255, 255, 255, 0.10);
 }
 
 [data-theme="dark"] .meta-chip {
-  background: linear-gradient(180deg, rgba(22, 28, 40, 0.9), rgba(17, 24, 39, 0.95));
-  border-color: rgba(148, 163, 184, 0.15);
-  color: #94a3b8;
+  background: var(--color-bg-subtle);
+  border-color: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-secondary);
 }
 
+/* Inverted pill on dark toolbar */
 [data-theme="dark"] .meta-chip--name {
-  background: linear-gradient(180deg, rgba(71, 85, 105, 0.2), rgba(22, 28, 40, 0.9));
-  color: #cbd5e1;
+  background: #e8ecf4;
+  color: var(--color-bg-deep);
+  border-color: rgba(8, 15, 32, 0.2);
+  box-shadow:
+    0 1px 3px rgba(0, 6, 18, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
 }
 
 [data-theme="dark"] .side-switch {
   border-color: rgba(255, 255, 255, 0.08);
 }
 
-[data-theme="dark"] .side-switch button {
-  background: linear-gradient(180deg, rgba(22, 28, 40, 0.95), rgba(17, 24, 39, 0.98));
+/* :not(.active) required — otherwise this overrides .active and both sides look identical */
+[data-theme="dark"] .side-switch button:not(.active) {
+  background: var(--color-bg-inset);
   border-right-color: rgba(255, 255, 255, 0.06);
-  color: #94a3b8;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+[data-theme="dark"] .side-switch button.active {
+  background: linear-gradient(180deg, #2d3d55 0%, #243049 100%);
+  color: #f5f8fc;
+  font-weight: 700;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 0 0 1px rgba(165, 180, 252, 0.16);
 }
 
 [data-theme="dark"] .side-switch button:hover:not(.active) {
-  color: #e2e8f0;
-  background: rgba(148, 163, 184, 0.1);
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .side-switch button.active:focus-visible {
+  outline-color: #7dd3fc;
 }
 
 [data-theme="dark"] .vcard-field {
-  background: linear-gradient(180deg, rgba(22, 28, 40, 0.97), rgba(17, 24, 39, 0.99));
-  border-color: rgba(148, 163, 184, 0.22);
+  background: var(--color-bg-inset);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 [data-theme="dark"] .pill {
@@ -3153,37 +3440,37 @@ body.electron-app .settings-modal-backdrop {
 }
 
 [data-theme="dark"] .btn-set-default--subtle {
-  color: #64748b;
+  color: var(--color-text-muted);
 }
 
 [data-theme="dark"] .btn-set-default--subtle:hover {
-  color: #94a3b8;
-  background: rgba(148, 163, 184, 0.1);
+  color: var(--color-text-secondary);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 [data-theme="dark"] .sheets-help-console-link,
 [data-theme="dark"] .sheets-help-step-title {
-  color: #94a3b8;
+  color: var(--color-text-secondary);
 }
 
 [data-theme="dark"] .sheets-help-step-desc {
-  color: #64748b;
+  color: var(--color-text-muted);
 }
 
 [data-theme="dark"] .range-row input[type="range"] {
-  background: linear-gradient(90deg, rgba(30, 36, 51, 0.9), rgba(22, 28, 40, 0.95));
+  background: var(--color-bg-card);
 }
 
 [data-theme="dark"] .ios-toggle-slider {
-  background: #334155;
+  background: var(--color-bg-toggle-track);
 }
 
 [data-theme="dark"] .ios-toggle-slider::after {
-  background: linear-gradient(180deg, #94a3b8, #64748b);
+  background: linear-gradient(180deg, #c0c0c0, #909090);
 }
 
 [data-theme="dark"] .photo-editor-window {
-  background: linear-gradient(175deg, #1e2433 0%, #161c28 42%, #131820 100%);
+  background: var(--color-bg-card);
   border-color: rgba(255, 255, 255, 0.1);
 }
 
@@ -3192,16 +3479,16 @@ body.electron-app .settings-modal-backdrop {
 }
 
 [data-theme="dark"] .photo-editor-header p {
-  color: #64748b;
+  color: var(--color-text-muted);
 }
 
 [data-theme="dark"] .photo-editor-group {
-  background: rgba(22, 28, 40, 0.7);
+  background: var(--color-bg-card);
   border-color: rgba(255, 255, 255, 0.08);
 }
 
 [data-theme="dark"] .photo-editor-preview {
-  background: rgba(22, 28, 40, 0.8);
+  background: var(--color-bg-card);
   border-color: rgba(255, 255, 255, 0.1);
 }
 
@@ -3210,29 +3497,49 @@ body.electron-app .settings-modal-backdrop {
 }
 
 [data-theme="dark"] .photo-editor-sidebar button.is-active {
-  background: rgba(71, 85, 105, 0.32);
-  border-color: rgba(148, 163, 184, 0.5);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 /* Modal windows */
 [data-theme="dark"] .settings-modal-window,
 [data-theme="dark"] .illustrator-modal-window {
-  background: linear-gradient(175deg, #1e2433 0%, #161c28 60%, #131820 100%);
+  background: var(--color-bg-card);
   border-color: rgba(255, 255, 255, 0.09);
 }
 
 [data-theme="dark"] .settings-modal-header,
 [data-theme="dark"] .illustrator-modal-header {
-  background: linear-gradient(180deg, rgba(22, 28, 40, 0.75), transparent);
+  background: linear-gradient(180deg, rgba(var(--color-bg-deep-rgb), 0.78), transparent);
   border-bottom-color: rgba(255, 255, 255, 0.07);
 }
 
 [data-theme="dark"] .settings-modal-header h2 {
-  color: #e2e8f0;
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .illustrator-modal-header h2 {
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .illustrator-modal-header p {
+  color: var(--color-text-secondary);
+}
+
+[data-theme="dark"] .modal-close-btn {
+  background: var(--color-bg-inset);
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .modal-close-btn:hover {
+  background: var(--color-bg-highlight);
+  border-color: rgba(244, 244, 245, 0.14);
+  color: var(--color-text);
 }
 
 [data-theme="dark"] .export-notice {
-  background: rgba(22, 28, 40, 0.8);
+  background: var(--color-bg-card);
   border-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -3299,7 +3606,7 @@ body.electron-app .settings-modal-backdrop {
 }
 
 .theme-toggle.is-dark .theme-toggle-icon--moon {
-  color: #94a3b8;
+  color: var(--color-text-secondary);
 }
 
 /* ─── Badge light/dark mode toggle ─── */
@@ -3369,5 +3676,5 @@ body.electron-app .settings-modal-backdrop {
 }
 
 .badge-mode-toggle.is-dark .badge-mode-toggle-icon--moon {
-  color: #94a3b8;
+  color: var(--color-text-secondary);
 }

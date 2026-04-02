@@ -1,7 +1,10 @@
 {
   "name": "collectif-badge-",
   "private": true,
-  "version": "0.0.2",
+  "version": "0.0.3",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
@@ -9,12 +12,11 @@
     "dev:web:api": "node server/web-api.cjs",
     "dev:webapp": "concurrently -k \"npm:dev:web\" \"npm:dev:web:api\"",
     "serve:webapp": "npm run build:web && node server/web-api.cjs",
-    "dev": "concurrently -k \"npm:dev:web\" \"wait-on tcp:5173 && electron .\"",
-    "start": "electron .",
+    "dev": "concurrently -k \"npm:dev:web\" \"wait-on tcp:5173 && env -u ELECTRON_RUN_AS_NODE electron .\"",
+    "start": "env -u ELECTRON_RUN_AS_NODE electron .",
     "build:web": "tsc -b && vite build",
-    "build": "npm run sync:version && npm run build:web && electron-builder",
+    "build": "npm run sync:version && npm run build:web && electron-builder --publish never",
     "sync:version": "node scripts/check-version-sync.cjs",
-    "postbuild": "node scripts/postbuild.cjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -41,7 +43,7 @@
     "@types/sql.js": "^1.4.10",
     "@vitejs/plugin-react": "^6.0.1",
     "concurrently": "^9.2.1",
-    "electron": "^34.5.0",
+    "electron": "^41.0.3",
     "electron-builder": "^26.8.1",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
@@ -54,7 +56,7 @@
   },
   "build": {
     "appId": "ch.collectif.badgeapp",
-    "productName": "Collectif Badgé",
+    "productName": "Collectif Badge",
     "files": [
       "dist/**/*",
       "electron/**/*",
@@ -64,12 +66,6 @@
       "buildResources": "build",
       "output": "release"
     },
-    "extraResources": [
-      {
-        "from": "scripts/sign-and-allow.sh",
-        "to": "scripts/sign-and-allow.sh"
-      }
-    ],
     "mac": {
       "target": [
         {

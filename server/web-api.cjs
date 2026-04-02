@@ -186,18 +186,13 @@ function getLanIp() {
 
 server.listen(PORT, HOST, () => {
   const lanIp = getLanIp();
-  // eslint-disable-next-line no-console
   console.log(`\nWeb server listening on:`);
-  // eslint-disable-next-line no-console
   console.log(`  Local:   http://127.0.0.1:${PORT}`);
   if (lanIp) {
-    // eslint-disable-next-line no-console
     console.log(`  Network: http://${lanIp}:${PORT}  ← share this with others on your LAN`);
   }
   if (!fs.existsSync(DIST_DIR)) {
-    // eslint-disable-next-line no-console
     console.warn(`\n  ⚠  dist/ folder not found — run "npm run build:web" first, then restart.\n`);
   }
-  // eslint-disable-next-line no-console
   console.log();
 });

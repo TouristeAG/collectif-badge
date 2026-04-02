@@ -239,6 +239,7 @@ function App() {
   const [networkShareUrls, setNetworkShareUrls] = useState<string[]>([]);
   const [copiedNetworkUrl, setCopiedNetworkUrl] = useState("");
   const [isIllustratorOpen, setIsIllustratorOpen] = useState(false);
+  const [illustratorExportSlot, setIllustratorExportSlot] = useState<HTMLDivElement | null>(null);
   const [isCanvaSettingsOpen, setIsCanvaSettingsOpen] = useState(false);
   const [isSheetsHelpOpen, setIsSheetsHelpOpen] = useState(false);
 
@@ -935,13 +936,17 @@ function App() {
                 </h2>
                 <p>{t("app.illustratorModalSubtitle")}</p>
               </div>
-              <button className="modal-close-btn" onClick={() => setIsIllustratorOpen(false)}>
-                {t("common.close")}
-              </button>
+              <div className="illustrator-modal-header-actions">
+                <div ref={setIllustratorExportSlot} className="illustrator-modal-export-slot" />
+                <button className="modal-close-btn" onClick={() => setIsIllustratorOpen(false)}>
+                  {t("common.close")}
+                </button>
+              </div>
             </header>
             <BadgeIllustrator
               key={illustratorPeople.map((p) => p.id).join("|")}
               people={illustratorPeople as [PersonRecord, ...PersonRecord[]]}
+              exportPortalHost={illustratorExportSlot}
             />
           </section>
         </div>

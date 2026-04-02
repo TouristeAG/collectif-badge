@@ -3,13 +3,14 @@ import {
   startTransition,
   useCallback,
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type ReactNode,
 } from "react";
-import { flushSync } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n/config";
 import { toJpeg, toPng, toSvg } from "html-to-image";
@@ -38,6 +39,8 @@ import {
 interface BadgeIllustratorProps {
   /** At least one person (the app only opens the modal when the list is non-empty). */
   people: [PersonRecord, ...PersonRecord[]];
+  /** When set, the export menu is rendered into this element (e.g. modal header). */
+  exportPortalHost?: HTMLElement | null;
 }
 
 type PersonEditableSnapshot = {
@@ -51,6 +54,8 @@ interface ToggleSwitchProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
   label: string;
+  /** `settingsRow`: label | switch (for grid rows with a sibling “default” button). */
+  variant?: "default" | "settingsRow";
 }
 
 type ExportFormat = "png" | "jpg" | "svg" | "pdf" | "bs" | "canva";
@@ -831,7 +836,8 @@ const NfcMark = memo(function NfcMark() {
   );
 });
 
-const ToggleSwitch = memo(function ToggleSwitch({ checked, onChange, label }: ToggleSwitchProps) {
+const ToggleSwitch = memo(function ToggleSwitch({ checked, onChange, label, variant = "default" }: ToggleSwitchProps) {
+  const switchId = useId();
   const [localChecked, setLocalChecked] = useState(checked);
 
   useEffect(() => {
@@ -848,6 +854,20 @@ const ToggleSwitch = memo(function ToggleSwitch({ checked, onChange, label }: To
     },
     [onChange]
   );
+
+  if (variant === "settingsRow") {
+    return (
+      <>
+        <label className="illustrator-switch-row__label" htmlFor={switchId}>
+          {label}
+        </label>
+        <label className="ios-toggle">
+          <input id={switchId} type="checkbox" checked={localChecked} onChange={handleChange} />
+          <span className="ios-toggle-slider" />
+        </label>
+      </>
+    );
+  }
 
   return (
     <label className="switch-row">
@@ -901,9 +921,11 @@ const ResponsiveRangeInput = memo(function ResponsiveRangeInput({
   const rafRef = useRef(0);
   const dragParentIntervalRef = useRef<number | null>(null);
   const onValueChangeRef = useRef(onValueChange);
-  onValueChangeRef.current = onValueChange;
   const onPreviewChangeRef = useRef(onPreviewChange);
-  onPreviewChangeRef.current = onPreviewChange;
+  useLayoutEffect(() => {
+    onValueChangeRef.current = onValueChange;
+    onPreviewChangeRef.current = onPreviewChange;
+  }, [onValueChange, onPreviewChange]);
 
   const flushParent = useCallback((v: number) => {
     startTransition(() => {
@@ -930,7 +952,8 @@ const ResponsiveRangeInput = memo(function ResponsiveRangeInput({
 
   useEffect(() => {
     if (pointerDraggingRef.current) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- mirror parent when value changes externally (reset, other tab); skipped while pointer-dragging
+    /* Mirror parent when value changes externally (reset, other tab); skipped while pointer-dragging. */
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: prop-driven reset of local slider mirror state
     setLocal(value);
     latestRef.current = value;
   }, [value]);
@@ -1051,7 +1074,7 @@ function SetAsDefaultButton({ onClick, label }: { onClick: () => void; label?: s
   );
 }
 
-export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
+export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllustratorProps) {
   const { t } = useTranslation();
   const canUseCanvaExport = Boolean(window.electronAPI?.canvaGetStatus && window.electronAPI?.canvaSendPdf);
 
@@ -1303,16 +1326,19 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
   }, [people]);
 
   useEffect(() => {
+    const snapshotsRef = personSnapshotsRef;
+    const photoRef = photoUrlRef;
     return () => {
-      for (const snap of personSnapshotsRef.current.values()) {
+      const snapshots = snapshotsRef.current;
+      for (const snap of snapshots.values()) {
         if (snap.profilePhotoUrl?.startsWith("blob:")) {
           URL.revokeObjectURL(snap.profilePhotoUrl);
         }
       }
-      personSnapshotsRef.current.clear();
-      if (photoUrlRef.current) {
-        URL.revokeObjectURL(photoUrlRef.current);
-        photoUrlRef.current = "";
+      snapshots.clear();
+      if (photoRef.current) {
+        URL.revokeObjectURL(photoRef.current);
+        photoRef.current = "";
       }
     };
   }, []);
@@ -1971,7 +1997,7 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
       if (frameOne) cancelAnimationFrame(frameOne);
       if (frameTwo) cancelAnimationFrame(frameTwo);
     };
-  }, [selectedSide, roleLabel, previewRoleTextFontSize]);
+  }, [selectedSide, roleLabel, previewRoleTextFontSize, personType]);
 
   useLayoutEffect(() => {
     const card = exportBackRef.current;
@@ -2033,7 +2059,7 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
       if (frameOne) cancelAnimationFrame(frameOne);
       if (frameTwo) cancelAnimationFrame(frameTwo);
     };
-  }, [roleLabel, exportRoleTextFontSize]);
+  }, [roleLabel, exportRoleTextFontSize, personType]);
 
   const saveBlob = useCallback(
     async (
@@ -2875,8 +2901,152 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
     showBackQr,
   ]);
 
+  const exportMenuEl = (
+    <div className="illustrator-export-anchor" ref={exportMenuRef}>
+      {isExportMenuOpen && (
+        <div className="illustrator-export-dropdown">
+          <button type="button" onClick={() => handleExport("png")} disabled={isExporting}>
+            {t("illustrator.exportPng")}
+          </button>
+          <button type="button" onClick={() => handleExport("jpg")} disabled={isExporting}>
+            {t("illustrator.exportJpg")}
+          </button>
+          <button type="button" onClick={() => handleExport("svg")} disabled={isExporting}>
+            {t("illustrator.exportSvg")}
+          </button>
+          <button type="button" onClick={() => handleExport("pdf")} disabled={isExporting}>
+            {t("illustrator.exportPdf")}
+          </button>
+          {canUseCanvaExport && (
+            <button type="button" onClick={() => handleExport("canva")} disabled={isExporting}>
+              {t("illustrator.exportCanva")}
+            </button>
+          )}
+          <button type="button" onClick={() => handleExport("bs")} disabled={isExporting}>
+            {t("illustrator.exportBs")}
+          </button>
+        </div>
+      )}
+      <button
+        type="button"
+        className="primary illustrator-export-trigger illustrator-export-trigger--header"
+        onClick={() => setIsExportMenuOpen((old) => !old)}
+        disabled={isExporting}
+      >
+        {isExporting ? t("illustrator.exporting") : t("illustrator.exportBadge")}
+      </button>
+    </div>
+  );
+
+  const colorRailEl = (
+    <>
+      <div className="badge-mode-toggle-wrap">
+        <span className="illustrator-card-bg-label">{t("illustrator.badgeTheme")}</span>
+        <button
+          type="button"
+          className={`badge-mode-toggle ${badgeLightMode ? "is-light" : "is-dark"}`}
+          onClick={toggleBadgeMode}
+          title={badgeLightMode ? t("illustrator.badgeThemeSwitchToDark") : t("illustrator.badgeThemeSwitchToLight")}
+          aria-label={badgeLightMode ? t("illustrator.badgeThemeSwitchToDark") : t("illustrator.badgeThemeSwitchToLight")}
+          aria-pressed={badgeLightMode}
+        >
+          <span className="badge-mode-toggle-thumb" />
+          <span className="badge-mode-toggle-icon badge-mode-toggle-icon--sun">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <circle cx="12" cy="12" r="5" />
+              <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+              <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+          </span>
+          <span className="badge-mode-toggle-icon badge-mode-toggle-icon--moon">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+          </span>
+        </button>
+      </div>
+      <div className="illustrator-top-color-grid">
+        <label className="illustrator-card-bg-field">
+          <span className="illustrator-card-bg-label">{t("illustrator.cardBackground")}</span>
+          <div className="illustrator-card-bg-controls">
+            <div className="background-color-inputs">
+              <input
+                type="color"
+                value={safeCardBackgroundColor}
+                onChange={(event) => setCardBackgroundColor(event.target.value)}
+                aria-label={t("illustrator.ariaCardBgColor")}
+              />
+              <input
+                type="text"
+                value={cardBackgroundColor}
+                onChange={(event) => setCardBackgroundColor(event.target.value)}
+                placeholder="#1b1b1b"
+              />
+            </div>
+            <SetAsDefaultButton
+              onClick={() => {
+                persistIllustratorPartial({ cardBackgroundColor });
+                flashDefaultsSaved();
+              }}
+              label={t("illustrator.setBackgroundDefault")}
+            />
+          </div>
+        </label>
+        <label className="illustrator-card-bg-field">
+          <span className="illustrator-card-bg-label">{t("illustrator.accentColour")}</span>
+          <div className="illustrator-card-bg-controls">
+            <div className="background-color-inputs">
+              <input type="color" value={safeAccentColor} onChange={(event) => setAccentColor(event.target.value)} />
+              <input
+                type="text"
+                value={accentColor}
+                onChange={(event) => setAccentColor(event.target.value)}
+                placeholder="#ffd699"
+              />
+            </div>
+            <SetAsDefaultButton
+              label={t("illustrator.setAccentDefault")}
+              onClick={() => {
+                persistIllustratorPartial({ accentColor: safeAccentColor });
+                flashDefaultsSaved();
+              }}
+            />
+          </div>
+        </label>
+        <label className="illustrator-card-bg-field">
+          <span className="illustrator-card-bg-label">{t("illustrator.secondaryColour")}</span>
+          <div className="illustrator-card-bg-controls">
+            <div className="background-color-inputs">
+              <input type="color" value={safeSecondaryColor} onChange={(event) => setSecondaryColor(event.target.value)} />
+              <input
+                type="text"
+                value={secondaryColor}
+                onChange={(event) => setSecondaryColor(event.target.value)}
+                placeholder="#ffffff"
+              />
+            </div>
+            <SetAsDefaultButton
+              label={t("illustrator.setSecondaryDefault")}
+              onClick={() => {
+                persistIllustratorPartial({ secondaryColor: safeSecondaryColor });
+                flashDefaultsSaved();
+              }}
+            />
+          </div>
+        </label>
+      </div>
+      <button type="button" className="btn-reset-factory" onClick={applyFactoryReset}>
+        {t("illustrator.resetFactoryShort")}
+      </button>
+    </>
+  );
+
   return (
-    <div className="badge-illustrator">
+    <>
+      {exportPortalHost ? createPortal(exportMenuEl, exportPortalHost) : null}
+      <div className="badge-illustrator">
       <header className="illustrator-toolbar">
         <div className="illustrator-toolbar-row illustrator-toolbar-row--primary">
           <div className="illustrator-toolbar-lead">
@@ -2904,151 +3074,6 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
               </div>
             </div>
           </div>
-          <div className="illustrator-export-anchor" ref={exportMenuRef}>
-            {isExportMenuOpen && (
-              <div className="illustrator-export-dropdown">
-                <button type="button" onClick={() => handleExport("png")} disabled={isExporting}>
-                  {t("illustrator.exportPng")}
-                </button>
-                <button type="button" onClick={() => handleExport("jpg")} disabled={isExporting}>
-                  {t("illustrator.exportJpg")}
-                </button>
-                <button type="button" onClick={() => handleExport("svg")} disabled={isExporting}>
-                  {t("illustrator.exportSvg")}
-                </button>
-                <button type="button" onClick={() => handleExport("pdf")} disabled={isExporting}>
-                  {t("illustrator.exportPdf")}
-                </button>
-                {canUseCanvaExport && (
-                  <button type="button" onClick={() => handleExport("canva")} disabled={isExporting}>
-                    {t("illustrator.exportCanva")}
-                  </button>
-                )}
-                <button type="button" onClick={() => handleExport("bs")} disabled={isExporting}>
-                  {t("illustrator.exportBs")}
-                </button>
-              </div>
-            )}
-            <button
-              type="button"
-              className="primary illustrator-export-trigger"
-              onClick={() => setIsExportMenuOpen((old) => !old)}
-              disabled={isExporting}
-            >
-              {isExporting ? t("illustrator.exporting") : t("illustrator.exportBadge")}
-            </button>
-          </div>
-        </div>
-
-        <div className="illustrator-toolbar-row illustrator-toolbar-row--secondary">
-          <div className="badge-mode-toggle-wrap">
-            <span className="illustrator-card-bg-label">{t("illustrator.badgeTheme")}</span>
-            <button
-              type="button"
-              className={`badge-mode-toggle ${badgeLightMode ? "is-light" : "is-dark"}`}
-              onClick={toggleBadgeMode}
-              title={badgeLightMode ? t("illustrator.badgeThemeSwitchToDark") : t("illustrator.badgeThemeSwitchToLight")}
-              aria-label={badgeLightMode ? t("illustrator.badgeThemeSwitchToDark") : t("illustrator.badgeThemeSwitchToLight")}
-              aria-pressed={badgeLightMode}
-            >
-              <span className="badge-mode-toggle-thumb" />
-              <span className="badge-mode-toggle-icon badge-mode-toggle-icon--sun">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <circle cx="12" cy="12" r="5" />
-                  <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                  <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                </svg>
-              </span>
-              <span className="badge-mode-toggle-icon badge-mode-toggle-icon--moon">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                </svg>
-              </span>
-            </button>
-          </div>
-          <div className="illustrator-top-color-grid">
-            <label className="illustrator-card-bg-field">
-              <span className="illustrator-card-bg-label">{t("illustrator.cardBackground")}</span>
-              <div className="illustrator-card-bg-controls">
-                <div className="background-color-inputs">
-                  <input
-                    type="color"
-                    value={safeCardBackgroundColor}
-                    onChange={(event) => setCardBackgroundColor(event.target.value)}
-                    aria-label={t("illustrator.ariaCardBgColor")}
-                  />
-                  <input
-                    type="text"
-                    value={cardBackgroundColor}
-                    onChange={(event) => setCardBackgroundColor(event.target.value)}
-                    placeholder="#1b1b1b"
-                  />
-                </div>
-                <SetAsDefaultButton
-                  onClick={() => {
-                    persistIllustratorPartial({ cardBackgroundColor });
-                    flashDefaultsSaved();
-                  }}
-                  label={t("illustrator.setBackgroundDefault")}
-                />
-              </div>
-            </label>
-            <label className="illustrator-card-bg-field">
-              <span className="illustrator-card-bg-label">{t("illustrator.accentColour")}</span>
-              <div className="illustrator-card-bg-controls">
-                <div className="background-color-inputs">
-                  <input
-                    type="color"
-                    value={safeAccentColor}
-                    onChange={(event) => setAccentColor(event.target.value)}
-                  />
-                  <input
-                    type="text"
-                    value={accentColor}
-                    onChange={(event) => setAccentColor(event.target.value)}
-                    placeholder="#ffd699"
-                  />
-                </div>
-                <SetAsDefaultButton
-                  label={t("illustrator.setAccentDefault")}
-                  onClick={() => {
-                    persistIllustratorPartial({ accentColor: safeAccentColor });
-                    flashDefaultsSaved();
-                  }}
-                />
-              </div>
-            </label>
-            <label className="illustrator-card-bg-field">
-              <span className="illustrator-card-bg-label">{t("illustrator.secondaryColour")}</span>
-              <div className="illustrator-card-bg-controls">
-                <div className="background-color-inputs">
-                  <input
-                    type="color"
-                    value={safeSecondaryColor}
-                    onChange={(event) => setSecondaryColor(event.target.value)}
-                  />
-                  <input
-                    type="text"
-                    value={secondaryColor}
-                    onChange={(event) => setSecondaryColor(event.target.value)}
-                    placeholder="#ffffff"
-                  />
-                </div>
-                <SetAsDefaultButton
-                  label={t("illustrator.setSecondaryDefault")}
-                  onClick={() => {
-                    persistIllustratorPartial({ secondaryColor: safeSecondaryColor });
-                    flashDefaultsSaved();
-                  }}
-                />
-              </div>
-            </label>
-          </div>
-          <button type="button" className="btn-reset-factory" onClick={applyFactoryReset}>
-            {t("illustrator.resetFactoryShort")}
-          </button>
         </div>
 
         {(defaultsHint || exportNotice) && (
@@ -3074,7 +3099,27 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
         </nav>
       )}
 
-      <div className="badge-illustrator-body">
+      <div className="badge-illustrator-main">
+        <div className="badge-illustrator-preview-top">
+          <section className="badge-preview-panel">
+            <div className="badge-preview-header">
+              <h3 className="badge-preview-heading">
+                <span>{t("illustrator.livePreview")}</span>
+                <span className="badge-preview-heading-meta">{t("illustrator.previewSubtitle")}</span>
+              </h3>
+            </div>
+            <div className="badge-preview-canvas-wrap">
+              <div
+                className="badge-card-preview badge-card-preview--isolate"
+                ref={previewCardRef}
+                style={{ backgroundColor: safeCardBackgroundColor }}
+              >
+                {selectedSide === "front" ? frontBadgeMarkup : previewBackBadgeMarkup}
+              </div>
+            </div>
+          </section>
+        </div>
+        <div className="badge-illustrator-work">
         <section className="badge-settings">
           {selectedSide === "front" ? (
             <>
@@ -3170,32 +3215,35 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
                   </div>
                 </div>
 
-                <div className="switch-with-default">
-                  <ToggleSwitch
-                    checked={showQrCode}
-                    onChange={setShowQrCode}
-                    label={t("illustrator.showQr")}
-                  />
-                  <SetAsDefaultButton
-                    onClick={() => {
-                      persistIllustratorPartial({ showQrCode });
-                      flashDefaultsSaved();
-                    }}
-                  />
-                </div>
-
-                <div className="switch-with-default">
-                  <ToggleSwitch
-                    checked={showNfcMark}
-                    onChange={setShowNfcMark}
-                    label={t("illustrator.showNfc")}
-                  />
-                  <SetAsDefaultButton
-                    onClick={() => {
-                      persistIllustratorPartial({ showNfcMark });
-                      flashDefaultsSaved();
-                    }}
-                  />
+                <div className="illustrator-switch-stack">
+                  <div className="illustrator-switch-row">
+                    <ToggleSwitch
+                      variant="settingsRow"
+                      checked={showQrCode}
+                      onChange={setShowQrCode}
+                      label={t("illustrator.showQr")}
+                    />
+                    <SetAsDefaultButton
+                      onClick={() => {
+                        persistIllustratorPartial({ showQrCode });
+                        flashDefaultsSaved();
+                      }}
+                    />
+                  </div>
+                  <div className="illustrator-switch-row">
+                    <ToggleSwitch
+                      variant="settingsRow"
+                      checked={showNfcMark}
+                      onChange={setShowNfcMark}
+                      label={t("illustrator.showNfc")}
+                    />
+                    <SetAsDefaultButton
+                      onClick={() => {
+                        persistIllustratorPartial({ showNfcMark });
+                        flashDefaultsSaved();
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -3561,8 +3609,9 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
               {/* QR code */}
               <div className="settings-section">
                 <h4>{t("illustrator.backQrSection")}</h4>
-                <div className="switch-with-default">
+                <div className="illustrator-switch-row">
                   <ToggleSwitch
+                    variant="settingsRow"
                     checked={showBackQr}
                     onChange={setShowBackQr}
                     label={t("illustrator.showBackQr")}
@@ -3579,24 +3628,8 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
             </>
           )}
         </section>
-
-        <section className="badge-preview-panel">
-          <div className="badge-preview-header">
-            <h3 className="badge-preview-heading">
-              <span>{t("illustrator.livePreview")}</span>
-              <span className="badge-preview-heading-meta">{t("illustrator.previewSubtitle")}</span>
-            </h3>
-          </div>
-          <div className="badge-preview-canvas-wrap">
-            <div
-              className="badge-card-preview badge-card-preview--isolate"
-              ref={previewCardRef}
-              style={{ backgroundColor: safeCardBackgroundColor }}
-            >
-              {selectedSide === "front" ? frontBadgeMarkup : previewBackBadgeMarkup}
-            </div>
-          </div>
-        </section>
+        <aside className="illustrator-color-rail">{colorRailEl}</aside>
+      </div>
       </div>
 
       {isPhotoEditorOpen && photoEditorDraft && (
@@ -3758,5 +3791,6 @@ export function BadgeIllustrator({ people }: BadgeIllustratorProps) {
       </div>
 
     </div>
+    </>
   );
 }
