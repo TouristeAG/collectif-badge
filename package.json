@@ -62,13 +62,14 @@
     "files": [
       "dist/**/*",
       "package.json",
-      {
-        "from": "electron",
-        "to": "electron",
-        "filter": [
-          "**/*.cjs"
-        ]
-      }
+      "electron/main.cjs",
+      "electron/preload.cjs",
+      "electron/sheets.cjs",
+      "electron/canva.cjs",
+      "electron/chromium-flags.cjs",
+      "electron/firebase-auth.cjs",
+      "electron/firebase-join.cjs",
+      "electron/firebase-people.cjs"
     ],
     "afterPack": "scripts/electron-after-pack.cjs",
     "artifactName": "CollectifBadge-${version}-${arch}.${ext}",
@@ -80,6 +81,13 @@
       {
         "from": "scripts/sign-and-allow.sh",
         "to": "scripts/sign-and-allow.sh"
+      },
+      {
+        "from": "electron",
+        "to": "electron-modules",
+        "filter": [
+          "**/*.cjs"
+        ]
       }
     ],
     "mac": {

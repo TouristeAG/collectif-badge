@@ -1,10 +1,11 @@
 /**
  * electron-builder afterPack.
- * Fail the build if required Electron main modules are missing from the asar
- * (that used to ship a dock/taskbar icon with no window).
+ * Inject any missing Electron main modules into app.asar (git/file-set omissions
+ * used to ship a dock icon with no window).
  */
 const fs = require("fs");
 const path = require("path");
+const os = require("os");
 
 const REQUIRED_ELECTRON_MODULES = [
   "main.cjs",
@@ -17,36 +18,89 @@ const REQUIRED_ELECTRON_MODULES = [
   "firebase-people.cjs"
 ];
 
-function existsInResources(resourcesDir, relativePath) {
-  const asarUnpacked = path.join(resourcesDir, "app.asar.unpacked", relativePath);
-  const loose = path.join(resourcesDir, "app", relativePath);
-  if (fs.existsSync(asarUnpacked) || fs.existsSync(loose)) return true;
-  try {
-    const Asar = require("@electron/asar");
-    const asarPath = path.join(resourcesDir, "app.asar");
-    if (!fs.existsSync(asarPath)) return false;
-    Asar.statFile(asarPath, relativePath.replace(/\\/g, "/"));
-    return true;
-  } catch {
-    return false;
+function findResourcesDir(context) {
+  if (context.electronPlatformName === "darwin") {
+    const apps = fs
+      .readdirSync(context.appOutDir)
+      .filter((name) => name.endsWith(".app"));
+    const preferred = `${context.packager.appInfo.productFilename}.app`;
+    const appName = apps.includes(preferred) ? preferred : apps[0];
+    if (!appName) {
+      throw new Error(`No .app found in ${context.appOutDir}`);
+    }
+    return path.join(context.appOutDir, appName, "Contents", "Resources");
   }
+  return path.join(context.appOutDir, "resources");
+}
+
+function asarHas(asarPath, relativePath) {
+  if (!fs.existsSync(asarPath)) return false;
+  const Asar = require("@electron/asar");
+  const variants = [
+    relativePath.replace(/\\/g, "/"),
+    relativePath.replace(/\\/g, "/").replace(/^\//, ""),
+    `/${relativePath.replace(/\\/g, "/").replace(/^\//, "")}`
+  ];
+  for (const candidate of variants) {
+    try {
+      Asar.statFile(asarPath, candidate);
+      return true;
+    } catch {
+      /* try next */
+    }
+  }
+  return false;
+}
+
+function unpackedHas(resourcesDir, relativePath) {
+  return fs.existsSync(path.join(resourcesDir, "app", relativePath));
 }
 
 module.exports = async function electronAfterPack(context) {
-  const resourcesDir =
-    context.electronPlatformName === "darwin"
-      ? path.join(context.appOutDir, `${context.packager.appInfo.productFilename}.app`, "Contents", "Resources")
-      : path.join(context.appOutDir, "resources");
+  const resourcesDir = findResourcesDir(context);
+  const asarPath = path.join(resourcesDir, "app.asar");
+  const projectElectronDir = path.join(context.packager.projectDir, "electron");
 
-  const missing = [];
-  for (const file of REQUIRED_ELECTRON_MODULES) {
+  const missing = REQUIRED_ELECTRON_MODULES.filter((file) => {
     const rel = path.posix.join("electron", file);
-    if (!existsInResources(resourcesDir, rel)) missing.push(rel);
+    return !asarHas(asarPath, rel) && !unpackedHas(resourcesDir, rel);
+  });
+
+  if (missing.length && fs.existsSync(asarPath)) {
+    const Asar = require("@electron/asar");
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "collectif-asar-"));
+    Asar.extractAll(asarPath, tmp);
+    fs.mkdirSync(path.join(tmp, "electron"), { recursive: true });
+    for (const file of missing) {
+      const src = path.join(projectElectronDir, file);
+      if (!fs.existsSync(src)) {
+        throw new Error(`Cannot pack ${file}: missing at ${src}`);
+      }
+      fs.copyFileSync(src, path.join(tmp, "electron", file));
+    }
+    await Asar.createPackage(tmp, asarPath);
+    fs.rmSync(tmp, { recursive: true, force: true });
   }
-  if (missing.length) {
+
+  const extraDir = path.join(resourcesDir, "electron-modules");
+  fs.mkdirSync(extraDir, { recursive: true });
+  for (const file of REQUIRED_ELECTRON_MODULES) {
+    const src = path.join(projectElectronDir, file);
+    if (fs.existsSync(src)) {
+      fs.copyFileSync(src, path.join(extraDir, file));
+    }
+  }
+
+  const stillMissing = REQUIRED_ELECTRON_MODULES.filter((file) => {
+    const rel = path.posix.join("electron", file);
+    const inAsar = asarHas(asarPath, rel);
+    const inUnpacked = unpackedHas(resourcesDir, rel);
+    const inExtra = fs.existsSync(path.join(extraDir, file));
+    return !inAsar && !inUnpacked && !inExtra;
+  });
+  if (stillMissing.length) {
     throw new Error(
-      `Packaged app is missing required Electron modules:\n  - ${missing.join("\n  - ")}\n` +
-        "The window will never open. Check build.files includes electron/*.cjs."
+      `Packaged app is missing required Electron modules:\n  - ${stillMissing.join("\n  - ")}`
     );
   }
 };

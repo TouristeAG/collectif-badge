@@ -20,8 +20,12 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Require Electron modules in this git ref
+        run: node scripts/verify-electron-pack.cjs sources
       - name: Build macOS DMG
         run: npm run build -- --mac
+      - name: Verify modules inside packaged asar
+        run: node scripts/verify-electron-pack.cjs asar
       - name: Upload DMG
         uses: actions/upload-artifact@v4
         with:
@@ -39,8 +43,12 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Require Electron modules in this git ref
+        run: node scripts/verify-electron-pack.cjs sources
       - name: Build Windows EXE
         run: npm run build -- --win
+      - name: Verify modules inside packaged asar
+        run: node scripts/verify-electron-pack.cjs asar
       - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:

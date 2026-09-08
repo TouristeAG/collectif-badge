@@ -67,6 +67,16 @@ git tag 1.5.0
 git push origin 1.5.0
 ```
 
+The tag **is** the code GitHub builds. `electron/firebase-auth.cjs`,
+`firebase-join.cjs` and `firebase-people.cjs` must be in that commit
+(`main.cjs` requires them before any window opens). Tag 1.5.0 originally
+pointed at a commit that lacked those files; CI packaged a dock/taskbar
+icon with no window. The workflow now fails instead of publishing that.
+
+To replace broken 1.5.0 installers: push `main` (with those files), then
+**Actions → Release — all platforms → Run workflow** on `main` (do not
+rebuild the old tag). That overwrites the same asset names.
+
 Use **`1.5.0` without a `v` prefix** so GitHub asset URLs match `version.json`
 (`…/releases/download/1.5.0/…`). A leading `v` is accepted by CI but then the
 download URLs in `version.json` must use that same tag.

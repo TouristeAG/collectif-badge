@@ -28,6 +28,28 @@ process.on("unhandledRejection", (reason) => {
     reason instanceof Error ? reason : new Error(String(reason))
   );
 });
+logMainCrash(
+  "startup",
+  new Error(
+    `packaged=${app.isPackaged} dirname=${__dirname} resources=${process.resourcesPath || ""} exec=${process.execPath}`
+  )
+);
+
+function requireElectronModule(name) {
+  const candidates = [
+    path.join(__dirname, name),
+    process.resourcesPath ? path.join(process.resourcesPath, "electron-modules", name) : null
+  ].filter(Boolean);
+  let lastErr = null;
+  for (const candidate of candidates) {
+    try {
+      return require(candidate);
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw lastErr || new Error(`Cannot find Electron module ${name}`);
+}
 
 let loadPeopleFromSheets;
 let canva;
@@ -35,16 +57,16 @@ let firebaseAuth = null;
 let firebasePeople = null;
 let firebaseJoin = null;
 try {
-  ({ loadPeopleFromSheets } = require("./sheets.cjs"));
-  canva = require("./canva.cjs");
+  ({ loadPeopleFromSheets } = requireElectronModule("sheets.cjs"));
+  canva = requireElectronModule("canva.cjs");
 } catch (err) {
   logMainCrash("requireSheetsOrCanva", err);
   throw err;
 }
 try {
-  firebaseAuth = require("./firebase-auth.cjs");
-  firebasePeople = require("./firebase-people.cjs");
-  firebaseJoin = require("./firebase-join.cjs");
+  firebaseAuth = requireElectronModule("firebase-auth.cjs");
+  firebasePeople = requireElectronModule("firebase-people.cjs");
+  firebaseJoin = requireElectronModule("firebase-join.cjs");
 } catch (err) {
   // Never abort startup: a missing Firebase module used to leave the dock/taskbar
   // icon alive with no window (require ran before createWindow).
@@ -114,7 +136,7 @@ function createWindow() {
     minHeight: 700,
     title: "Collectif Badgé",
     backgroundColor: "#0f172a",
-    show: false,
+    show: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
@@ -125,19 +147,9 @@ function createWindow() {
     }
   });
   mainWindow = win;
-  win.once("ready-to-show", () => {
-    if (win.isDestroyed()) return;
-    win.center();
-    win.show();
-    win.focus();
-  });
-  // If the renderer never becomes ready, still surface a window.
-  setTimeout(() => {
-    if (win.isDestroyed() || win.isVisible()) return;
-    win.center();
-    win.show();
-    win.focus();
-  }, 2500);
+  win.center();
+  win.show();
+  win.focus();
   win.on("closed", () => {
     if (mainWindow === win) mainWindow = null;
   });
