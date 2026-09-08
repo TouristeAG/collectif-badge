@@ -61,15 +61,8 @@
     "productName": "Collectif Badge",
     "files": [
       "dist/**/*",
-      "package.json",
-      "electron/main.cjs",
-      "electron/preload.cjs",
-      "electron/sheets.cjs",
-      "electron/canva.cjs",
-      "electron/chromium-flags.cjs",
-      "electron/firebase-auth.cjs",
-      "electron/firebase-join.cjs",
-      "electron/firebase-people.cjs"
+      "electron/**/*",
+      "package.json"
     ],
     "afterPack": "scripts/electron-after-pack.cjs",
     "artifactName": "CollectifBadge-${version}-${arch}.${ext}",
