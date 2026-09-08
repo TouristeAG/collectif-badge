@@ -3,8 +3,16 @@ import { useTranslation } from "react-i18next";
 import "./App.css";
 import { BadgeIllustrator } from "./components/BadgeIllustrator";
 import { CanvaSettingsButton, CanvaSettingsModal } from "./components/CanvaSettingsModal";
+import { FirebaseBackendPanel, FirebaseHelpModal } from "./components/FirebaseBackendPanel";
 import { GoogleSheetsHelpModal } from "./components/GoogleSheetsHelp";
-import type { PeopleResponse, PersonCategory, PersonRecord, SheetNames } from "./types";
+import type {
+  FirebaseStatus,
+  PeopleBackend,
+  PeopleResponse,
+  PersonCategory,
+  PersonRecord,
+  SheetNames
+} from "./types";
 import collectifnocturneLogo from "./assets/logo/collectifnocturne.png";
 
 function useDarkMode(): [boolean, () => void] {
@@ -56,6 +64,16 @@ function SunIcon() {
   );
 }
 
+function ReloadIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <polyline points="23 4 23 10 17 10" />
+      <polyline points="1 20 1 14 7 14" />
+      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+    </svg>
+  );
+}
+
 function DarkModeToggle({ isDark, onToggle }: { isDark: boolean; onToggle: () => void }) {
   const { t } = useTranslation();
   return (
@@ -103,6 +121,14 @@ function normalizePersonRecord(person: PersonRecord, index: number): PersonRecor
     typeof person.eventManagerId === "string" && person.eventManagerId.trim()
       ? person.eventManagerId
       : normalizedSheetColumns?.G;
+  const photoUrl =
+    typeof person.profilePhotoUrl === "string" && person.profilePhotoUrl.trim() !== "-"
+      ? person.profilePhotoUrl.trim()
+      : "";
+  const photoPath =
+    typeof person.profilePhotoPath === "string" && person.profilePhotoPath.trim() !== "-"
+      ? person.profilePhotoPath.trim()
+      : "";
   return {
     ...person,
     id: String(fallbackId),
@@ -115,6 +141,8 @@ function normalizePersonRecord(person: PersonRecord, index: number): PersonRecor
     venue: typeof person.venue === "string" ? person.venue : "",
     notes: typeof person.notes === "string" ? person.notes : "",
     artistName: typeof person.artistName === "string" ? person.artistName : "",
+    profilePhotoUrl: photoUrl || undefined,
+    profilePhotoPath: photoPath || undefined
   };
 }
 
@@ -215,6 +243,20 @@ function App() {
   const [spreadsheetId, setSpreadsheetId] = useState(localStorage.getItem("spreadsheetId") ?? "");
   const [serviceAccountConfigured, setServiceAccountConfigured] = useState(false);
   const [serviceAccountEmail, setServiceAccountEmail] = useState("");
+  const [peopleBackend, setPeopleBackend] = useState<PeopleBackend>(() => {
+    const stored = localStorage.getItem("peopleBackend");
+    return stored === "firebase" ? "firebase" : "sheets";
+  });
+  const [syncSetupExpanded, setSyncSetupExpanded] = useState(() => {
+    const stored = localStorage.getItem("syncSetupExpanded");
+    if (stored === "0") return false;
+    if (stored === "1") return true;
+    // First visit: keep open until a backend is already wired.
+    return localStorage.getItem("peopleBackend") !== "firebase" && !localStorage.getItem("spreadsheetId");
+  });
+  const [firebaseStatus, setFirebaseStatus] = useState<FirebaseStatus | null>(null);
+  const [firebaseBusy, setFirebaseBusy] = useState(false);
+  const [isFirebaseHelpOpen, setIsFirebaseHelpOpen] = useState(false);
   const [webApiBaseUrl, setWebApiBaseUrl] = useState(
     localStorage.getItem("webApiBaseUrl") ?? ""
   );
@@ -441,8 +483,68 @@ function App() {
     }
   }, [spreadsheetId, serviceAccountConfigured, sheetNames, t, isDesktopApp, webApiBaseUrl]);
 
+  const applyPeopleResponse = useCallback((response: PeopleResponse) => {
+    const normalizedResponse = normalizePeopleResponse(response);
+    setPeople(normalizedResponse.people);
+    setSelectedId((old) => (normalizedResponse.people.some((person) => person.id === old) ? old : null));
+    setCheckedForIllustrator((prev) => {
+      const valid = new Set(normalizedResponse.people.map((person) => person.id));
+      return new Set([...prev].filter((id) => valid.has(id)));
+    });
+    return normalizedResponse;
+  }, []);
+
+  const refreshFromFirebase = useCallback(async () => {
+    setError("");
+    if (!window.electronAPI?.firebaseLoadPeople) {
+      setError(t("firebase.desktopOnly"));
+      return;
+    }
+    if (!firebaseStatus?.signedIn) {
+      setError(t("firebase.signInRequired"));
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const response = await window.electronAPI.firebaseLoadPeople();
+      applyPeopleResponse(response);
+      const status = await window.electronAPI.firebaseGetStatus?.();
+      if (status) setFirebaseStatus(status);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("firebase.loadFailed"));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [applyPeopleResponse, firebaseStatus?.signedIn, t]);
+
+  const refreshPeople = useCallback(async () => {
+    if (peopleBackend === "firebase") {
+      await refreshFromFirebase();
+    } else {
+      await refreshFromSheets();
+    }
+  }, [peopleBackend, refreshFromFirebase, refreshFromSheets]);
+
   const refreshFromSheetsRef = useRef(refreshFromSheets);
   refreshFromSheetsRef.current = refreshFromSheets;
+  const refreshFromFirebaseRef = useRef(refreshFromFirebase);
+  refreshFromFirebaseRef.current = refreshFromFirebase;
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("peopleBackend", peopleBackend);
+    } catch {
+      /* ignore */
+    }
+  }, [peopleBackend]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("syncSetupExpanded", syncSetupExpanded ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }, [syncSetupExpanded]);
 
   useEffect(() => {
     try {
@@ -451,6 +553,70 @@ function App() {
       // ignore storage errors
     }
   }, [spreadsheetId]);
+
+  useEffect(() => {
+    if (!window.electronAPI?.firebaseGetStatus) return;
+    void window.electronAPI
+      .firebaseGetStatus()
+      .then((status) => setFirebaseStatus(status))
+      .catch(() => setFirebaseStatus(null));
+  }, []);
+
+  async function saveFirebaseJoin(raw: string) {
+    if (!window.electronAPI?.firebaseSaveJoinConfig) {
+      throw new Error(t("firebase.desktopOnly"));
+    }
+    setFirebaseBusy(true);
+    setError("");
+    try {
+      await window.electronAPI.firebaseSaveJoinConfig(raw);
+      const status = await window.electronAPI.firebaseGetStatus?.();
+      if (status) setFirebaseStatus(status);
+    } finally {
+      setFirebaseBusy(false);
+    }
+  }
+
+  async function firebaseSignIn() {
+    if (!window.electronAPI?.firebaseSignIn) {
+      setError(t("firebase.desktopOnly"));
+      return;
+    }
+    setFirebaseBusy(true);
+    setError("");
+    try {
+      const status = await window.electronAPI.firebaseSignIn();
+      setFirebaseStatus(status);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("firebase.signInFailed"));
+    } finally {
+      setFirebaseBusy(false);
+    }
+  }
+
+  async function firebaseSignOut() {
+    if (!window.electronAPI?.firebaseSignOut) return;
+    setFirebaseBusy(true);
+    try {
+      const status = await window.electronAPI.firebaseSignOut();
+      setFirebaseStatus(status);
+      setPeople([]);
+    } finally {
+      setFirebaseBusy(false);
+    }
+  }
+
+  async function firebaseClear() {
+    if (!window.electronAPI?.firebaseClearConfig) return;
+    setFirebaseBusy(true);
+    try {
+      const status = await window.electronAPI.firebaseClearConfig();
+      setFirebaseStatus(status);
+      setPeople([]);
+    } finally {
+      setFirebaseBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (window.electronAPI) {
@@ -512,11 +678,16 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (peopleBackend === "firebase") {
+      if (!firebaseStatus?.signedIn) return;
+      void refreshFromFirebaseRef.current();
+      return;
+    }
     if (!spreadsheetId.trim()) return;
     if (!serviceAccountConfigured) return;
     void refreshFromSheetsRef.current();
     // Intentionally auto-refresh only when startup settings are ready.
-  }, [spreadsheetId, serviceAccountConfigured, isDesktopApp, webApiBaseUrl]);
+  }, [spreadsheetId, serviceAccountConfigured, isDesktopApp, webApiBaseUrl, peopleBackend, firebaseStatus?.signedIn]);
 
   return (
     <main className="app">
@@ -579,8 +750,12 @@ function App() {
           <div className="topbar-actions">
             <DarkModeToggle isDark={isDark} onToggle={toggleDarkMode} />
             <CanvaSettingsButton onClick={() => setIsCanvaSettingsOpen(true)} />
-            <button className="primary topbar-refresh" onClick={refreshFromSheets} disabled={isLoading}>
-              {isLoading ? t("app.refreshing") : t("app.refreshSheets")}
+            <button className="primary topbar-refresh" onClick={() => void refreshPeople()} disabled={isLoading}>
+              {isLoading
+                ? t("app.refreshing")
+                : peopleBackend === "firebase"
+                  ? t("firebase.refresh")
+                  : t("app.refreshSheets")}
             </button>
           </div>
         </header>
@@ -638,91 +813,202 @@ function App() {
 
       <CanvaSettingsModal isOpen={isCanvaSettingsOpen} onClose={() => setIsCanvaSettingsOpen(false)} />
       <GoogleSheetsHelpModal isOpen={isSheetsHelpOpen} onClose={() => setIsSheetsHelpOpen(false)} />
+      <FirebaseHelpModal isOpen={isFirebaseHelpOpen} onClose={() => setIsFirebaseHelpOpen(false)} />
 
-      <section className="setup-card">
-        <div className="setup-card-header">
-          <h2>{t("sheetsHelp.cardTitle")}</h2>
+      <section className={`setup-card sync-setup-card ${syncSetupExpanded ? "is-expanded" : "is-collapsed"}`}>
+        <div className="setup-card-header sync-setup-header">
           <button
             type="button"
-            className="icon-button setup-card-help-btn"
-            onClick={() => setIsSheetsHelpOpen(true)}
-            aria-label={t("sheetsHelp.openHelpAria")}
-            title={t("sheetsHelp.openHelpTitle")}
+            className="sync-setup-toggle"
+            onClick={() => setSyncSetupExpanded((open) => !open)}
+            aria-expanded={syncSetupExpanded}
+            aria-controls="sync-setup-body"
           >
-            ?
+            <span className="sync-setup-toggle-chevron" aria-hidden="true">
+              {syncSetupExpanded ? "▾" : "▸"}
+            </span>
+            <span className="sync-setup-toggle-text">
+              <span className="sync-setup-title">{t("app.backendTitle")}</span>
+              {!syncSetupExpanded ? (
+                <span className="sync-setup-summary">
+                  {peopleBackend === "firebase"
+                    ? firebaseStatus?.signedIn
+                      ? t("app.syncSetupSummaryFirebase", {
+                          email: firebaseStatus.email || "—",
+                          org: firebaseStatus.orgId || "—"
+                        })
+                      : firebaseStatus?.configured
+                        ? t("app.syncSetupSummaryFirebaseReady")
+                        : t("app.syncSetupSummaryFirebaseEmpty")
+                    : serviceAccountConfigured && spreadsheetId.trim()
+                      ? t("app.syncSetupSummarySheets", { id: spreadsheetId.trim().slice(0, 12) })
+                      : t("app.syncSetupSummarySheetsEmpty")}
+                </span>
+              ) : null}
+            </span>
           </button>
-        </div>
-        <div className="form-grid">
-          <label>
-            {t("app.spreadsheetId")}
-            <input
-              value={spreadsheetId}
-              onChange={(event) => setSpreadsheetId(event.target.value)}
-              placeholder="1AbCdEfGh..."
-            />
-          </label>
-          <label className="key-picker">
-            {t("app.serviceAccountImport")}
-            <input
-              value={
-                serviceAccountConfigured
-                  ? serviceAccountEmail || t("app.serviceAccountConfigured")
-                  : t("app.serviceAccountNotConfigured")
-              }
-              readOnly
-            />
-            {isDesktopApp ? (
-              <button type="button" onClick={importKeyFile}>
-                {t("app.importJson")}
+          <div className="sync-setup-header-actions">
+            {syncSetupExpanded ? (
+              <button
+                type="button"
+                className="icon-button setup-card-help-btn"
+                onClick={() =>
+                  peopleBackend === "firebase"
+                    ? setIsFirebaseHelpOpen(true)
+                    : setIsSheetsHelpOpen(true)
+                }
+                aria-label={
+                  peopleBackend === "firebase"
+                    ? t("firebase.openHelpAria")
+                    : t("sheetsHelp.openHelpAria")
+                }
+                title={
+                  peopleBackend === "firebase"
+                    ? t("firebase.openHelpTitle")
+                    : t("sheetsHelp.openHelpTitle")
+                }
+              >
+                ?
               </button>
             ) : null}
-          </label>
-          {!isDesktopApp && (
-            <label>
-              {t("app.webApiBaseUrl")}
-              <input
-                value={webApiBaseUrl}
-                onChange={(event) => setWebApiBaseUrl(event.target.value)}
-                placeholder="https://api.example.com"
-              />
-            </label>
-          )}
-          <label>
-            {t("app.volunteersSheet")}
-            <input
-              value={sheetNames.volunteers}
-              onChange={(event) =>
-                setSheetNames((old) => ({ ...old, volunteers: event.target.value }))
-              }
-            />
-          </label>
-          <label>
-            {t("app.permanentGuestsSheet")}
-            <input
-              value={sheetNames.guestList}
-              onChange={(event) => setSheetNames((old) => ({ ...old, guestList: event.target.value }))}
-            />
-          </label>
-          <label>
-            {t("app.volunteerGuestsSheet")}
-            <input
-              value={sheetNames.volunteerGuestList}
-              onChange={(event) =>
-                setSheetNames((old) => ({ ...old, volunteerGuestList: event.target.value }))
-              }
-            />
-          </label>
-          <label>
-            {t("app.tempGuestsSheet")}
-            <input
-              value={sheetNames.tempGuestList}
-              onChange={(event) =>
-                setSheetNames((old) => ({ ...old, tempGuestList: event.target.value }))
-              }
-            />
-          </label>
+            <button
+              type="button"
+              className="sync-setup-collapse-btn"
+              onClick={() => setSyncSetupExpanded((open) => !open)}
+              aria-expanded={syncSetupExpanded}
+              aria-controls="sync-setup-body"
+            >
+              {syncSetupExpanded ? t("app.syncSetupCollapse") : t("app.syncSetupExpand")}
+            </button>
+          </div>
         </div>
-        {error && <p className="error">{error}</p>}
+
+        {syncSetupExpanded ? (
+          <div id="sync-setup-body" className="sync-setup-body">
+            <div className="backend-picker" role="group" aria-label={t("app.backendTitle")}>
+              <button
+                type="button"
+                className={peopleBackend === "sheets" ? "backend-picker-btn is-active" : "backend-picker-btn"}
+                onClick={() => setPeopleBackend("sheets")}
+              >
+                {t("app.backendSheets")}
+              </button>
+              <button
+                type="button"
+                className={peopleBackend === "firebase" ? "backend-picker-btn is-active" : "backend-picker-btn"}
+                onClick={() => {
+                  if (!isDesktopApp) {
+                    setError(t("firebase.desktopOnly"));
+                    return;
+                  }
+                  setPeopleBackend("firebase");
+                }}
+                disabled={!isDesktopApp && peopleBackend !== "firebase"}
+              >
+                {t("app.backendFirebase")}
+              </button>
+            </div>
+            <p className="hint">{t("app.backendHint")}</p>
+
+            {peopleBackend === "firebase" ? (
+              <div className="sync-setup-backend-panel">
+                <FirebaseBackendPanel
+                  status={firebaseStatus}
+                  busy={firebaseBusy || isLoading}
+                  onSaveJoinCode={saveFirebaseJoin}
+                  onSignIn={firebaseSignIn}
+                  onSignOut={firebaseSignOut}
+                  onClear={firebaseClear}
+                  onOpenHelp={() => setIsFirebaseHelpOpen(true)}
+                  embedded
+                />
+                {error ? <p className="error">{error}</p> : null}
+              </div>
+            ) : (
+              <div className="sync-setup-backend-panel">
+                <h3 className="sync-setup-backend-title">{t("sheetsHelp.cardTitle")}</h3>
+                <div className="form-grid">
+                  <label>
+                    {t("app.spreadsheetId")}
+                    <input
+                      value={spreadsheetId}
+                      onChange={(event) => setSpreadsheetId(event.target.value)}
+                      placeholder="1AbCdEfGh..."
+                    />
+                  </label>
+                  <label className="key-picker">
+                    {t("app.serviceAccountImport")}
+                    <input
+                      value={
+                        serviceAccountConfigured
+                          ? serviceAccountEmail || t("app.serviceAccountConfigured")
+                          : t("app.serviceAccountNotConfigured")
+                      }
+                      readOnly
+                    />
+                    {isDesktopApp ? (
+                      <button type="button" onClick={importKeyFile}>
+                        {t("app.importJson")}
+                      </button>
+                    ) : null}
+                  </label>
+                  {!isDesktopApp && (
+                    <label>
+                      {t("app.webApiBaseUrl")}
+                      <input
+                        value={webApiBaseUrl}
+                        onChange={(event) => setWebApiBaseUrl(event.target.value)}
+                        placeholder="https://api.example.com"
+                      />
+                    </label>
+                  )}
+                  <label>
+                    {t("app.volunteersSheet")}
+                    <input
+                      value={sheetNames.volunteers}
+                      onChange={(event) =>
+                        setSheetNames((old) => ({ ...old, volunteers: event.target.value }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    {t("app.permanentGuestsSheet")}
+                    <input
+                      value={sheetNames.guestList}
+                      onChange={(event) =>
+                        setSheetNames((old) => ({ ...old, guestList: event.target.value }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    {t("app.volunteerGuestsSheet")}
+                    <input
+                      value={sheetNames.volunteerGuestList}
+                      onChange={(event) =>
+                        setSheetNames((old) => ({
+                          ...old,
+                          volunteerGuestList: event.target.value
+                        }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    {t("app.tempGuestsSheet")}
+                    <input
+                      value={sheetNames.tempGuestList}
+                      onChange={(event) =>
+                        setSheetNames((old) => ({ ...old, tempGuestList: event.target.value }))
+                      }
+                    />
+                  </label>
+                </div>
+                {error ? <p className="error">{error}</p> : null}
+              </div>
+            )}
+          </div>
+        ) : error ? (
+          <p className="error sync-setup-collapsed-error">{error}</p>
+        ) : null}
       </section>
 
       <section className="stats">
@@ -916,13 +1202,33 @@ function App() {
         </section>
       </section>
 
-      {illustratorPeople.length > 0 && (
-        <button className="floating-illustrator-btn primary" onClick={() => setIsIllustratorOpen(true)}>
-          {illustratorPeople.length > 1
-            ? t("app.openIllustratorMulti", { count: illustratorPeople.length })
-            : t("app.openIllustratorOne")}
+      <div className="floating-actions">
+        <button
+          type="button"
+          className={`floating-reload-btn${isLoading ? " is-loading" : ""}`}
+          onClick={() => void refreshPeople()}
+          disabled={isLoading}
+          title={
+            peopleBackend === "firebase" ? t("firebase.refresh") : t("app.refreshSheets")
+          }
+          aria-label={
+            peopleBackend === "firebase" ? t("firebase.refresh") : t("app.refreshSheets")
+          }
+        >
+          <ReloadIcon />
         </button>
-      )}
+        {illustratorPeople.length > 0 ? (
+          <button
+            type="button"
+            className="floating-illustrator-btn primary"
+            onClick={() => setIsIllustratorOpen(true)}
+          >
+            {illustratorPeople.length > 1
+              ? t("app.openIllustratorMulti", { count: illustratorPeople.length })
+              : t("app.openIllustratorOne")}
+          </button>
+        ) : null}
+      </div>
 
       {isIllustratorOpen && illustratorPeople.length > 0 && (
         <div className="illustrator-modal-backdrop" onClick={() => setIsIllustratorOpen(false)}>

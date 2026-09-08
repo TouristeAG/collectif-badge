@@ -48,7 +48,35 @@ type PersonEditableSnapshot = {
   backFirstName: string;
   backLastName: string;
   profilePhotoUrl: string;
+  /** local = user upload override; firebase = NoctuList Storage; cleared = user removed; none = empty */
+  photoOrigin: "none" | "firebase" | "local" | "cleared";
 };
+
+function personHasFirebasePhoto(person: PersonRecord): boolean {
+  const url = person.profilePhotoUrl?.trim() ?? "";
+  const path = person.profilePhotoPath?.trim() ?? "";
+  return (Boolean(url) && url !== "-") || (Boolean(path) && path !== "-");
+}
+
+async function fetchFirebasePhotoBlobUrl(person: PersonRecord): Promise<string | null> {
+  if (!personHasFirebasePhoto(person)) return null;
+  const api = window.electronAPI?.firebaseFetchProfilePhoto;
+  if (typeof api !== "function") return null;
+  try {
+    const result = await api({
+      profilePhotoUrl: person.profilePhotoUrl,
+      profilePhotoPath: person.profilePhotoPath
+    });
+    if (!result?.base64) return null;
+    const binary = atob(result.base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blob = new Blob([bytes], { type: result.mimeType || "image/jpeg" });
+    return URL.createObjectURL(blob);
+  } catch {
+    return null;
+  }
+}
 
 interface ToggleSwitchProps {
   checked: boolean;
@@ -290,6 +318,18 @@ type PhotoAdjustments = {
   grayscale: boolean;
   invert: boolean;
 };
+
+/**
+ * Pan via translate (not object-position): with object-fit:cover, object-position X
+ * has no effect on typical portrait photos (only the long axis can be cropped).
+ * Offset range ±200 maps to ±50% of the frame — same former sensitivity as /4.
+ */
+function buildPhotoTransform(offsetX: number, offsetY: number, zoom: number, rotation: number): string {
+  const scale = Math.max(1, zoom / 100);
+  const tx = offsetX / 4;
+  const ty = offsetY / 4;
+  return `translate(${tx}%, ${ty}%) scale(${scale}) rotate(${rotation}deg)`;
+}
 
 function buildPhotoCssFilter(p: PhotoAdjustments): string {
   const brightness =
@@ -738,8 +778,8 @@ function buildBsEncodingXml(): string {
 }
 
 function buildEventManagerQrPayload(person: PersonRecord): string {
-  // Encode the plain NanoID, matching EventManagerApp's format for volunteers and guests.
-  // For temporary guests, the ID comes from column G in the temp sheet.
+  // Plain NanoID (NoctuList / Lightspeed) — not JSON, not a device join QR.
+  // For temporary guests on Sheets, the ID may also appear in column G.
   const directId = person.eventManagerId?.trim();
   if (directId) return directId;
   return person.sheetColumns?.G?.trim() ?? "";
@@ -1155,6 +1195,8 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
   );
   const [secondaryColor, setSecondaryColor] = useState(() => readIllustratorDefaultsCached().secondaryColor);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
+  const [photoOrigin, setPhotoOrigin] = useState<"none" | "firebase" | "local" | "cleared">("none");
+  const photoLoadGenRef = useRef(0);
   const [photoFrameShape, setPhotoFrameShape] = useState<"circle" | "rounded">(
     () => readIllustratorDefaultsCached().photoFrameShape
   );
@@ -1260,34 +1302,98 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
     [people, activePersonId]
   );
 
-  const loadPersonDataIntoState = useCallback((p: PersonRecord) => {
-    const defaultType = defaultPersonTypeForCategory(p);
-    setPersonType(defaultType);
-    setAccentColor(PERSON_TYPE_META.find((o) => o.value === defaultType)?.defaultAccent ?? "#ffd699");
-    const existing = personSnapshotsRef.current.get(p.id);
-    if (existing) {
-      setVCardSettings(structuredClone(existing.vCardSettings));
-      setBackFirstName(existing.backFirstName);
-      setBackLastName(existing.backLastName);
-      const url = existing.profilePhotoUrl;
-      if (photoUrlRef.current && photoUrlRef.current !== url) {
-        URL.revokeObjectURL(photoUrlRef.current);
-      }
-      photoUrlRef.current = url.startsWith("blob:") ? url : "";
-      setProfilePhotoUrl(url);
-    } else {
-      setVCardSettings(
-        mergeVCardFromStored(buildDefaultVCardSettings(p), readIllustratorDefaultsCached().vCardSettings)
-      );
-      setBackFirstName(splitName(p.displayName).firstName);
-      setBackLastName(p.abbreviation?.trim() || splitName(p.displayName).lastName);
-      if (photoUrlRef.current) {
-        URL.revokeObjectURL(photoUrlRef.current);
-        photoUrlRef.current = "";
-      }
-      setProfilePhotoUrl("");
+  const applyPhotoUrl = useCallback((url: string, origin: "none" | "firebase" | "local" | "cleared") => {
+    if (photoUrlRef.current && photoUrlRef.current !== url && photoUrlRef.current.startsWith("blob:")) {
+      URL.revokeObjectURL(photoUrlRef.current);
     }
+    photoUrlRef.current = url.startsWith("blob:") ? url : "";
+    setProfilePhotoUrl(url);
+    setPhotoOrigin(origin);
   }, []);
+
+  const loadFirebasePhotoForPerson = useCallback(
+    async (p: PersonRecord, gen: number) => {
+      if (!personHasFirebasePhoto(p)) return;
+      const existing = personSnapshotsRef.current.get(p.id);
+      if (existing?.photoOrigin === "local" || existing?.photoOrigin === "cleared") return;
+      const url = await fetchFirebasePhotoBlobUrl(p);
+      if (!url) return;
+      if (photoLoadGenRef.current !== gen) {
+        URL.revokeObjectURL(url);
+        return;
+      }
+      const again = personSnapshotsRef.current.get(p.id);
+      if (again?.photoOrigin === "local" || again?.photoOrigin === "cleared") {
+        URL.revokeObjectURL(url);
+        return;
+      }
+      applyPhotoUrl(url, "firebase");
+      personSnapshotsRef.current.set(p.id, {
+        vCardSettings: again?.vCardSettings ?? structuredClone(vCardSettings),
+        backFirstName: again?.backFirstName ?? splitName(p.displayName).firstName,
+        backLastName:
+          again?.backLastName ?? (p.abbreviation?.trim() || splitName(p.displayName).lastName),
+        profilePhotoUrl: url,
+        photoOrigin: "firebase"
+      });
+    },
+    [applyPhotoUrl, vCardSettings]
+  );
+
+  const loadPersonDataIntoState = useCallback(
+    (p: PersonRecord) => {
+      const defaultType = defaultPersonTypeForCategory(p);
+      setPersonType(defaultType);
+      setAccentColor(PERSON_TYPE_META.find((o) => o.value === defaultType)?.defaultAccent ?? "#ffd699");
+      const existing = personSnapshotsRef.current.get(p.id);
+      const gen = ++photoLoadGenRef.current;
+      if (existing) {
+        setVCardSettings(structuredClone(existing.vCardSettings));
+        setBackFirstName(existing.backFirstName);
+        setBackLastName(existing.backLastName);
+        const url = existing.profilePhotoUrl;
+        applyPhotoUrl(url, existing.photoOrigin || (url ? "local" : "none"));
+        if (
+          !url &&
+          existing.photoOrigin !== "cleared" &&
+          existing.photoOrigin !== "local" &&
+          personHasFirebasePhoto(p)
+        ) {
+          void loadFirebasePhotoForPerson(p, gen);
+        }
+      } else {
+        setVCardSettings(
+          mergeVCardFromStored(buildDefaultVCardSettings(p), readIllustratorDefaultsCached().vCardSettings)
+        );
+        setBackFirstName(splitName(p.displayName).firstName);
+        setBackLastName(p.abbreviation?.trim() || splitName(p.displayName).lastName);
+        applyPhotoUrl("", "none");
+        if (personHasFirebasePhoto(p)) {
+          void loadFirebasePhotoForPerson(p, gen);
+        }
+      }
+    },
+    [applyPhotoUrl, loadFirebasePhotoForPerson]
+  );
+
+  const ensurePersonPhotoReady = useCallback(
+    async (p: PersonRecord) => {
+      const snap = personSnapshotsRef.current.get(p.id);
+      if (snap?.profilePhotoUrl) return;
+      if (snap?.photoOrigin === "cleared" || snap?.photoOrigin === "local") return;
+      if (!personHasFirebasePhoto(p)) return;
+      const gen = ++photoLoadGenRef.current;
+      await loadFirebasePhotoForPerson(p, gen);
+      // Re-apply into live state if this person is active
+      if (photoLoadGenRef.current === gen) {
+        const updated = personSnapshotsRef.current.get(p.id);
+        if (updated?.profilePhotoUrl) {
+          applyPhotoUrl(updated.profilePhotoUrl, updated.photoOrigin);
+        }
+      }
+    },
+    [applyPhotoUrl, loadFirebasePhotoForPerson]
+  );
 
   const flushCurrentPersonSnapshot = useCallback(() => {
     if (!activePersonId) return;
@@ -1296,8 +1402,9 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
       backFirstName,
       backLastName,
       profilePhotoUrl,
+      photoOrigin
     });
-  }, [activePersonId, vCardSettings, backFirstName, backLastName, profilePhotoUrl]);
+  }, [activePersonId, vCardSettings, backFirstName, backLastName, profilePhotoUrl, photoOrigin]);
 
   const handlePersonTabClick = useCallback(
     (newId: string) => {
@@ -1476,7 +1583,7 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
     };
   }, [showQrCode, vCardString, safeCardBackgroundColor]);
 
-  // Back QR code (EventManagerApp JSON format — margin 1, error correction L)
+  // Back QR code (plain NanoID — margin 1, error correction L)
   useEffect(() => {
     if (!showBackQr || !backQrPayload) {
       startTransition(() => setBackQrDataUrl(""));
@@ -1622,11 +1729,8 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
       cachedPreviewBackPhotoVignetteEl.current = vignetteEl;
     }
     const p = livePhotoRef.current;
-    const scale = Math.max(1, p.zoom / 100);
-    const posX = Math.max(0, Math.min(100, 50 + p.offsetX / 4));
-    const posY = Math.max(0, Math.min(100, 50 + p.offsetY / 4));
-    el.style.transform = `scale(${scale}) rotate(${p.rotation}deg)`;
-    el.style.objectPosition = `${posX}% ${posY}%`;
+    el.style.transform = buildPhotoTransform(p.offsetX, p.offsetY, p.zoom, p.rotation);
+    el.style.objectPosition = "50% 50%";
     el.style.filter = buildPhotoCssFilter({
       frameShape: "circle",
       ...p,
@@ -1751,6 +1855,7 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
     setBackFirstName(splitName(activePerson.displayName).firstName);
     setBackLastName(activePerson.abbreviation?.trim() || splitName(activePerson.displayName).lastName);
     setProfilePhotoUrl("");
+    setPhotoOrigin("cleared");
     if (photoUrlRef.current) {
       URL.revokeObjectURL(photoUrlRef.current);
       photoUrlRef.current = "";
@@ -1765,6 +1870,7 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
       const url = URL.createObjectURL(file);
       photoUrlRef.current = url;
       setProfilePhotoUrl(url);
+      setPhotoOrigin("local");
     }
     // Allow selecting the same file again after remove/change.
     event.target.value = "";
@@ -1774,8 +1880,24 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
     if (photoUrlRef.current) URL.revokeObjectURL(photoUrlRef.current);
     photoUrlRef.current = "";
     setProfilePhotoUrl("");
+    setPhotoOrigin("cleared");
     if (photoInputRef.current) photoInputRef.current.value = "";
   }, []);
+
+  const restoreFirebasePhoto = useCallback(() => {
+    if (!activePerson || !personHasFirebasePhoto(activePerson)) return;
+    const gen = ++photoLoadGenRef.current;
+    const snap = personSnapshotsRef.current.get(activePerson.id);
+    if (snap) {
+      personSnapshotsRef.current.set(activePerson.id, {
+        ...snap,
+        profilePhotoUrl: "",
+        photoOrigin: "none"
+      });
+    }
+    applyPhotoUrl("", "none");
+    void loadFirebasePhotoForPerson(activePerson, gen);
+  }, [activePerson, applyPhotoUrl, loadFirebasePhotoForPerson]);
 
   const openPhotoEditor = useCallback(() => {
     setPhotoEditorDraft({
@@ -1878,17 +2000,21 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
     grayscale: photoGrayscale,
     invert: photoInvert,
   };
-  const photoScale = Math.max(1, photoSettings.zoom / 100);
-  const photoPositionX = Math.max(0, Math.min(100, 50 + photoSettings.offsetX / 4));
-  const photoPositionY = Math.max(0, Math.min(100, 50 + photoSettings.offsetY / 4));
-  const photoTransform = `scale(${photoScale}) rotate(${photoSettings.rotation}deg)`;
+  const photoTransform = buildPhotoTransform(
+    photoSettings.offsetX,
+    photoSettings.offsetY,
+    photoSettings.zoom,
+    photoSettings.rotation
+  );
   const photoFilter = buildPhotoCssFilter(photoSettings);
   const photoVignetteOpacity = Math.max(0, Math.min(1, photoSettings.vignette / 100));
   const photoEditorPreviewSettings = photoEditorDraft ?? photoSettings;
-  const photoEditorPreviewScale = Math.max(1, photoEditorPreviewSettings.zoom / 100);
-  const photoEditorPreviewTransform = `scale(${photoEditorPreviewScale}) rotate(${photoEditorPreviewSettings.rotation}deg)`;
-  const photoEditorPreviewPosX = Math.max(0, Math.min(100, 50 + photoEditorPreviewSettings.offsetX / 4));
-  const photoEditorPreviewPosY = Math.max(0, Math.min(100, 50 + photoEditorPreviewSettings.offsetY / 4));
+  const photoEditorPreviewTransform = buildPhotoTransform(
+    photoEditorPreviewSettings.offsetX,
+    photoEditorPreviewSettings.offsetY,
+    photoEditorPreviewSettings.zoom,
+    photoEditorPreviewSettings.rotation
+  );
   const photoEditorPreviewFilter = buildPhotoCssFilter(photoEditorPreviewSettings);
   const photoEditorPreviewVignette = Math.max(0, Math.min(1, photoEditorPreviewSettings.vignette / 100));
   const exportBaseName = useMemo(
@@ -2165,12 +2291,14 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
       const batch = people.length > 1;
       const initialActiveId = activePersonId;
 
-      const activatePersonForBatch = (p: PersonRecord) => {
+      const activatePersonForBatch = async (p: PersonRecord) => {
         flushCurrentPersonSnapshot();
         flushSync(() => {
           setActivePersonId(p.id);
           loadPersonDataIntoState(p);
         });
+        await ensurePersonPhotoReady(p);
+        await waitRenderSettled();
       };
 
       const restoreInitialPerson = () => {
@@ -2201,7 +2329,7 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
             const used = new Set<string>();
             const zip = new JSZip();
             for (const p of people) {
-              activatePersonForBatch(p);
+              await activatePersonForBatch(p);
               await waitForQrAfterPersonChange();
               flushCurrentPersonSnapshot();
               const snap = personSnapshotsRef.current.get(p.id);
@@ -2323,7 +2451,7 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
               setExportNotice(t("export.canvaSendingBatchAutofill", { count: people.length }));
               for (let i = 0; i < people.length; i++) {
                 const p = people[i];
-                activatePersonForBatch(p);
+                await activatePersonForBatch(p);
                 await waitForQrAfterPersonChange();
                 flushCurrentPersonSnapshot();
                 const snap = personSnapshotsRef.current.get(p.id)!;
@@ -2347,7 +2475,7 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
             setExportNotice(t("export.canvaSendingBatchPdf", { count: people.length }));
             for (let i = 0; i < people.length; i++) {
               const p = people[i];
-              activatePersonForBatch(p);
+              await activatePersonForBatch(p);
               await waitForQrAfterPersonChange();
               flushCurrentPersonSnapshot();
               const snap = personSnapshotsRef.current.get(p.id)!;
@@ -2408,7 +2536,7 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
             let firstBackBytes: Uint8Array | null = null;
 
             for (const p of people) {
-              activatePersonForBatch(p);
+              await activatePersonForBatch(p);
               await waitForQrAfterPersonChange();
               flushCurrentPersonSnapshot();
               const { front, back } = await captureBothSides("png");
@@ -2529,7 +2657,7 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
           const used = new Set<string>();
           const zip = new JSZip();
           for (const p of people) {
-            activatePersonForBatch(p);
+            await activatePersonForBatch(p);
             await waitForQrAfterPersonChange();
             flushCurrentPersonSnapshot();
             const snap = personSnapshotsRef.current.get(p.id);
@@ -2582,6 +2710,7 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
       exportBaseName,
       flushCurrentPersonSnapshot,
       flushFrontQrForExport,
+      ensurePersonPhotoReady,
       loadPersonDataIntoState,
       people,
       roleLabel,
@@ -2738,7 +2867,7 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
                 draggable={false}
                 style={{
                   transform: photoTransform,
-                  objectPosition: `${photoPositionX}% ${photoPositionY}%`,
+                  objectPosition: "50% 50%",
                   filter: photoFilter,
                 }}
               />
@@ -2771,8 +2900,6 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
     backLastName,
     backQrDataUrl,
     photoFrameShape,
-    photoPositionX,
-    photoPositionY,
     photoFilter,
     photoTransform,
     photoVignetteOpacity,
@@ -2853,7 +2980,7 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
                 draggable={false}
                 style={{
                   transform: photoTransform,
-                  objectPosition: `${photoPositionX}% ${photoPositionY}%`,
+                  objectPosition: "50% 50%",
                   filter: photoFilter,
                 }}
               />
@@ -2888,8 +3015,6 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
     exportRoleOffsetX,
     exportRoleTextFontSize,
     photoFrameShape,
-    photoPositionX,
-    photoPositionY,
     photoFilter,
     photoTransform,
     photoVignetteOpacity,
@@ -3504,7 +3629,20 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
                       </button>
                     </>
                   )}
+                  {activePerson &&
+                    personHasFirebasePhoto(activePerson) &&
+                    photoOrigin !== "firebase" && (
+                      <button type="button" onClick={restoreFirebasePhoto}>
+                        {t("illustrator.useNoctuListPhoto")}
+                      </button>
+                    )}
                 </div>
+                {photoOrigin === "firebase" ? (
+                  <p className="hint">{t("illustrator.firebasePhotoHint")}</p>
+                ) : null}
+                {photoOrigin === "local" ? (
+                  <p className="hint">{t("illustrator.localPhotoOverrideHint")}</p>
+                ) : null}
                 {profilePhotoUrl && <p className="hint">{t("illustrator.personalizePhotoHint")}</p>}
 
                 <label>
@@ -3777,7 +3915,7 @@ export function BadgeIllustrator({ people, exportPortalHost = null }: BadgeIllus
                       draggable={false}
                       style={{
                         transform: photoEditorPreviewTransform,
-                        objectPosition: `${photoEditorPreviewPosX}% ${photoEditorPreviewPosY}%`,
+                        objectPosition: "50% 50%",
                         filter: photoEditorPreviewFilter,
                       }}
                     />

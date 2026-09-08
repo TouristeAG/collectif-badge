@@ -1,14 +1,52 @@
 /**
- * electron-builder afterPack (macOS).
- *
- * The old bash launcher wrap exists only for historical argv workarounds. It is disabled:
- * passing Chromium flags via a stub is unsafe with electron-builder's launcher, and postbuild
- * `codesign --deep` had been re-signing Electron Framework.framework with ad-hoc signatures,
- * which breaks JIT entitlements on macOS 15 (Intel) and causes V8 SIGTRAP at startup.
- * Use `app.commandLine.appendSwitch` in electron/main.cjs instead.
- *
- * Fuses still run after this hook (see package.json build.electronFuses).
+ * electron-builder afterPack.
+ * Fail the build if required Electron main modules are missing from the asar
+ * (that used to ship a dock/taskbar icon with no window).
  */
-module.exports = async function electronAfterPack() {
-  /* intentionally empty */
+const fs = require("fs");
+const path = require("path");
+
+const REQUIRED_ELECTRON_MODULES = [
+  "main.cjs",
+  "preload.cjs",
+  "sheets.cjs",
+  "canva.cjs",
+  "chromium-flags.cjs",
+  "firebase-auth.cjs",
+  "firebase-join.cjs",
+  "firebase-people.cjs"
+];
+
+function existsInResources(resourcesDir, relativePath) {
+  const asarUnpacked = path.join(resourcesDir, "app.asar.unpacked", relativePath);
+  const loose = path.join(resourcesDir, "app", relativePath);
+  if (fs.existsSync(asarUnpacked) || fs.existsSync(loose)) return true;
+  try {
+    const Asar = require("@electron/asar");
+    const asarPath = path.join(resourcesDir, "app.asar");
+    if (!fs.existsSync(asarPath)) return false;
+    Asar.statFile(asarPath, relativePath.replace(/\\/g, "/"));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+module.exports = async function electronAfterPack(context) {
+  const resourcesDir =
+    context.electronPlatformName === "darwin"
+      ? path.join(context.appOutDir, `${context.packager.appInfo.productFilename}.app`, "Contents", "Resources")
+      : path.join(context.appOutDir, "resources");
+
+  const missing = [];
+  for (const file of REQUIRED_ELECTRON_MODULES) {
+    const rel = path.posix.join("electron", file);
+    if (!existsInResources(resourcesDir, rel)) missing.push(rel);
+  }
+  if (missing.length) {
+    throw new Error(
+      `Packaged app is missing required Electron modules:\n  - ${missing.join("\n  - ")}\n` +
+        "The window will never open. Check build.files includes electron/*.cjs."
+    );
+  }
 };

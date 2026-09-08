@@ -61,9 +61,16 @@
     "productName": "Collectif Badge",
     "files": [
       "dist/**/*",
-      "electron/**/*",
-      "package.json"
+      "package.json",
+      {
+        "from": "electron",
+        "to": "electron",
+        "filter": [
+          "**/*.cjs"
+        ]
+      }
     ],
+    "afterPack": "scripts/electron-after-pack.cjs",
     "artifactName": "CollectifBadge-${version}-${arch}.${ext}",
     "directories": {
       "buildResources": "build",

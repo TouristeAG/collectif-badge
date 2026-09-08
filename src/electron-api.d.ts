@@ -1,4 +1,4 @@
-import type { PeopleResponse, SheetsLoadPayload } from "./types";
+import type { FirebaseStatus, PeopleResponse, SheetsLoadPayload } from "./types";
 
 export interface CanvaStatus {
   hasCredentials: boolean;
@@ -11,6 +11,18 @@ interface ElectronAPI {
   importServiceAccountKey: () => Promise<{ configured: boolean; clientEmail: string } | null>;
   getServiceAccountStatus: () => Promise<{ configured: boolean; clientEmail: string }>;
   loadPeopleFromSheets: (payload: SheetsLoadPayload) => Promise<PeopleResponse>;
+  firebaseGetStatus?: () => Promise<FirebaseStatus>;
+  firebaseSaveJoinConfig?: (
+    payload: string | Record<string, string>
+  ) => Promise<{ configured: boolean; orgId: string; projectId: string; hasJoinSecrets: boolean }>;
+  firebaseClearConfig?: () => Promise<FirebaseStatus>;
+  firebaseSignIn?: () => Promise<FirebaseStatus>;
+  firebaseSignOut?: () => Promise<FirebaseStatus>;
+  firebaseLoadPeople?: () => Promise<PeopleResponse>;
+  firebaseFetchProfilePhoto?: (payload: {
+    profilePhotoUrl?: string;
+    profilePhotoPath?: string;
+  }) => Promise<{ base64: string; mimeType: string; fromCache?: boolean } | null>;
   networkShareGetStatus?: () => Promise<{
     running: boolean;
     localUrl: string;

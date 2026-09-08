@@ -1,6 +1,7 @@
 const path = require("path");
 const electron = require("electron");
 const { app, BrowserWindow, dialog, ipcMain, shell } = electron;
+require(path.join(__dirname, "chromium-flags.cjs")).mainProcessApply(app);
 const fs = require("fs/promises");
 const os = require("os");
 const fssync = require("fs");
@@ -30,18 +31,31 @@ process.on("unhandledRejection", (reason) => {
 
 let loadPeopleFromSheets;
 let canva;
-let firebaseAuth;
-let firebasePeople;
-let firebaseJoin;
+let firebaseAuth = null;
+let firebasePeople = null;
+let firebaseJoin = null;
 try {
   ({ loadPeopleFromSheets } = require("./sheets.cjs"));
   canva = require("./canva.cjs");
+} catch (err) {
+  logMainCrash("requireSheetsOrCanva", err);
+  throw err;
+}
+try {
   firebaseAuth = require("./firebase-auth.cjs");
   firebasePeople = require("./firebase-people.cjs");
   firebaseJoin = require("./firebase-join.cjs");
 } catch (err) {
-  logMainCrash("requireSheetsOrCanvaOrFirebase", err);
-  throw err;
+  // Never abort startup: a missing Firebase module used to leave the dock/taskbar
+  // icon alive with no window (require ran before createWindow).
+  logMainCrash("requireFirebase", err);
+}
+
+function requireFirebase(mod, name) {
+  if (!mod) {
+    throw new Error(`Firebase is unavailable (${name}). Reinstall Collectif Badge.`);
+  }
+  return mod;
 }
 
 const isDev = !app.isPackaged;
@@ -100,6 +114,7 @@ function createWindow() {
     minHeight: 700,
     title: "Collectif Badgé",
     backgroundColor: "#0f172a",
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
@@ -110,6 +125,19 @@ function createWindow() {
     }
   });
   mainWindow = win;
+  win.once("ready-to-show", () => {
+    if (win.isDestroyed()) return;
+    win.center();
+    win.show();
+    win.focus();
+  });
+  // If the renderer never becomes ready, still surface a window.
+  setTimeout(() => {
+    if (win.isDestroyed() || win.isVisible()) return;
+    win.center();
+    win.show();
+    win.focus();
+  }, 2500);
   win.on("closed", () => {
     if (mainWindow === win) mainWindow = null;
   });
@@ -567,50 +595,58 @@ function handleIpc(channel, listener) {
   ipcMain.handle(channel, listener);
 }
 
-handleIpc("firebase:getStatus", async () => firebaseAuth.getStatus());
+handleIpc("firebase:getStatus", async () => requireFirebase(firebaseAuth, "auth").getStatus());
 
 handleIpc("firebase:saveJoinConfig", async (_, payload) => {
+  const join = requireFirebase(firebaseJoin, "join");
+  const auth = requireFirebase(firebaseAuth, "auth");
   const raw = typeof payload === "string" ? payload : payload?.raw ?? payload;
   const parsed =
     typeof raw === "string"
-      ? firebaseJoin.parseFirebaseConfigInput(raw)
-      : firebaseJoin.normalizePayload(raw || {});
-  const saved = await firebaseAuth.saveConfig(parsed);
-  const status = await firebaseAuth.getStatus();
+      ? join.parseFirebaseConfigInput(raw)
+      : join.normalizePayload(raw || {});
+  const saved = await auth.saveConfig(parsed);
+  const status = await auth.getStatus();
   return {
     ...status,
     configured: true,
     orgId: saved.orgId,
     projectId: saved.projectId,
-    hasJoinSecrets: firebaseJoin.hasJoinSecrets(saved)
+    hasJoinSecrets: join.hasJoinSecrets(saved)
   };
 });
 
 handleIpc("firebase:clearConfig", async () => {
-  await firebaseAuth.clearConfig();
-  return firebaseAuth.getStatus();
+  const auth = requireFirebase(firebaseAuth, "auth");
+  await auth.clearConfig();
+  return auth.getStatus();
 });
 
 handleIpc("firebase:signIn", async () => {
-  await firebaseAuth.signInWithGoogle();
+  const auth = requireFirebase(firebaseAuth, "auth");
+  const people = requireFirebase(firebasePeople, "people");
+  await auth.signInWithGoogle();
   try {
-    await firebasePeople.ensureMembership();
+    await people.ensureMembership();
   } catch (err) {
     // Sign-in succeeded; membership may need a fuller join code — surface that on load.
     logMainCrash("firebaseEnsureMembership", err);
   }
-  return firebaseAuth.getStatus();
+  return auth.getStatus();
 });
 
 handleIpc("firebase:signOut", async () => {
-  await firebaseAuth.clearSession();
-  return firebaseAuth.getStatus();
+  const auth = requireFirebase(firebaseAuth, "auth");
+  await auth.clearSession();
+  return auth.getStatus();
 });
 
-handleIpc("firebase:loadPeople", async () => firebasePeople.loadPeopleFromFirebase());
+handleIpc("firebase:loadPeople", async () =>
+  requireFirebase(firebasePeople, "people").loadPeopleFromFirebase()
+);
 
 handleIpc("firebase:fetchProfilePhoto", async (_, payload) =>
-  firebasePeople.fetchProfilePhoto(payload ?? {})
+  requireFirebase(firebasePeople, "people").fetchProfilePhoto(payload ?? {})
 );
 
 ipcMain.handle("canva:getStatus", () => canva.getStatus());

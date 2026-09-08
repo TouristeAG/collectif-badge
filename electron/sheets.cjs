@@ -134,6 +134,11 @@ function parseTempGuestList(rows) {
   return people;
 }
 
+/**
+ * Volunteer Guest List columns (NoctuList SheetsColumnContract):
+ * Name, Last Name Abbreviation, Invitations, Venue, Notes, Volunteer Benefit, Last Modified, NFC UID.
+ * There is no NanoID / EventManager ID column on this tab.
+ */
 function parseVolunteerGuestList(rows) {
   const people = [];
   rows.forEach((row, index) => {
@@ -143,13 +148,11 @@ function parseVolunteerGuestList(rows) {
 
     people.push(
       makeRecord("volunteer_guest_list", rowNumber, "volunteer_guest", name, {
-        eventManagerId: clean(row[7]),
-        email: clean(row[1]),
-        phone: clean(row[2]),
-        invitations: Number.parseInt(clean(row[3]), 10) || 0,
-        venue: clean(row[4]),
-        notes: clean(row[5]),
-        nfcCardUid: clean(row[6]),
+        abbreviation: clean(row[1]),
+        invitations: Number.parseInt(clean(row[2]), 10) || 0,
+        venue: clean(row[3]),
+        notes: clean(row[4]),
+        nfcCardUid: clean(row[7]),
         sheetColumns: rowToNonEmptyColumnMap(row, 8)
       })
     );
