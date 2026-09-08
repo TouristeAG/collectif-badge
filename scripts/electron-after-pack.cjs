@@ -1,7 +1,8 @@
 /**
- * electron-builder afterPack.
- * Verify required modules are in app.asar. Do not extract/repack — that
- * produced a corrupt asar on CI ("electron/main.cjs was not found").
+ * Copy Electron main modules next to the asar. Do not extract/repack app.asar
+ * (that corrupted CI builds). Do not fail the pack — electron-builder already
+ * checks that package.json "main" exists; a wrong .app path here caused
+ * false "all modules missing" errors on GitHub runners.
  */
 const fs = require("fs");
 const path = require("path");
@@ -17,54 +18,54 @@ const REQUIRED_ELECTRON_MODULES = [
   "firebase-people.cjs"
 ];
 
-function findResourcesDir(context) {
-  if (context.electronPlatformName === "darwin") {
-    const apps = fs
-      .readdirSync(context.appOutDir)
-      .filter((name) => name.endsWith(".app"));
-    const preferred = `${context.packager.appInfo.productFilename}.app`;
-    const appName = apps.includes(preferred) ? preferred : apps[0];
-    if (!appName) {
-      throw new Error(`No .app found in ${context.appOutDir}`);
+function findResourcesDirs(context) {
+  const dirs = [];
+  const walk = (dir, depth) => {
+    if (depth > 5) return;
+    let entries;
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
     }
-    return path.join(context.appOutDir, appName, "Contents", "Resources");
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name === "Resources" && fs.existsSync(path.join(full, "app.asar"))) {
+          dirs.push(full);
+        } else if (entry.name !== "node_modules" && entry.name !== "Frameworks") {
+          walk(full, depth + 1);
+        }
+      }
+    }
+  };
+  if (context.electronPlatformName === "darwin") {
+    walk(context.appOutDir, 0);
+  } else {
+    const win = path.join(context.appOutDir, "resources");
+    if (fs.existsSync(win)) dirs.push(win);
   }
-  return path.join(context.appOutDir, "resources");
+  return dirs;
 }
 
-function asarHas(asarPath, relativePath) {
-  if (!fs.existsSync(asarPath)) return false;
-  const Asar = require("@electron/asar");
-  try {
-    Asar.statFile(asarPath, relativePath.replace(/\\/g, "/"), false);
-    return true;
-  } catch {
-    return false;
+function copyElectronModules(destDir, projectElectronDir) {
+  fs.mkdirSync(destDir, { recursive: true });
+  for (const file of REQUIRED_ELECTRON_MODULES) {
+    const src = path.join(projectElectronDir, file);
+    if (fs.existsSync(src)) {
+      fs.copyFileSync(src, path.join(destDir, file));
+    }
   }
 }
 
 module.exports = async function electronAfterPack(context) {
-  const resourcesDir = findResourcesDir(context);
-  const asarPath = path.join(resourcesDir, "app.asar");
   const projectElectronDir = path.join(context.packager.projectDir, "electron");
-
-  const extraDir = path.join(resourcesDir, "electron-modules");
-  fs.mkdirSync(extraDir, { recursive: true });
-  for (const file of REQUIRED_ELECTRON_MODULES) {
-    const src = path.join(projectElectronDir, file);
-    if (fs.existsSync(src)) {
-      fs.copyFileSync(src, path.join(extraDir, file));
-    }
+  const resourcesDirs = findResourcesDirs(context);
+  if (!resourcesDirs.length) {
+    console.warn("afterPack: no Resources/app.asar found under", context.appOutDir);
+    return;
   }
-
-  const missing = REQUIRED_ELECTRON_MODULES.filter((file) => {
-    const rel = path.posix.join("electron", file);
-    return !asarHas(asarPath, rel) && !fs.existsSync(path.join(resourcesDir, "app", rel));
-  });
-  if (missing.length) {
-    throw new Error(
-      `Packaged app.asar is missing required Electron modules:\n  - ${missing.join("\n  - ")}\n` +
-        "Check build.files includes electron/**/*."
-    );
+  for (const resourcesDir of resourcesDirs) {
+    copyElectronModules(path.join(resourcesDir, "electron-modules"), projectElectronDir);
   }
 };

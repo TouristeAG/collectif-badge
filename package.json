@@ -61,8 +61,14 @@
     "productName": "Collectif Badge",
     "files": [
       "dist/**/*",
-      "electron/**/*",
-      "package.json"
+      "package.json",
+      {
+        "from": "electron",
+        "to": "electron",
+        "filter": [
+          "**/*"
+        ]
+      }
     ],
     "afterPack": "scripts/electron-after-pack.cjs",
     "artifactName": "CollectifBadge-${version}-${arch}.${ext}",
@@ -74,13 +80,6 @@
       {
         "from": "scripts/sign-and-allow.sh",
         "to": "scripts/sign-and-allow.sh"
-      },
-      {
-        "from": "electron",
-        "to": "electron-modules",
-        "filter": [
-          "**/*.cjs"
-        ]
       }
     ],
     "mac": {

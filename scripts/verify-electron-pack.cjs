@@ -68,6 +68,7 @@ function verifySources() {
 }
 
 function verifyAsar() {
+  const Asar = require("@electron/asar");
   const releaseDir = path.join(process.cwd(), "release");
   const asars = findAsars(releaseDir);
   if (!asars.length) {
@@ -76,16 +77,24 @@ function verifyAsar() {
   }
   let failed = false;
   for (const asarPath of asars) {
-    const missing = REQUIRED.filter((rel) => !asarHas(asarPath, rel));
+    const listed = Asar.listPackage(asarPath).filter((f) => /electron\/.*\.cjs$/.test(f));
+    console.log(`${path.relative(process.cwd(), asarPath)} electron/*.cjs:\n  ${listed.join("\n  ") || "(none)"}`);
+    const extraDir = path.join(path.dirname(asarPath), "electron-modules");
+    if (!asarHas(asarPath, "electron/main.cjs")) {
+      failed = true;
+      console.error(`electron/main.cjs is not inside ${asarPath} — the app cannot start.`);
+    }
+    const missing = REQUIRED.filter((rel) => {
+      if (asarHas(asarPath, rel)) return false;
+      return !fs.existsSync(path.join(extraDir, path.basename(rel)));
+    });
     if (missing.length) {
       failed = true;
-      console.error(`Missing in ${asarPath}:\n  - ${missing.join("\n  - ")}`);
-    } else {
-      console.log(`OK ${path.relative(process.cwd(), asarPath)}`);
+      console.error(`Missing from asar and electron-modules:\n  - ${missing.join("\n  - ")}`);
     }
   }
   if (failed) {
-    console.error("Packaged app.asar is incomplete. Refusing to publish.");
+    console.error("Packaged app is incomplete. Refusing to publish.");
     process.exit(1);
   }
 }
