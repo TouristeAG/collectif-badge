@@ -30,11 +30,17 @@ process.on("unhandledRejection", (reason) => {
 
 let loadPeopleFromSheets;
 let canva;
+let firebaseAuth;
+let firebasePeople;
+let firebaseJoin;
 try {
   ({ loadPeopleFromSheets } = require("./sheets.cjs"));
   canva = require("./canva.cjs");
+  firebaseAuth = require("./firebase-auth.cjs");
+  firebasePeople = require("./firebase-people.cjs");
+  firebaseJoin = require("./firebase-join.cjs");
 } catch (err) {
-  logMainCrash("requireSheetsOrCanva", err);
+  logMainCrash("requireSheetsOrCanvaOrFirebase", err);
   throw err;
 }
 
@@ -83,6 +89,9 @@ async function readStoredServiceAccount() {
   return parsed;
 }
 
+/** @type {Electron.BrowserWindow | null} */
+let mainWindow = null;
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1280,
@@ -99,6 +108,10 @@ function createWindow() {
       // kills the renderer immediately, then window-all-closed quits the app on macOS.
       sandbox: false
     }
+  });
+  mainWindow = win;
+  win.on("closed", () => {
+    if (mainWindow === win) mainWindow = null;
   });
 
   win.webContents.on("did-fail-load", (_event, code, desc, url, isMainFrame) => {
@@ -188,6 +201,25 @@ function fetchJson(url) {
   });
 }
 
+function cleanUrl(value) {
+  const trimmed = String(value ?? "").trim();
+  return trimmed || "";
+}
+
+function resolveUpdateDownloadUrl(metadata) {
+  const releaseUrl = cleanUrl(metadata?.releaseUrl) || UPDATE_FALLBACK_URL;
+  if (process.platform === "darwin") {
+    const isArm = process.arch === "arm64";
+    const arm = cleanUrl(metadata?.desktopDownloadUrlDmgArm64);
+    const intel = cleanUrl(metadata?.desktopDownloadUrlDmgX64 || metadata?.desktopDownloadUrlDmgX86);
+    return (isArm ? arm : intel) || arm || intel || releaseUrl;
+  }
+  if (process.platform === "win32") {
+    return cleanUrl(metadata?.desktopDownloadUrlExe) || releaseUrl;
+  }
+  return releaseUrl;
+}
+
 async function checkForUpdatesFromRemote() {
   const currentVersion = app.getVersion();
   const metadata = await fetchJson(UPDATE_METADATA_URL);
@@ -198,9 +230,7 @@ async function checkForUpdatesFromRemote() {
     ? compareVersions(currentVersion, minRequiredVersion) < 0
     : false;
   const mandatory = forcedByMinRequired || (Boolean(metadata?.mandatory) && updateAvailable);
-  const releaseUrl = typeof metadata?.releaseUrl === "string" && metadata.releaseUrl.trim()
-    ? metadata.releaseUrl.trim()
-    : UPDATE_FALLBACK_URL;
+  const releaseUrl = resolveUpdateDownloadUrl(metadata);
   const notes = typeof metadata?.notes === "string" ? metadata.notes : "";
   const result = {
     checkedAt: Date.now(),
@@ -527,6 +557,61 @@ ipcMain.handle("dialog:saveBinaryFile", async (_, payload) => {
 
   return result.filePath;
 });
+
+function handleIpc(channel, listener) {
+  try {
+    ipcMain.removeHandler(channel);
+  } catch {
+    /* ignore */
+  }
+  ipcMain.handle(channel, listener);
+}
+
+handleIpc("firebase:getStatus", async () => firebaseAuth.getStatus());
+
+handleIpc("firebase:saveJoinConfig", async (_, payload) => {
+  const raw = typeof payload === "string" ? payload : payload?.raw ?? payload;
+  const parsed =
+    typeof raw === "string"
+      ? firebaseJoin.parseFirebaseConfigInput(raw)
+      : firebaseJoin.normalizePayload(raw || {});
+  const saved = await firebaseAuth.saveConfig(parsed);
+  const status = await firebaseAuth.getStatus();
+  return {
+    ...status,
+    configured: true,
+    orgId: saved.orgId,
+    projectId: saved.projectId,
+    hasJoinSecrets: firebaseJoin.hasJoinSecrets(saved)
+  };
+});
+
+handleIpc("firebase:clearConfig", async () => {
+  await firebaseAuth.clearConfig();
+  return firebaseAuth.getStatus();
+});
+
+handleIpc("firebase:signIn", async () => {
+  await firebaseAuth.signInWithGoogle();
+  try {
+    await firebasePeople.ensureMembership();
+  } catch (err) {
+    // Sign-in succeeded; membership may need a fuller join code — surface that on load.
+    logMainCrash("firebaseEnsureMembership", err);
+  }
+  return firebaseAuth.getStatus();
+});
+
+handleIpc("firebase:signOut", async () => {
+  await firebaseAuth.clearSession();
+  return firebaseAuth.getStatus();
+});
+
+handleIpc("firebase:loadPeople", async () => firebasePeople.loadPeopleFromFirebase());
+
+handleIpc("firebase:fetchProfilePhoto", async (_, payload) =>
+  firebasePeople.fetchProfilePhoto(payload ?? {})
+);
 
 ipcMain.handle("canva:getStatus", () => canva.getStatus());
 

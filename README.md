@@ -1,20 +1,17 @@
 # Collectif Badge Manager (Desktop)
 
-Cross-platform desktop app (macOS + Windows) to read Google Sheets and display:
-- Volunteers
-- Permanent guests
-- Volunteer guests
-- Temporary guests
-
-This is the first milestone: clean sync + aesthetic list UI + person selection.
-Badge illustration generation for the front cover is now included.
-Evolis Badgy 200 printing flow comes next.
+Cross-platform desktop app (macOS + Windows) companion to **NoctuList**:
+- Sync volunteers / guests from **Firebase** (recommended) or **Google Sheets**
+- Design double-sided badges (cover + back with NanoID QR)
+- Use NoctuList **profile photos** by default (Firebase), with optional local upload override
+- Export PNG / PDF / Canva / Badgy Studio
 
 ## Stack
 
 - Electron (desktop shell)
 - React + TypeScript (UI)
-- Google Sheets API (read-only, via service account)
+- Google Sheets API (read-only, via service account) — legacy backend
+- Firebase Auth + Firestore + Storage (join QR + Google Sign-In) — NoctuList 2.x backend
 
 ## Quick Start
 
@@ -30,12 +27,27 @@ npm install
 npm run dev
 ```
 
-3. In the app:
-   - Enter your Spreadsheet ID
-   - Import your service account JSON key
-   - Confirm/adjust sheet tab names
-   - Click **Refresh from Sheets**
-   - Select a person, then open **Badge illustrator**
+3. Choose a people source:
+
+### Firebase (NoctuList)
+
+1. In NoctuList Admin, show the organization **join QR** (`noctulist-fb:1:…`).
+2. In Collectif Badgé, pick **Firebase**, paste or scan that code, then **Sign in with Google**.
+3. After Google Sign-In, click **Reload** (bottom right) to refresh the roster from Firebase.
+4. Open **Badge illustrator** — profile photos load from Storage when available; you can still upload a local override.
+
+Authorized redirect URIs on the institution Web OAuth client should include:
+`http://localhost:8889/Callback`, `8888`, `8765`, `9090`, and `8890`.
+
+### Google Sheets (legacy)
+
+1. Enter your Spreadsheet ID
+2. Import your service account JSON key
+3. Confirm/adjust sheet tab names
+4. Click **Refresh from Sheets**
+5. Select a person, then open **Badge illustrator**
+
+Badge back QR encodes the plain **NanoID** (same as NoctuList door scanning / Lightspeed). Do not print device join QRs on badges.
 
 ## Badge cover & venue logos (bundled)
 
@@ -142,5 +154,20 @@ Create desktop installers:
 npm run build
 ```
 
-- macOS target: `dmg`
-- Windows target: `nsis`
+- macOS: `CollectifBadge-<version>-arm64.dmg` and `-x64.dmg`
+- Windows: `CollectifBadge-<version>-x64.exe`
+
+## Release (all platforms)
+
+Same idea as NoctuList: bump `version.json`, commit to `main`, push a version tag. GitHub Actions builds macOS + Windows and publishes the GitHub Release.
+
+See [`.github/PUBLISHING.md`](.github/PUBLISHING.md).
+
+```bash
+npm run sync:version
+git add version.json package.json package-lock.json
+git commit -m "chore: bump to 1.5.0"
+git push origin main
+git tag 1.5.0
+git push origin 1.5.0
+```

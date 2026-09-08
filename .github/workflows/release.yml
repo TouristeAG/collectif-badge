@@ -1,0 +1,162 @@
+name: Release — all platforms
+
+# Push a version tag to ship macOS + Windows automatically:
+#
+#   git tag 1.5.0
+#   git push origin 1.5.0
+#
+# 1. Build macOS DMGs (Intel + Apple Silicon) and Windows NSIS in parallel
+# 2. Create the GitHub Release (notes from .github/release-notes/<version>.md)
+# 3. Attach every installer to the release
+#
+# Manual: Actions → Release — all platforms → Run workflow
+
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      prerelease:
+        description: "Mark as pre-release?"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  resolve-version:
+    name: Resolve version
+    runs-on: ubuntu-latest
+    outputs:
+      name: ${{ steps.version.outputs.name }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read version
+        id: version
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="$(node -p "require('./version.json').version.replace(/^v/i,'')")"
+          fi
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            echo "Invalid version: $VERSION"
+            exit 1
+          fi
+          echo "name=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Releasing $VERSION"
+
+  build-mac:
+    name: macOS DMG (x64 + arm64)
+    needs: resolve-version
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build macOS DMGs
+        run: npm run build -- --mac
+      - name: Verify DMG names
+        run: |
+          ls -la release/
+          test -f "release/CollectifBadge-${{ needs.resolve-version.outputs.name }}-arm64.dmg"
+          test -f "release/CollectifBadge-${{ needs.resolve-version.outputs.name }}-x64.dmg"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmgs
+          path: |
+            release/CollectifBadge-*-arm64.dmg
+            release/CollectifBadge-*-x64.dmg
+          if-no-files-found: error
+
+  build-windows:
+    name: Windows NSIS
+    needs: resolve-version
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build Windows installer
+        run: npm run build -- --win
+      - name: Verify EXE name
+        shell: bash
+        run: |
+          ls -la release/
+          test -f "release/CollectifBadge-${{ needs.resolve-version.outputs.name }}-x64.exe"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: release/CollectifBadge-*-x64.exe
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: [resolve-version, build-mac, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Collect installers
+        id: files
+        run: |
+          mkdir -p dist-release
+          find artifacts -type f \( -name 'CollectifBadge-*.dmg' -o -name 'CollectifBadge-*.exe' \) -print
+          find artifacts -type f \( -name 'CollectifBadge-*.dmg' -o -name 'CollectifBadge-*.exe' \) -exec cp {} dist-release/ \;
+          ls -la dist-release/
+          VERSION="${{ needs.resolve-version.outputs.name }}"
+          test -f "dist-release/CollectifBadge-${VERSION}-arm64.dmg"
+          test -f "dist-release/CollectifBadge-${VERSION}-x64.dmg"
+          test -f "dist-release/CollectifBadge-${VERSION}-x64.exe"
+      - name: Release notes
+        id: notes
+        run: |
+          VERSION="${{ needs.resolve-version.outputs.name }}"
+          NOTES=".github/release-notes/${VERSION}.md"
+          if [[ -f "$NOTES" ]]; then
+            echo "Using $NOTES"
+            {
+              echo "path=$NOTES"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "No $NOTES — falling back to version.json notes"
+            node -e "
+              const fs = require('fs');
+              const v = JSON.parse(fs.readFileSync('version.json','utf8'));
+              fs.writeFileSync('release-body.md', (v.notes || 'Collectif Badge ${VERSION}').trim() + '\n');
+            "
+            echo "path=release-body.md" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || needs.resolve-version.outputs.name }}
+          name: Collectif Badge ${{ needs.resolve-version.outputs.name }}
+          body_path: ${{ steps.notes.outputs.path }}
+          draft: false
+          make_latest: true
+          prerelease: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.prerelease == 'true' }}
+          fail_on_unmatched_files: true
+          files: |
+            dist-release/CollectifBadge-${{ needs.resolve-version.outputs.name }}-arm64.dmg
+            dist-release/CollectifBadge-${{ needs.resolve-version.outputs.name }}-x64.dmg
+            dist-release/CollectifBadge-${{ needs.resolve-version.outputs.name }}-x64.exe

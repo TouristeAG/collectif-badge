@@ -1,9 +1,9 @@
-name: Build
+name: Build (manual test)
+
+# Standalone platform builds for debugging. Does not create a GitHub Release.
+# Shipping is handled by `.github/workflows/release.yml` (tag or Run workflow).
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 env:
@@ -14,44 +14,36 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-
+          cache: npm
       - name: Install dependencies
-        run: npm install
-
+        run: npm ci
       - name: Build macOS DMG
         run: npm run build -- --mac
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Upload DMG
         uses: actions/upload-artifact@v4
         with:
           name: mac-dmg
-          path: release/*.dmg
+          path: release/CollectifBadge-*.dmg
+          if-no-files-found: error
 
   build-windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-
+          cache: npm
       - name: Install dependencies
-        run: npm install
-
+        run: npm ci
       - name: Build Windows EXE
         run: npm run build -- --win
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:
           name: windows-exe
-          path: release/*.exe
+          path: release/CollectifBadge-*.exe
+          if-no-files-found: error

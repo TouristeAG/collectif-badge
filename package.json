@@ -1,7 +1,7 @@
 {
   "name": "collectif-badge-",
   "private": true,
-  "version": "0.0.5",
+  "version": "1.5.0",
   "engines": {
     "node": ">=22.0.0"
   },
@@ -28,6 +28,7 @@
     "html-to-image": "^1.11.13",
     "i18next": "^25.10.4",
     "jspdf": "^4.2.1",
+    "jsqr": "^1.4.0",
     "jszip": "^3.10.1",
     "qrcode": "^1.5.4",
     "react": "^19.2.4",
@@ -63,6 +64,7 @@
       "electron/**/*",
       "package.json"
     ],
+    "artifactName": "CollectifBadge-${version}-${arch}.${ext}",
     "directories": {
       "buildResources": "build",
       "output": "release"
